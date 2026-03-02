@@ -49,7 +49,42 @@
         #file-preview { display: none; width: 60px; height: 60px; border-radius: 8px; object-fit: cover; border: 1px solid var(--primary); }
 
         /* エディタ・プレビュー */
-        #code-editor { flex: 1; border: none; padding: 15px; font-family: monospace; background: #0d0d0d; color: #d1d1d1; font-size: 14px; outline: none; resize: none; }
+        .editor-wrapper { /* New wrapper for editor and copy button */
+            flex: 1; /* Make it fill the page */
+            position: relative; /* For absolute positioning of the button */
+            display: flex; /* To make textarea take full height inside */
+        }
+        #code-editor {
+            flex: 1; /* Make textarea fill the wrapper */
+            border: none;
+            /* Adjust padding to make space for the copy button */
+            padding: 40px 15px 15px 15px; /* Top, Right, Bottom, Left */
+            font-family: monospace;
+            background: #0d0d0d;
+            color: #d1d1d1;
+            font-size: 14px;
+            outline: none;
+            resize: none;
+        }
+        .copy-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.15); /* Slightly darker for better contrast */
+            color: #fff;
+            border: none;
+            padding: 4px 8px; /* Slightly smaller padding */
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 11px; /* Smaller font for subtlety */
+            z-index: 10;
+            transition: background 0.2s;
+            opacity: 0.8; /* Slightly less opaque */
+        }
+        .copy-button:hover {
+            background: rgba(255, 255, 255, 0.25);
+            opacity: 1;
+        }
         #preview-frame { flex: 1; border: none; background: #fff; width: 100%; height: 100%; }
 
         /* ボタン */
@@ -89,7 +124,10 @@
     </div>
 
     <div id="p-editor" class="page">
-        <textarea id="code-editor" spellcheck="false" oninput="updatePreview()"></textarea>
+        <div class="editor-wrapper">
+            <textarea id="code-editor" spellcheck="false" oninput="updatePreview()"></textarea>
+            <button id="copy-btn" class="copy-button" onclick="copyCode()">Copy</button>
+        </div>
     </div>
 
     <div id="p-preview" class="page">
@@ -201,8 +239,8 @@
             
             if(data.error) throw new Error(data.error.message);
             
-            // マークダウンの ```html などを除去
-            let result = data.candidates[0].content.parts[0].text.replace(/```[a-z]*\n?/g, '').replace(/```/g, '').trim();
+            // マークダウンの  などを除去
+            let result = data.candidates[0].content.parts[0].text.replace(/[a-z]*\n?/g, '').replace(//g, '').trim();
             document.getElementById('code-editor').value = result;
             
             aiMsg.innerHTML = '✨ 生成が完了しました。プレビューを確認してください。';
@@ -219,6 +257,34 @@
         } finally {
             log.scrollTop = log.scrollHeight;
         }
+    }
+
+    function copyCode() {
+        const codeEditor = document.getElementById('code-editor');
+        const copyBtn = document.getElementById('copy-btn');
+        codeEditor.select();
+        codeEditor.setSelectionRange(0, codeEditor.value.length); // For mobile browsers to correctly select all text
+
+        navigator.clipboard.writeText(codeEditor.value).then(() => {
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => {
+                copyBtn.textContent = originalText;
+            }, 2000); // Change back after 2 seconds
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            // Fallback for older browsers or if permission is denied
+            try {
+                document.execCommand('copy'); // Deprecated but might work in some older contexts
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                }, 2000);
+            } catch (fallbackErr) {
+                alert('コピーに失敗しました。手動でコピーしてください。');
+            }
+        });
     }
 
     // --- スワイプ処理の実装 ---
@@ -252,7 +318,6 @@
                 showPage(pagesList[currentIndex - 1], document.querySelectorAll('.tab-btn')[currentIndex - 1]);
             }
         }
-        // 下スワイプのリロード処理を削除しました
     }
 </script>
 </body>
