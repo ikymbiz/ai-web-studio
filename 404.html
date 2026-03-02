@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found</title>
+    <style>
+        :root {
+            --bg: #171717;
+            --text: #ececec;
+            --primary: #3b82f6;
+            --secondary: #444;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, system-ui, sans-serif;
+            text-align: center;
+        }
+        .container {
+            max-width: 400px;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 8rem;
+            margin: 0;
+            font-weight: 900;
+            background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 0;
+            color: #888;
+        }
+        p {
+            font-size: 1rem;
+            margin: 20px 0 30px;
+            line-height: 1.6;
+            opacity: 0.8;
+        }
+        .home-btn {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: transform 0.2s, background-color 0.2s;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+        .home-btn:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+        }
+        .home-btn:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>404</h1>
+    <h2>Oops! Page Not Found</h2>
+    <p>お探しのページは見つかりませんでした。<br>URLが正しいか確認するか、下のボタンからホームに戻ってください。</p>
+    <a href="./" class="home-btn">ホームへ戻る</a>
+</div>
+
+</body>
+</html>
