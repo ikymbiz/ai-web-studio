@@ -25,17 +25,10 @@
         .user { align-self: flex-end; background: var(--user-msg); color: #fff; }
         .ai { align-self: flex-start; background: var(--ai-msg); border: 1px solid #333; width: 100%; }
         
-        /* クルクル (スピナー) */
         .spinner {
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.2);
-            border-top: 3px solid var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 10px;
+            width: 20px; height: 20px; border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: 3px solid var(--primary); border-radius: 50%;
+            animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px;
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
@@ -48,52 +41,27 @@
         #file-input { display: none; }
         #file-preview { display: none; width: 60px; height: 60px; border-radius: 8px; object-fit: cover; border: 1px solid var(--primary); }
 
-        /* エディタ・プレビュー */
-        .editor-wrapper {
-            flex: 1;
-            position: relative;
-            display: flex;
-        }
-        #code-editor {
-            flex: 1;
-            border: none;
-            padding: 40px 15px 15px 15px;
-            font-family: monospace;
-            background: #0d0d0d;
-            color: #d1d1d1;
-            font-size: 14px;
-            outline: none;
-            resize: none;
-        }
-        .copy-button {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            background: rgba(255, 255, 255, 0.15);
-            color: #fff;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 11px;
-            z-index: 10;
-            transition: background 0.2s;
-            opacity: 0.8;
-        }
-        .copy-button:hover {
-            background: rgba(255, 255, 255, 0.25);
-            opacity: 1;
-        }
-        #preview-frame { flex: 1; border: none; background: #fff; width: 100%; height: 100%; }
-
-        /* ボタン */
+        .action-row { display: flex; justify-content: flex-end; }
         .send-btn { background: var(--primary); color: white; border: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+        .generate-btn { background: #10b981; color: white; border: none; height: 36px; padding: 0 16px; border-radius: 18px; font-weight: bold; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+
+        /* エディタ */
+        .editor-wrapper { flex: 1; position: relative; display: flex; }
+        #code-editor { flex: 1; border: none; padding: 40px 15px 15px 15px; font-family: monospace; background: #0d0d0d; color: #d1d1d1; font-size: 14px; outline: none; resize: none; }
+        .copy-button { position: absolute; top: 10px; right: 15px; background: rgba(255, 255, 255, 0.15); color: #fff; border: none; padding: 4px 8px; border-radius: 5px; cursor: pointer; font-size: 11px; z-index: 10; transition: background 0.2s; opacity: 0.8; }
+        .copy-button:hover { background: rgba(255, 255, 255, 0.25); opacity: 1; }
+        
+        /* プレビュー */
+        #preview-frame { flex: 1; border: none; background: #fff; width: 100%; height: 100%; }
+        .debug-panel { background: var(--bg); border-top: 1px solid #333; padding: 12px 15px; display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; }
+        #debug-memo { flex: 1; min-height: 40px; max-height: 100px; background: #2f2f2f; border: 1px solid #444; border-radius: 20px; padding: 10px 15px; color: #fff; font-size: 14px; outline: none; resize: none; }
+        .debug-btn { background: #eab308; color: #000; border: none; height: 40px; padding: 0 16px; border-radius: 20px; font-weight: bold; cursor: pointer; flex-shrink: 0; font-size: 13px; }
 
         /* 設定 */
         .settings { padding: 25px; overflow-y: auto; }
         .field { margin-bottom: 20px; }
         label { display: block; font-size: 12px; color: #888; margin-bottom: 8px; font-weight: bold; }
-        input[type="password"], textarea { width: 100%; background: #2f2f2f; border: 1px solid #444; border-radius: 8px; padding: 12px; color: #fff; font-size: 14px; }
+        input[type="password"], textarea.setting-input { width: 100%; background: #2f2f2f; border: 1px solid #444; border-radius: 8px; padding: 12px; color: #fff; font-size: 14px; resize: vertical; }
         .save-btn { background: #fff; color: #000; border: none; padding: 15px; border-radius: 8px; font-weight: bold; width: 100%; margin-top: 10px; cursor: pointer; }
     </style>
 </head>
@@ -109,15 +77,18 @@
 <div class="content">
     <div id="p-chat" class="page active">
         <div id="chat-log">
-            <div class="msg ai">Gemini 2.5 Flash 起動中。画像添付やプロファイル設定で精度を高められます。</div>
+            <div class="msg ai">Gemini Web Studio 起動。\nここでは要件の壁打ちを行います。仕様が固まったら「⚡️コードを作成」ボタンを押してください。</div>
         </div>
         <div class="input-container">
             <img id="file-preview">
             <div class="input-row">
                 <label class="file-label" for="file-input">＋</label>
                 <input type="file" id="file-input" accept="image/*" onchange="previewFile()">
-                <textarea id="user-prompt" placeholder="メッセージを入力..." rows="1" oninput="autoGrow(this)"></textarea>
+                <textarea id="user-prompt" placeholder="作りたいアプリの要件を伝える..." rows="1" oninput="autoGrow(this)"></textarea>
                 <button class="send-btn" id="send-btn" onclick="askGemini()">↑</button>
+            </div>
+            <div class="action-row">
+                <button class="generate-btn" onclick="generateCode()">⚡️ コードを作成</button>
             </div>
         </div>
     </div>
@@ -131,6 +102,10 @@
 
     <div id="p-preview" class="page">
         <iframe id="preview-frame"></iframe>
+        <div class="debug-panel">
+            <textarea id="debug-memo" placeholder="修正点やデバッグ内容をメモ..." rows="1" oninput="autoGrow(this)"></textarea>
+            <button class="debug-btn" onclick="sendDebugRequest()">依頼に反映</button>
+        </div>
     </div>
 
     <div id="p-settings" class="page settings">
@@ -140,7 +115,7 @@
         </div>
         <div class="field">
             <label>DEVELOPER PROFILE</label>
-            <textarea id="user-profile" rows="6" placeholder="例：Tailwind CSSを使用。日本語コメント。モダンなダークモード。"></textarea>
+            <textarea id="user-profile" class="setting-input" rows="6" placeholder="例：Tailwind CSSを使用。日本語コメント。モダンなダークモード。"></textarea>
         </div>
         <button class="save-btn" onclick="saveSettings()">設定を保存</button>
     </div>
@@ -148,6 +123,7 @@
 
 <script>
     let currentImageBase64 = null;
+    let conversationContext = ""; // 対話の履歴を保持する変数
     const pagesList = ['chat', 'editor', 'preview', 'settings'];
 
     function showPage(id, btn) {
@@ -190,27 +166,25 @@
         document.getElementById('preview-frame').srcdoc = document.getElementById('code-editor').value;
     }
 
+    // --- 要件固めのチャット用関数 ---
     async function askGemini() {
         const key = document.getElementById('api-key').value;
         const prof = document.getElementById('user-profile').value;
         const input = document.getElementById('user-prompt');
-        const code = document.getElementById('code-editor').value;
         const promptText = input.value.trim();
         
-        if(!key || !promptText) return alert('APIキーと指示を確認してください');
+        if(!key || !promptText) return alert('APIキーとメッセージを確認してください');
 
         const log = document.getElementById('chat-log');
         
-        // ユーザーの入力をテキストとして安全に追加 (HTMLタグの誤作動を防止)
         const userMsg = document.createElement('div');
         userMsg.className = 'msg user';
         userMsg.textContent = promptText; 
         log.appendChild(userMsg);
 
-        // AIの「クルクル」待機メッセージ
         const aiMsg = document.createElement('div');
         aiMsg.className = 'msg ai';
-        aiMsg.innerHTML = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>コードを生成中...</span></div>';
+        aiMsg.innerHTML = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>考え中...</span></div>';
         log.appendChild(aiMsg);
         
         input.value = '';
@@ -218,9 +192,16 @@
         document.getElementById('file-preview').style.display = 'none';
         log.scrollTop = log.scrollHeight;
 
-        const system = `Expert Web Developer. Profile: ${prof}. Current Code: ${code || "None"}. Task: ${promptText}. Return ONLY full HTML code starting with <!DOCTYPE html>. No explanation. No markdown blocks.`;
+        // 会話履歴に追加
+        conversationContext += `\nユーザー: ${promptText}`;
+
+        const system = `あなたはプロのWeb開発ディレクター兼アシスタントです。ユーザーの作りたいWebアプリの要件をヒアリングし、仕様を整理してください。
+開発プロファイル: ${prof}
+※ここではコードそのものは出力せず、仕様についての提案、質問、確認を自然な日本語で返答してください。`;
         
-        const contents = [{ parts: [{ text: system }] }];
+        const contents = [{ 
+            parts: [{ text: system + "\n\nこれまでの会話:" + conversationContext }] 
+        }];
 
         if (currentImageBase64) {
             contents[0].parts.push({
@@ -238,24 +219,102 @@
             
             if(data.error) throw new Error(data.error.message);
             
-            // 修正箇所：正規表現を正しく直しました
-            let result = data.candidates[0].content.parts[0].text.replace(/```[a-z]*\n?/g, '').replace(/```/g, '').trim();
-            document.getElementById('code-editor').value = result;
+            const resultText = data.candidates[0].content.parts[0].text;
+            aiMsg.textContent = resultText;
             
-            aiMsg.innerHTML = '✨ 生成が完了しました。プレビューを確認してください。';
+            // AIの返答も会話履歴に追加
+            conversationContext += `\nアシスタント: ${resultText}`;
             
-            // リセット処理
             currentImageBase64 = null;
             document.getElementById('file-input').value = "";
-            
-            // 生成完了後、自動でプレビュー画面へ移動
-            showPage('preview', document.querySelectorAll('.tab-btn')[2]);
             
         } catch (e) {
             aiMsg.textContent = 'エラー: ' + e.message;
         } finally {
             log.scrollTop = log.scrollHeight;
         }
+    }
+
+    // --- コード生成用の関数 ---
+    async function generateCode() {
+        const key = document.getElementById('api-key').value;
+        const prof = document.getElementById('user-profile').value;
+        const code = document.getElementById('code-editor').value;
+
+        if(!key) return alert('APIキーを設定画面で入力してください');
+
+        const log = document.getElementById('chat-log');
+        
+        const sysMsg = document.createElement('div');
+        sysMsg.className = 'msg user';
+        sysMsg.style.backgroundColor = '#10b981';
+        sysMsg.textContent = '⚡️ これまでの要件をもとにコード生成を実行'; 
+        log.appendChild(sysMsg);
+
+        const aiMsg = document.createElement('div');
+        aiMsg.className = 'msg ai';
+        aiMsg.innerHTML = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>コードを生成中...</span></div>';
+        log.appendChild(aiMsg);
+        log.scrollTop = log.scrollHeight;
+
+        const system = `あなたはExpert Web Developerです。これまでの要件定義の会話履歴をもとに、要件を満たす完全なHTMLコードを生成してください。
+開発プロファイル: ${prof}
+現在のコード: ${code || "なし"}
+
+これまでの会話履歴（要件）:
+${conversationContext || "まだ会話はありません。一般的なモダンなWebページのテンプレートを作成してください。"}
+
+指示:
+- <!DOCTYPE html>から始まる1つの完全なHTMLコードのみを出力してください。
+- HTML、CSS、JSはすべて1つのファイルにまとめてください。
+- markdownのコードブロック表記 (\`\`\`html など) や、説明文・挨拶は一切含めず、純粋なコードのみを出力してください。`;
+
+        const contents = [{ parts: [{ text: system }] }];
+
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            // 必要であれば system_instruction を使う形式に変えても良いですが、今回は互換性の高いプロンプト埋め込み方式にしています
+                body: JSON.stringify({ contents })
+            });
+            const data = await res.json();
+            
+            if(data.error) throw new Error(data.error.message);
+            
+            let result = data.candidates[0].content.parts[0].text.replace(/```[a-z]*\n?/g, '').replace(/```/g, '').trim();
+            document.getElementById('code-editor').value = result;
+            
+            aiMsg.innerHTML = '✨ 生成が完了しました。プレビューを確認してください。';
+            
+            // 自動でプレビュー画面へ移動
+            showPage('preview', document.querySelectorAll('.tab-btn')[2]);
+            
+        } catch (e) {
+            aiMsg.textContent = '生成エラー: ' + e.message;
+        } finally {
+            log.scrollTop = log.scrollHeight;
+        }
+    }
+
+    // --- プレビュー画面のデバッグ依頼関数 ---
+    function sendDebugRequest() {
+        const memoInput = document.getElementById('debug-memo');
+        const memoText = memoInput.value.trim();
+        
+        if (!memoText) return alert('修正点やデバッグ内容をメモに入力してください。');
+        
+        // CHATタブに遷移
+        showPage('chat', document.querySelectorAll('.tab-btn')[0]);
+        
+        // CHATの入力欄にセット
+        const chatInput = document.getElementById('user-prompt');
+        chatInput.value = `【修正・デバッグ依頼】\n現在のプレビューに対して、以下の修正をお願いします：\n${memoText}`;
+        autoGrow(chatInput);
+        
+        // メモ欄をリセット
+        memoInput.value = '';
+        memoInput.style.height = "40px";
     }
 
     function copyCode() {
@@ -267,25 +326,20 @@
         navigator.clipboard.writeText(codeEditor.value).then(() => {
             const originalText = copyBtn.textContent;
             copyBtn.textContent = 'Copied!';
-            setTimeout(() => {
-                copyBtn.textContent = originalText;
-            }, 2000);
+            setTimeout(() => copyBtn.textContent = originalText, 2000);
         }).catch(err => {
-            console.error('Failed to copy: ', err);
             try {
                 document.execCommand('copy');
                 const originalText = copyBtn.textContent;
                 copyBtn.textContent = 'Copied!';
-                setTimeout(() => {
-                    copyBtn.textContent = originalText;
-                }, 2000);
+                setTimeout(() => copyBtn.textContent = originalText, 2000);
             } catch (fallbackErr) {
-                alert('コピーに失敗しました。手動でコピーしてください。');
+                alert('コピーに失敗しました。');
             }
         });
     }
 
-    // --- スワイプ処理の実装 ---
+    // --- スワイプ処理 ---
     let touchStartX = 0;
     let touchStartY = 0;
 
@@ -304,15 +358,14 @@
         const dx = endX - startX;
         const dy = endY - startY;
         const activePage = document.querySelector('.page.active');
+        if(!activePage) return;
+        
         const currentIndex = pagesList.indexOf(activePage.id.replace('p-', ''));
 
-        // 左右スワイプ (タブ切り替え) - スワイプ距離が50px以上かつ、縦より横の動きが大きい場合
         if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
             if (dx < 0 && currentIndex < pagesList.length - 1) {
-                // 左にスワイプ -> 次のタブへ
                 showPage(pagesList[currentIndex + 1], document.querySelectorAll('.tab-btn')[currentIndex + 1]);
             } else if (dx > 0 && currentIndex > 0) {
-                // 右にスワイプ -> 前のタブへ
                 showPage(pagesList[currentIndex - 1], document.querySelectorAll('.tab-btn')[currentIndex - 1]);
             }
         }
