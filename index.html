@@ -41,8 +41,10 @@
         #file-input { display: none; }
         #file-preview { display: none; width: 60px; height: 60px; border-radius: 8px; object-fit: cover; border: 1px solid var(--primary); }
 
-        .action-row { display: flex; justify-content: flex-end; }
         .send-btn { background: var(--primary); color: white; border: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+        
+        /* インラインのコード生成ボタン */
+        .generate-btn-wrapper { margin-top: 15px; display: flex; justify-content: flex-end; }
         .generate-btn { background: #10b981; color: white; border: none; height: 36px; padding: 0 16px; border-radius: 18px; font-weight: bold; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; }
 
         /* エディタ */
@@ -77,7 +79,7 @@
 <div class="content">
     <div id="p-chat" class="page active">
         <div id="chat-log">
-            <div class="msg ai">Gemini Web Studio 起動。\nここでは要件の壁打ちを行います。仕様が固まったら「⚡️コードを作成」ボタンを押してください。</div>
+            <div class="msg ai">Gemini Web Studio 起動。\nここでは要件の壁打ちを行います。仕様が固まったら表示される「⚡️コードを作成」ボタンを押してください。</div>
         </div>
         <div class="input-container">
             <img id="file-preview">
@@ -86,9 +88,6 @@
                 <input type="file" id="file-input" accept="image/*" onchange="previewFile()">
                 <textarea id="user-prompt" placeholder="作りたいアプリの要件を伝える..." rows="1" oninput="autoGrow(this)"></textarea>
                 <button class="send-btn" id="send-btn" onclick="askGemini()">↑</button>
-            </div>
-            <div class="action-row">
-                <button class="generate-btn" onclick="generateCode()">⚡️ コードを作成</button>
             </div>
         </div>
     </div>
@@ -123,7 +122,7 @@
 
 <script>
     let currentImageBase64 = null;
-    let conversationContext = ""; // 対話の履歴を保持する変数
+    let conversationContext = ""; 
     const pagesList = ['chat', 'editor', 'preview', 'settings'];
 
     function showPage(id, btn) {
@@ -166,7 +165,7 @@
         document.getElementById('preview-frame').srcdoc = document.getElementById('code-editor').value;
     }
 
-    // --- 要件固めのチャット用関数 ---
+    // --- 要件固めのチャット用関数 (ストリーミング対応 + ボタン動的追加) ---
     async function askGemini() {
         const key = document.getElementById('api-key').value;
         const prof = document.getElementById('user-profile').value;
@@ -177,6 +176,9 @@
 
         const log = document.getElementById('chat-log');
         
+        // 過去の生成ボタンがあれば削除しておく
+        document.querySelectorAll('.generate-btn-wrapper').forEach(el => el.remove());
+
         const userMsg = document.createElement('div');
         userMsg.className = 'msg user';
         userMsg.textContent = promptText; 
@@ -184,6 +186,7 @@
 
         const aiMsg = document.createElement('div');
         aiMsg.className = 'msg ai';
+        // 初期のクルクル表示
         aiMsg.innerHTML = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>考え中...</span></div>';
         log.appendChild(aiMsg);
         
@@ -192,12 +195,15 @@
         document.getElementById('file-preview').style.display = 'none';
         log.scrollTop = log.scrollHeight;
 
-        // 会話履歴に追加
         conversationContext += `\nユーザー: ${promptText}`;
 
         const system = `あなたはプロのWeb開発ディレクター兼アシスタントです。ユーザーの作りたいWebアプリの要件をヒアリングし、仕様を整理してください。
 開発プロファイル: ${prof}
-※ここではコードそのものは出力せず、仕様についての提案、質問、確認を自然な日本語で返答してください。`;
+
+【重要ルール】
+1. 応答は長々と話さず、要点を箇条書きで簡潔にまとめてください。
+2. ユーザーの入力の粒度や複雑さに応じて、臨機応変に文字数や情報量を調整してください。一度に情報を詰め込みすぎず、対話のキャッチボールを重視してください。
+3. ここではコードそのものは出力せず、仕様についての提案、質問、確認を自然な日本語で行ってください。`;
         
         const contents = [{ 
             parts: [{ text: system + "\n\nこれまでの会話:" + conversationContext }] 
@@ -210,21 +216,69 @@
         }
 
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${key}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents })
             });
-            const data = await res.json();
             
-            if(data.error) throw new Error(data.error.message);
+            if(!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error?.message || '通信エラー');
+            }
+
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let aiText = "";
+            let buffer = "";
+            aiMsg.innerHTML = ""; // ストリーミング開始前にクルクルを消去
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop(); 
+                
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const dataStr = line.slice(6);
+                        if (dataStr.trim() === "[DONE]") continue; 
+                        try {
+                            const data = JSON.parse(dataStr);
+                            const textChunk = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                            if (textChunk) {
+                                aiText += textChunk;
+                                aiMsg.textContent = aiText; // 画面を逐次更新
+                                log.scrollTop = log.scrollHeight; 
+                            }
+                        } catch (e) {
+                            // パース中のエラーは無視
+                        }
+                    }
+                }
+            }
             
-            const resultText = data.candidates[0].content.parts[0].text;
-            aiMsg.textContent = resultText;
+            // --- ストリーミング完了後の処理 ---
+            aiMsg.textContent = aiText; // テキストを再設定
+            conversationContext += `\nアシスタント: ${aiText}`;
+
+            // メッセージの末尾に「コードを作成」ボタンを追加
+            const btnWrapper = document.createElement('div');
+            btnWrapper.className = 'generate-btn-wrapper';
             
-            // AIの返答も会話履歴に追加
-            conversationContext += `\nアシスタント: ${resultText}`;
+            const genBtn = document.createElement('button');
+            genBtn.className = 'generate-btn';
+            genBtn.innerHTML = '⚡️ コードを作成';
+            genBtn.onclick = generateCode;
             
+            btnWrapper.appendChild(genBtn);
+            aiMsg.appendChild(btnWrapper);
+            
+            log.scrollTop = log.scrollHeight;
+            
+            // 添付画像をクリア
             currentImageBase64 = null;
             document.getElementById('file-input').value = "";
             
@@ -244,6 +298,9 @@
         if(!key) return alert('APIキーを設定画面で入力してください');
 
         const log = document.getElementById('chat-log');
+        
+        // 過去のボタンを消しておく
+        document.querySelectorAll('.generate-btn-wrapper').forEach(el => el.remove());
         
         const sysMsg = document.createElement('div');
         sysMsg.className = 'msg user';
@@ -275,7 +332,6 @@ ${conversationContext || "まだ会話はありません。一般的なモダン
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-            // 必要であれば system_instruction を使う形式に変えても良いですが、今回は互換性の高いプロンプト埋め込み方式にしています
                 body: JSON.stringify({ contents })
             });
             const data = await res.json();
@@ -287,7 +343,6 @@ ${conversationContext || "まだ会話はありません。一般的なモダン
             
             aiMsg.innerHTML = '✨ 生成が完了しました。プレビューを確認してください。';
             
-            // 自動でプレビュー画面へ移動
             showPage('preview', document.querySelectorAll('.tab-btn')[2]);
             
         } catch (e) {
@@ -304,15 +359,12 @@ ${conversationContext || "まだ会話はありません。一般的なモダン
         
         if (!memoText) return alert('修正点やデバッグ内容をメモに入力してください。');
         
-        // CHATタブに遷移
         showPage('chat', document.querySelectorAll('.tab-btn')[0]);
         
-        // CHATの入力欄にセット
         const chatInput = document.getElementById('user-prompt');
         chatInput.value = `【修正・デバッグ依頼】\n現在のプレビューに対して、以下の修正をお願いします：\n${memoText}`;
         autoGrow(chatInput);
         
-        // メモ欄をリセット
         memoInput.value = '';
         memoInput.style.height = "40px";
     }
