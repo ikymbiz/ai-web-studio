@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Web Studio Pro</title>
+    <title>AI Web Studio Pro 2026</title>
     <style>
-        :root { --bg: #212121; --sidebar: #171717; --primary: #3b82f6; --text: #ececec; --user-msg: #303030; --ai-msg: #212121; --danger: #ef4444; }
+        :root { --bg: #212121; --sidebar: #171717; --primary: #3b82f6; --text: #ececec; --user-msg: #303030; --ai-msg: #212121; --danger: #ef4444; --success: #10b981; --accent: #8b5cf6; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, system-ui, sans-serif; margin: 0; height: 100dvh; display: flex; flex-direction: column; background: var(--bg); color: var(--text); overflow: hidden; }
 
@@ -21,19 +21,20 @@
 
         /* チャットヘッダー */
         .chat-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: var(--sidebar); border-bottom: 1px solid #333; }
-        .header-title { font-size: 11px; font-weight: bold; color: #666; letter-spacing: 1px; }
+        .header-title { font-size: 12px; font-weight: bold; color: #888; }
         .reset-btn { background: #333; color: #eee; border: 1px solid #444; padding: 4px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+        .reset-btn:hover { background: var(--danger); border-color: var(--danger); }
 
         /* チャットエリア */
         #chat-log { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; background: var(--bg); }
-        .msg { max-width: 90%; padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.6; word-wrap: break-word; white-space: pre-wrap; }
+        .msg { max-width: 95%; padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.6; word-wrap: break-word; white-space: pre-wrap; }
         .user { align-self: flex-end; background: var(--user-msg); color: #fff; }
-        .ai { align-self: flex-start; background: var(--ai-msg); border: 1px solid #333; width: 100%; position: relative; }
+        .ai { align-self: flex-start; background: var(--ai-msg); border: 1px solid #333; width: 100%; }
         
         .spinner {
-            width: 18px; height: 18px; border: 2px solid rgba(255, 255, 255, 0.1);
-            border-top: 2px solid var(--primary); border-radius: 50%;
-            animation: spin 0.8s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px;
+            width: 20px; height: 20px; border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: 3px solid var(--primary); border-radius: 50%;
+            animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px;
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
@@ -45,75 +46,84 @@
         .file-label { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: #333; border-radius: 50%; cursor: pointer; font-size: 20px; flex-shrink: 0; }
         #file-input { display: none; }
         #file-preview { display: none; width: 60px; height: 60px; border-radius: 8px; object-fit: cover; border: 1px solid var(--primary); margin-bottom: 5px; }
+
         .send-btn { background: var(--primary); color: white; border: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
         
-        /* インライン生成ボタン */
-        .generate-btn-wrapper { margin-top: 15px; display: flex; justify-content: flex-end; border-top: 1px solid #333; padding-top: 10px; }
-        .generate-btn { background: #10b981; color: white; border: none; height: 36px; padding: 0 16px; border-radius: 18px; font-weight: bold; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+        /* ボタン類 */
+        .generate-btn-wrapper { margin-top: 15px; display: flex; justify-content: flex-end; }
+        .generate-btn { background: var(--success); color: white; border: none; height: 38px; padding: 0 18px; border-radius: 19px; font-weight: bold; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
 
         /* エディタ */
         .editor-wrapper { flex: 1; position: relative; display: flex; }
-        #code-editor { flex: 1; border: none; padding: 40px 15px 15px 15px; font-family: monospace; background: #0d0d0d; color: #d1d1d1; font-size: 14px; outline: none; resize: none; }
-        .copy-button { position: absolute; top: 10px; right: 15px; background: rgba(255, 255, 255, 0.1); color: #fff; border: 1px solid #444; padding: 4px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; z-index: 10; }
+        #code-editor { flex: 1; border: none; padding: 50px 15px 15px 15px; font-family: 'Fira Code', monospace; background: #0d0d0d; color: #d1d1d1; font-size: 14px; outline: none; resize: none; }
+        .editor-actions { position: absolute; top: 10px; right: 15px; display: flex; gap: 8px; z-index: 10; }
+        .action-btn { color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; opacity: 0.9; transition: 0.2s; }
+        .copy-btn { background: rgba(255, 255, 255, 0.15); }
+        .deploy-btn { background: var(--accent); }
+        .action-btn:hover { opacity: 1; transform: translateY(-1px); }
         
         /* プレビュー */
         #preview-frame { flex: 1; border: none; background: #fff; width: 100%; height: 100%; }
-        .debug-panel { background: var(--bg); border-top: 1px solid #333; padding: 12px 15px; display: flex; gap: 10px; align-items: flex-end; }
+        .debug-panel { background: var(--bg); border-top: 1px solid #333; padding: 12px 15px; display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; }
         #debug-memo { flex: 1; min-height: 40px; max-height: 100px; background: #2f2f2f; border: 1px solid #444; border-radius: 20px; padding: 10px 15px; color: #fff; font-size: 14px; outline: none; resize: none; }
-        .debug-btn { background: #eab308; color: #000; border: none; height: 40px; padding: 0 16px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; }
+        .debug-btn { background: #eab308; color: #000; border: none; height: 40px; padding: 0 16px; border-radius: 20px; font-weight: bold; cursor: pointer; flex-shrink: 0; font-size: 13px; }
 
         /* 設定 */
         .settings { padding: 25px; overflow-y: auto; }
-        .field { margin-bottom: 20px; }
-        .field-row { display: flex; gap: 10px; margin-bottom: 20px; }
-        .field-row .field { flex: 1; margin-bottom: 0; }
-        label { display: block; font-size: 11px; color: #888; margin-bottom: 8px; font-weight: bold; }
-        input[type="password"], textarea.setting-input, select.setting-input { width: 100%; background: #2f2f2f; border: 1px solid #444; border-radius: 8px; padding: 12px; color: #fff; font-size: 14px; outline: none; }
-        select.setting-input { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 14px; }
-        .save-btn { background: #fff; color: #000; border: none; padding: 15px; border-radius: 8px; font-weight: bold; width: 100%; margin-top: 10px; cursor: pointer; }
+        .field-row { display: flex; gap: 15px; margin-bottom: 20px; }
+        .field { flex: 1; margin-bottom: 20px; }
+        label { display: block; font-size: 11px; color: #888; margin-bottom: 8px; font-weight: bold; letter-spacing: 0.05em; }
+        input[type="password"], textarea.setting-input, select.setting-input { width: 100%; background: #2f2f2f; border: 1px solid #444; border-radius: 8px; padding: 12px; color: #fff; font-size: 14px; outline: none; transition: border 0.2s; }
+        input:focus, textarea:focus, select:focus { border-color: var(--primary); }
+        select.setting-input { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C2.185 5.355 2.402 5 2.805 5h9.39c.403 0 .62.355.354.658l-4.796 5.482a.5.5 0 0 1-.748 0z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+        .save-btn { background: #fff; color: #000; border: none; padding: 15px; border-radius: 8px; font-weight: bold; width: 100%; margin-top: 10px; cursor: pointer; transition: 0.2s; }
+        .save-btn:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
 
 <div class="tabs">
-    <button class="tab-btn active" onclick="showPage('chat', this)">CHAT</button>
-    <button class="tab-btn" onclick="showPage('editor', this)">CODE</button>
-    <button class="tab-btn" onclick="showPage('preview', this)">PREVIEW</button>
-    <button class="tab-btn" onclick="showPage('settings', this)">SET</button>
+    <button class="tab-btn active" id="tab-chat" onclick="showPage('chat', this)">CHAT</button>
+    <button class="tab-btn" id="tab-editor" onclick="showPage('editor', this)">CODE</button>
+    <button class="tab-btn" id="tab-preview" onclick="showPage('preview', this)">PREVIEW</button>
+    <button class="tab-btn" id="tab-settings" onclick="showPage('settings', this)">SET</button>
 </div>
 
 <div class="content">
     <div id="p-chat" class="page active">
         <div class="chat-header">
-            <span class="header-title">PLANNING MODE</span>
-            <button class="reset-btn" onclick="confirmReset()">Reset Chat</button>
+            <span class="header-title">CONVERSATION (PLAN)</span>
+            <button class="reset-btn" onclick="confirmReset()">＋ New Project</button>
         </div>
         <div id="chat-log">
-            <div class="msg ai">Studio Pro へようこそ。要件を相談してください。</div>
+            <div class="msg ai">Gemini Web Studio 2026 起動。<br>要件を教えてください。プランが固まったら「⚡️コードを作成」ボタンを表示します。</div>
         </div>
         <div class="input-container">
             <img id="file-preview">
             <div class="input-row">
                 <label class="file-label" for="file-input">＋</label>
                 <input type="file" id="file-input" accept="image/*" onchange="previewFile()">
-                <textarea id="user-prompt" placeholder="指示を入力..." rows="1" oninput="autoGrow(this)"></textarea>
-                <button class="send-btn" onclick="askGemini()">↑</button>
+                <textarea id="user-prompt" placeholder="例：ダークモードのTodoアプリを作りたい..." rows="1" oninput="autoGrow(this)"></textarea>
+                <button class="send-btn" id="send-btn" onclick="askGemini()">↑</button>
             </div>
         </div>
     </div>
 
     <div id="p-editor" class="page">
         <div class="editor-wrapper">
-            <textarea id="code-editor" spellcheck="false" oninput="updatePreview()" placeholder="ここにコードが生成されます..."></textarea>
-            <button id="copy-btn" class="copy-button" onclick="copyCode()">Copy Code</button>
+            <div class="editor-actions">
+                <button class="action-btn copy-btn" onclick="copyCode()">Copy</button>
+                <button class="action-btn deploy-btn" onclick="openDeployer()">🚀 GitHub Deploy</button>
+            </div>
+            <textarea id="code-editor" spellcheck="false" oninput="updatePreview()" placeholder="ここにソースコードが生成されます..."></textarea>
         </div>
     </div>
 
     <div id="p-preview" class="page">
         <iframe id="preview-frame"></iframe>
         <div class="debug-panel">
-            <textarea id="debug-memo" placeholder="修正点をメモ..." rows="1" oninput="autoGrow(el)"></textarea>
-            <button class="debug-btn" onclick="sendDebugRequest()">反映依頼</button>
+            <textarea id="debug-memo" placeholder="修正したい点を入力..." rows="1" oninput="autoGrow(this)"></textarea>
+            <button class="debug-btn" onclick="sendDebugRequest()">修正を依頼</button>
         </div>
     </div>
 
@@ -122,17 +132,18 @@
             <div class="field">
                 <label>CHAT MODEL (PLAN)</label>
                 <select id="chat-model" class="setting-input">
-                    <option value="gemini-3-flash-preview">3 Flash</option>
-                    <option value="gemini-2.5-flash">2.5 Flash</option>
-                    <option value="gemini-2.5-pro">2.5 Pro</option>
+                    <option value="gemini-3-flash-preview">3 Flash (Fast & Frontier)</option>
+                    <option value="gemini-2.5-flash">2.5 Flash (Balanced)</option>
+                    <option value="gemini-2.5-pro">2.5 Pro (High-Quality Reasoning)</option>
+                    <option value="deep-research-pro-preview-12-2025">Deep Research (Agentic Plan)</option>
                 </select>
             </div>
             <div class="field">
                 <label>CODE MODEL (BUILD)</label>
                 <select id="code-model" class="setting-input">
-                    <option value="gemini-3.1-pro-preview">3.1 Pro</option>
-                    <option value="gemini-2.5-pro">2.5 Pro</option>
-                    <option value="gemini-3-flash-preview">3 Flash</option>
+                    <option value="gemini-3.1-pro-preview">3.1 Pro (Vibe Coding / Best)</option>
+                    <option value="gemini-2.5-pro">2.5 Pro (Deep Reasoning)</option>
+                    <option value="gemini-3-flash-preview">3 Flash (High-Speed Build)</option>
                 </select>
             </div>
         </div>
@@ -142,9 +153,9 @@
         </div>
         <div class="field">
             <label>DEVELOPER PROFILE</label>
-            <textarea id="user-profile" class="setting-input" rows="5"></textarea>
+            <textarea id="user-profile" class="setting-input" rows="6" placeholder="例：Tailwind CSSを使用。日本語コメント。モダンなダークモード。"></textarea>
         </div>
-        <button class="save-btn" onclick="saveSettings()">Save Settings</button>
+        <button class="save-btn" onclick="saveSettings()">設定を保存</button>
     </div>
 </div>
 
@@ -156,17 +167,13 @@
     window.onload = () => {
         document.getElementById('api-key').value = localStorage.getItem('g_key') || '';
         document.getElementById('user-profile').value = localStorage.getItem('g_prof') || '';
-        if (localStorage.getItem('g_chat_m')) document.getElementById('chat-model').value = localStorage.getItem('g_chat_m');
-        if (localStorage.getItem('g_code_m')) document.getElementById('code-model').value = localStorage.getItem('g_code_m');
+        
+        const savedChatModel = localStorage.getItem('g_chat_model');
+        if (savedChatModel) document.getElementById('chat-model').value = savedChatModel;
+        
+        const savedCodeModel = localStorage.getItem('g_code_model');
+        if (savedCodeModel) document.getElementById('code-model').value = savedCodeModel;
     };
-
-    function saveSettings() {
-        localStorage.setItem('g_key', document.getElementById('api-key').value);
-        localStorage.setItem('g_prof', document.getElementById('user-profile').value);
-        localStorage.setItem('g_chat_m', document.getElementById('chat-model').value);
-        localStorage.setItem('g_code_m', document.getElementById('code-model').value);
-        alert('設定を保存しました');
-    }
 
     function showPage(id, btn) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -176,38 +183,54 @@
         if(id === 'preview') updatePreview();
     }
 
-    function autoGrow(el) { el.style.height = "5px"; el.style.height = (el.scrollHeight) + "px"; }
-    
+    function autoGrow(element) {
+        element.style.height = "5px";
+        element.style.height = (element.scrollHeight) + "px";
+    }
+
     function previewFile() {
         const file = document.getElementById('file-input').files[0];
         const reader = new FileReader();
         reader.onloadend = () => {
             currentImageBase64 = reader.result.split(',')[1];
-            document.getElementById('file-preview').src = reader.result;
-            document.getElementById('file-preview').style.display = 'block';
+            const preview = document.getElementById('file-preview');
+            preview.src = reader.result;
+            preview.style.display = 'block';
         };
         if (file) reader.readAsDataURL(file);
     }
 
+    function saveSettings() {
+        localStorage.setItem('g_key', document.getElementById('api-key').value);
+        localStorage.setItem('g_prof', document.getElementById('user-profile').value);
+        localStorage.setItem('g_chat_model', document.getElementById('chat-model').value);
+        localStorage.setItem('g_code_model', document.getElementById('code-model').value);
+        alert('設定を保存しました');
+    }
+
     function confirmReset() {
-        if (confirm("会話をリセットしますか？")) {
+        if (confirm("会話とコードをリセットしますか？")) {
             conversationContext = "";
-            document.getElementById('chat-log').innerHTML = '<div class="msg ai">リセットしました。</div>';
+            document.getElementById('chat-log').innerHTML = '<div class="msg ai">会話をリセットしました。</div>';
+            document.getElementById('code-editor').value = "";
+            document.getElementById('preview-frame').srcdoc = "";
         }
     }
 
     function updatePreview() {
-        document.getElementById('preview-frame').srcdoc = document.getElementById('code-editor').value;
+        const code = document.getElementById('code-editor').value;
+        document.getElementById('preview-frame').srcdoc = code;
     }
 
-    // --- チャットロジック (ご指定の重厚プロンプトを適用) ---
+    // --- CHAT (PLAN) ---
     async function askGemini() {
         const key = document.getElementById('api-key').value;
         const prof = document.getElementById('user-profile').value;
         const model = document.getElementById('chat-model').value;
         const input = document.getElementById('user-prompt');
         const promptText = input.value.trim();
-        if(!key || !promptText) return;
+        
+        if(!key || !promptText) return alert('APIキーと入力を確認してください');
 
         const log = document.getElementById('chat-log');
         document.querySelectorAll('.generate-btn-wrapper').forEach(el => el.remove());
@@ -219,25 +242,24 @@
 
         const aiMsg = document.createElement('div');
         aiMsg.className = 'msg ai';
-        aiMsg.innerHTML = '<div class="spinner"></div>';
+        aiMsg.innerHTML = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>考案中...</span></div>';
         log.appendChild(aiMsg);
         
         input.value = '';
         input.style.height = "44px";
         document.getElementById('file-preview').style.display = 'none';
         log.scrollTop = log.scrollHeight;
+
         conversationContext += `\nユーザー: ${promptText}`;
 
-        // 差し戻し：重厚プロンプト
-        const system = `あなたはプロのWeb開発ディレクター兼アシスタントです。ユーザーの作りたいWebアプリの要件をヒアリングし、仕様を整理してください。
-開発プロファイル: ${prof}
-
-【重要ルール】
-1. 応答は長々と話さず、要点を箇書きで簡潔にまとめてください。
-2. ユーザーの入力の粒度や複雑さに応じて、臨機応変に文字数や情報量を調整してください。一度に情報を詰め込みすぎず、対話のキャッチボールを重視してください。
-3. ここではコードそのものは出力せず、仕様についての提案、質問、確認を自然な日本語で行ってください。`;
-
-        const contents = [{ parts: [{ text: system + "\n\n履歴:" + conversationContext }] }];
+        const system = `あなたはプロのWeb開発ディレクターです。要件定義を行い、開発の指針を立ててください。
+プロファイル: ${prof}
+【ルール】
+- 簡潔な箇条書きでプランを提案。
+- 日本語で応答。
+- ここではコードを出さない。`;
+        
+        const contents = [{ parts: [{ text: system + "\n\n会話:" + conversationContext }] }];
         if (currentImageBase64) contents[0].parts.push({ inline_data: { mime_type: "image/png", data: currentImageBase64 } });
 
         try {
@@ -246,11 +268,13 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents })
             });
+            
             const reader = res.body.getReader();
             const decoder = new TextDecoder("utf-8");
             let aiText = "";
             let buffer = "";
             aiMsg.innerHTML = "";
+
             while (true) {
                 const { value, done } = await reader.read();
                 if (done) break;
@@ -259,97 +283,102 @@
                 buffer = lines.pop(); 
                 for (const line of lines) {
                     if (line.startsWith('data: ')) {
-                        const dataStr = line.slice(6);
-                        if (dataStr.trim() === "[DONE]") continue; 
                         try {
-                            const data = JSON.parse(dataStr);
+                            const data = JSON.parse(line.slice(6));
                             const textChunk = data.candidates?.[0]?.content?.parts?.[0]?.text;
                             if (textChunk) { aiText += textChunk; aiMsg.textContent = aiText; log.scrollTop = log.scrollHeight; }
                         } catch (e) {}
                     }
                 }
             }
-            conversationContext += `\nアシスタント: ${aiText}`;
             
+            conversationContext += `\nアシスタント: ${aiText}`;
+
             const btnWrapper = document.createElement('div');
             btnWrapper.className = 'generate-btn-wrapper';
             const genBtn = document.createElement('button');
             genBtn.className = 'generate-btn';
-            genBtn.innerHTML = '⚡️ コードを作成';
+            genBtn.innerHTML = '⚡️ コードを作成 (BUILD)';
             genBtn.onclick = generateCode;
             btnWrapper.appendChild(genBtn);
             aiMsg.appendChild(btnWrapper);
-            
             log.scrollTop = log.scrollHeight;
             currentImageBase64 = null;
-        } catch (e) { aiMsg.textContent = 'Error: ' + e.message; }
+        } catch (e) { aiMsg.textContent = 'エラー: ' + e.message; }
     }
 
-    // --- コード生成ロジック ---
+    // --- CODE (BUILD) ---
     async function generateCode() {
         const key = document.getElementById('api-key').value;
         const prof = document.getElementById('user-profile').value;
         const model = document.getElementById('code-model').value;
-        const code = document.getElementById('code-editor').value;
-        if(!key) return alert('APIキーを確認してください');
+        const currentCode = document.getElementById('code-editor').value;
 
         const log = document.getElementById('chat-log');
         document.querySelectorAll('.generate-btn-wrapper').forEach(el => el.remove());
         
-        const sysMsg = document.createElement('div');
-        sysMsg.className = 'msg user';
-        sysMsg.style.backgroundColor = '#10b981';
-        sysMsg.textContent = `⚡️ ${model} で生成開始...`; 
-        log.appendChild(sysMsg);
-
         const aiMsg = document.createElement('div');
         aiMsg.className = 'msg ai';
-        aiMsg.innerHTML = '<div class="spinner"></div>';
+        aiMsg.innerHTML = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>構築中...</span></div>';
         log.appendChild(aiMsg);
         log.scrollTop = log.scrollHeight;
 
-        const system = `Expert Web Developer. プロファイル: ${prof}\n指示: 完全に動作するHTMLを1つだけ出力してください。Markdown表記や余計な説明は不要です。`;
-        const contents = [{ parts: [{ text: system + "\n\n要件:\n" + conversationContext + "\n現在のコード:\n" + code }] }];
+        const system = `Expert Full-stack Web Developerとして、完全なHTML/CSS/JSコードを1つのファイルで作成してください。
+プロファイル: ${prof}
+【ルール】
+- Markdown記号（\`\`\`htmlなど）は一切不要。<!DOCTYPE html>から開始。
+- 既存コードがある場合はそれを修正/拡張。
+- 現在のコード: ${currentCode || "なし"}
+- 会話履歴: ${conversationContext}`;
+
+        const contents = [{ parts: [{ text: system }] }];
 
         try {
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents })
             });
             const data = await res.json();
             let result = data.candidates[0].content.parts[0].text.replace(/```[a-z]*\n?/g, '').replace(/```/g, '').trim();
             document.getElementById('code-editor').value = result;
-            aiMsg.innerHTML = '✨ 生成完了。PREVIEWへ移動します。';
-            showPage('preview', document.querySelectorAll('.tab-btn')[2]);
-        } catch (e) { aiMsg.textContent = 'Generate Error: ' + e.message; }
+            aiMsg.innerHTML = '✨ 構築完了。PREVIEWを確認してください。';
+            showPage('preview', document.getElementById('tab-preview'));
+        } catch (e) { aiMsg.textContent = 'エラー: ' + e.message; }
+    }
+
+    // --- DEPLOYER 連携 ---
+    function openDeployer() {
+        const code = document.getElementById('code-editor').value;
+        if (!code) return alert("デプロイするコードがありません。");
+        localStorage.setItem('pending_deploy_code', code);
+        window.open('Deployer.html', '_blank');
     }
 
     function sendDebugRequest() {
-        const memo = document.getElementById('debug-memo');
-        if (!memo.value.trim()) return;
-        showPage('chat', document.querySelectorAll('.tab-btn')[0]);
-        const input = document.getElementById('user-prompt');
-        input.value = `【修正依頼】\n以下を修正してください：\n${memo.value}`;
-        autoGrow(input);
-        memo.value = '';
+        const memoInput = document.getElementById('debug-memo');
+        const memoText = memoInput.value.trim();
+        if (!memoText) return;
+        showPage('chat', document.getElementById('tab-chat'));
+        const chatInput = document.getElementById('user-prompt');
+        chatInput.value = `【修正依頼】\n${memoText}`;
+        autoGrow(chatInput);
+        memoInput.value = '';
+        askGemini();
     }
 
     function copyCode() {
-        const editor = document.getElementById('code-editor');
-        navigator.clipboard.writeText(editor.value).then(() => {
-            const btn = document.getElementById('copy-btn');
-            btn.textContent = 'Copied!';
-            setTimeout(() => btn.textContent = 'Copy Code', 1500);
-        });
+        const codeEditor = document.getElementById('code-editor');
+        navigator.clipboard.writeText(codeEditor.value).then(() => alert("Copied!"));
     }
 
+    // スワイプ処理
     let touchStartX = 0;
     document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
     document.addEventListener('touchend', e => {
         const dx = e.changedTouches[0].screenX - touchStartX;
-        const currentIndex = pagesList.indexOf(document.querySelector('.page.active').id.replace('p-', ''));
-        if (Math.abs(dx) > 100) {
+        const activePage = document.querySelector('.page.active');
+        const currentIndex = pagesList.indexOf(activePage.id.replace('p-', ''));
+        if (Math.abs(dx) > 120) {
             if (dx < 0 && currentIndex < pagesList.length - 1) showPage(pagesList[currentIndex + 1], document.querySelectorAll('.tab-btn')[currentIndex + 1]);
             else if (dx > 0 && currentIndex > 0) showPage(pagesList[currentIndex - 1], document.querySelectorAll('.tab-btn')[currentIndex - 1]);
         }
