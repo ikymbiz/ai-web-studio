@@ -252,23 +252,7 @@
                 showPage(pagesList[currentIndex - 1], document.querySelectorAll('.tab-btn')[currentIndex - 1]);
             }
         }
-
-        // 下スワイプ (リロード) - スワイプ距離が80px以上かつ、横より縦の動きが大きい場合
-        if (dy > 80 && Math.abs(dy) > Math.abs(dx)) {
-            let isAtTop = true;
-            // 現在の画面のスクロール位置が一番上の時だけリロードさせる
-            if (activePage.id === 'p-chat') {
-                isAtTop = document.getElementById('chat-log').scrollTop === 0;
-            } else if (activePage.id === 'p-editor') {
-                isAtTop = document.getElementById('code-editor').scrollTop === 0;
-            } else if (activePage.id === 'p-settings') {
-                isAtTop = document.querySelector('.settings').scrollTop === 0;
-            }
-            
-            if (isAtTop) {
-                location.reload();
-            }
-        }
+        // 下スワイプのリロード処理を削除しました
     }
 </script>
 </body>
