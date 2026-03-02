@@ -3,240 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mobile AI Studio v2.1</title>
+    <title>AI Studio - Gemini 2.5 Flash Edition</title>
     <style>
-        :root { --primary: #4a90e2; --bg: #f0f2f5; --dark: #1e1e1e; }
+        :root { --primary: #007bff; --bg: #f8f9fa; --dark: #121212; --msg-user: #007bff; --msg-ai: #e9ecef; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
-        /* 100dvh はキーボードの高さを考慮する最新の単位 */
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
-            margin: 0; 
-            height: 100vh; 
-            height: 100dvh; 
-            display: flex; 
-            flex-direction: column; 
-            background: var(--bg); 
-            overflow: hidden; 
+            font-family: -apple-system, system-ui, sans-serif; 
+            margin: 0; height: 100dvh; display: flex; flex-direction: column; 
+            background: var(--bg); overflow: hidden; 
         }
 
-        /* ヘッダー・タブ固定 */
-        .tabs { 
-            display: flex; 
-            background: #fff; 
-            border-bottom: 1px solid #ddd; 
-            z-index: 100;
-            flex-shrink: 0;
-        }
-        .tab-btn { 
-            flex: 1; 
-            padding: 15px 5px; 
-            border: none; 
-            background: none; 
-            font-size: 14px; 
-            font-weight: bold; 
-            color: #666; 
-        }
-        .tab-btn.active { 
-            color: var(--primary); 
-            border-bottom: 3px solid var(--primary); 
-        }
+        /* タブ */
+        .tabs { display: flex; background: #fff; border-bottom: 1px solid #dee2e6; flex-shrink: 0; }
+        .tab-btn { flex: 1; padding: 14px 0; border: none; background: none; font-size: 13px; font-weight: 600; color: #6c757d; }
+        .tab-btn.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
 
-        /* コンテンツエリア：絶対配置をやめてflexで管理 */
-        .content-area { 
-            flex: 1; 
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .page { 
-            display: none; 
-            flex-direction: column;
-            height: 100%; 
-            width: 100%; 
-            overflow: hidden;
-        }
+        /* コンテンツ */
+        .content { flex: 1; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+        .page { display: none; height: 100%; flex-direction: column; }
         .page.active { display: flex; }
 
-        /* 設定ページ */
-        .settings-page { padding: 20px; overflow-y: auto; }
+        /* チャット */
+        #chat-log { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .msg { max-width: 85%; padding: 10px 14px; border-radius: 15px; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
+        .user { align-self: flex-end; background: var(--msg-user); color: white; border-bottom-right-radius: 2px; }
+        .ai { align-self: flex-start; background: var(--msg-ai); color: #333; border-bottom-left-radius: 2px; }
         
-        /* チャットページ */
-        #chat-log { 
-            flex: 1; 
-            padding: 15px; 
-            overflow-y: auto; 
-            background: #f9f9f9; 
-            font-size: 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .input-group { 
-            padding: 12px; 
-            background: #fff; 
-            border-top: 1px solid #ddd; 
-            display: flex; 
-            gap: 10px;
-            flex-shrink: 0;
-        }
-        #user-prompt { 
-            flex: 1; 
-            height: 60px; /* 高さを少し確保 */
-            padding: 10px; 
-            border: 1px solid #ccc; 
-            border-radius: 8px; 
-            font-size: 16px; /* 16px以上にするとiPhoneでズームしない */
-            resize: none;
-        }
+        .input-box { padding: 10px; background: #fff; border-top: 1px solid #dee2e6; display: flex; gap: 8px; }
+        #user-prompt { flex: 1; height: 45px; border: 1px solid #ced4da; border-radius: 20px; padding: 10px 15px; font-size: 16px; resize: none; outline: none; }
 
-        /* エディタページ */
-        #code-editor { 
-            flex: 1; 
-            width: 100%; 
-            border: none; 
-            padding: 15px; 
-            font-family: Menlo, Monaco, monospace; 
-            font-size: 14px; 
-            background: var(--dark); 
-            color: #fff; 
-            outline: none; 
-            resize: none;
-        }
+        /* エディタ */
+        #code-editor { flex: 1; border: none; padding: 15px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 13px; background: var(--dark); color: #adbac7; outline: none; resize: none; }
 
-        /* プレビューページ */
-        #preview-frame { flex: 1; width: 100%; border: none; background: white; }
+        /* プレビュー */
+        #preview-frame { flex: 1; border: none; background: white; }
 
-        /* 共通パーツ */
-        .msg { padding: 10px; border-radius: 8px; max-width: 90%; word-wrap: break-word; }
-        .user-msg { background: #e3f2fd; align-self: flex-end; color: #1a1a1a; }
-        .ai-msg { background: #eee; align-self: flex-start; font-size: 13px; color: #444; }
+        /* 設定 */
+        .settings { padding: 20px; overflow-y: auto; }
+        .field { margin-bottom: 20px; }
+        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; color: #495057; }
+        input, textarea { width: 100%; border: 1px solid #ced4da; border-radius: 8px; padding: 12px; font-size: 14px; }
         
-        button.main-btn { 
-            background: var(--primary); 
-            color: white; 
-            border: none; 
-            padding: 0 20px; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            font-size: 14px;
-        }
-        label { font-size: 12px; font-weight: bold; margin-bottom: 5px; display: block; color: #555; }
-        input, textarea { border-radius: 8px; border: 1px solid #ccc; padding: 12px; margin-bottom: 15px; width: 100%; font-size: 16px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; }
+        .btn:disabled { opacity: 0.5; }
     </style>
 </head>
 <body>
 
-<div class="tabs" id="tab-bar">
-    <button class="tab-btn active" onclick="showPage('chat', this)">AI対話</button>
-    <button class="tab-btn" onclick="showPage('editor', this)">コード</button>
-    <button class="tab-btn" onclick="showPage('preview', this)">実行</button>
-    <button class="tab-btn" onclick="showPage('settings', this)">設定</button>
+<div class="tabs">
+    <button class="tab-btn active" onclick="showPage('chat', this)">CHAT</button>
+    <button class="tab-btn" onclick="showPage('editor', this)">CODE</button>
+    <button class="tab-btn" onclick="showPage('preview', this)">RUN</button>
+    <button class="tab-btn" onclick="showPage('settings', this)">SET</button>
 </div>
 
-<div class="content-area">
-    <div id="page-chat" class="page active">
-        <div id="chat-log">
-            <div class="msg ai-msg">準備ができました。APIキーを設定して指示を送ってください。</div>
-        </div>
-        <div class="input-group">
-            <textarea id="user-prompt" placeholder="ここをタップして指示を入力"></textarea>
-            <button class="main-btn" id="send-btn" onclick="askGemini()">送信</button>
+<div class="content">
+    <div id="p-chat" class="page active">
+        <div id="chat-log"><div class="msg ai">Gemini 2.5 Flash 準備完了。何を作りましょうか？</div></div>
+        <div class="input-box">
+            <textarea id="user-prompt" placeholder="指示を入力..."></textarea>
+            <button class="btn" id="send-btn" style="width: auto; padding: 0 20px;" onclick="askGemini()">送信</button>
         </div>
     </div>
 
-    <div id="page-editor" class="page">
-        <textarea id="code-editor" spellcheck="false" oninput="updatePreview()" placeholder="ここにコードが表示されます"></textarea>
+    <div id="p-editor" class="page">
+        <textarea id="code-editor" spellcheck="false" oninput="updatePreview()"></textarea>
     </div>
 
-    <div id="page-preview" class="page">
+    <div id="p-preview" class="page">
         <iframe id="preview-frame"></iframe>
     </div>
 
-    <div id="page-settings" class="page settings-page">
-        <label>Gemini API Key</label>
-        <input type="password" id="api-key" placeholder="AIzaSy...">
-        <label>あなたのプロファイル</label>
-        <textarea id="user-profile" rows="5" placeholder="例：ダークモードでモダンなデザインが好き。"></textarea>
-        <button class="main-btn" onclick="saveSettings()" style="width: 100%; padding: 15px;">設定を保存</button>
+    <div id="p-settings" class="page settings">
+        <div class="field">
+            <label>Gemini API Key</label>
+            <input type="password" id="api-key" placeholder="AIzaSy...">
+        </div>
+        <div class="field">
+            <label>開発プロファイル</label>
+            <textarea id="user-profile" rows="5" placeholder="例：モダンなUI。Vanilla JS。Tailwind CSS使用。"></textarea>
+        </div>
+        <button class="btn" onclick="saveSettings()">設定を保存</button>
     </div>
 </div>
 
 <script>
-    function showPage(pageId, btnElement) {
-        // すべてのページを非表示にする
+    function showPage(id, btn) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        // すべてのボタンのactiveを外す
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        
-        // 対象のページを表示し、ボタンをactiveにする
-        document.getElementById('page-' + pageId).classList.add('active');
-        if(btnElement) btnElement.classList.add('active');
-        
-        if(pageId === 'preview') updatePreview();
+        document.getElementById('p-' + id).classList.add('active');
+        btn.classList.add('active');
+        if(id === 'preview') updatePreview();
     }
 
     window.onload = () => {
-        document.getElementById('api-key').value = localStorage.getItem('gemini_api_key') || '';
-        document.getElementById('user-profile').value = localStorage.getItem('user_profile') || '';
+        document.getElementById('api-key').value = localStorage.getItem('g_key') || '';
+        document.getElementById('user-profile').value = localStorage.getItem('g_prof') || '';
     };
 
     function saveSettings() {
-        localStorage.setItem('gemini_api_key', document.getElementById('api-key').value);
-        localStorage.setItem('user_profile', document.getElementById('user_profile').value);
-        alert('設定を保存しました');
+        localStorage.setItem('g_key', document.getElementById('api-key').value);
+        localStorage.setItem('g_prof', document.getElementById('user-profile').value);
+        alert('Saved!');
     }
 
     function updatePreview() {
-        const code = document.getElementById('code-editor').value;
-        const frame = document.getElementById('preview-frame');
-        // iframeの中身をクリアしてから再描画（たまに古いのが残るため）
-        frame.srcdoc = "";
-        setTimeout(() => { frame.srcdoc = code; }, 10);
+        document.getElementById('preview-frame').srcdoc = document.getElementById('code-editor').value;
     }
 
     async function askGemini() {
-        const apiKey = document.getElementById('api-key').value;
-        const profile = document.getElementById('user-profile').value;
-        const promptInput = document.getElementById('user-prompt');
-        const prompt = promptInput.value;
-        const currentCode = document.getElementById('code-editor').value;
-
-        if (!apiKey) return alert('設定タブでAPIキーを入力してください');
-        if (!prompt) return;
+        const key = document.getElementById('api-key').value;
+        const prof = document.getElementById('user-profile').value;
+        const input = document.getElementById('user-prompt');
+        const code = document.getElementById('code-editor').value;
+        
+        if(!key || !input.value) return alert('APIキーと指示を確認してください');
 
         const log = document.getElementById('chat-log');
-        log.innerHTML += `<div class="msg user-msg">${prompt}</div>`;
-        const aiStatus = document.createElement('div');
-        aiStatus.className = 'msg ai-msg';
-        aiStatus.innerText = '生成中...';
-        log.appendChild(aiStatus);
+        log.innerHTML += `<div class="msg user">${input.value}</div>`;
+        const aiMsg = document.createElement('div');
+        aiMsg.className = 'msg ai';
+        aiMsg.innerText = '生成中...';
+        log.appendChild(aiMsg);
         
-        // 入力欄をクリアしてキーボードを閉じる（UX向上）
-        promptInput.value = '';
-        promptInput.blur();
+        const currentPrompt = input.value;
+        input.value = '';
+        input.blur();
         log.scrollTop = log.scrollHeight;
 
-        const system = `Webエンジニアとして、プロファイル：${profile} を踏まえ、指示を反映した完全なHTMLコード(CSS/JS含む)を1ファイルで出力してください。説明は一切不要、コードのみ。現在のコード：\n${currentCode}`;
+        // Gemini 2.5 Flash 用の最適化プロンプト
+        const system = `You are an expert web developer. 
+Profile: ${prof}
+Current Code: ${code || "None"}
+Task: Update the code based on: ${currentPrompt}
+Constraint: Return ONLY the full HTML code starting with <!DOCTYPE html>. No explanation. No markdown code blocks.`;
 
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: system + "\n指示:" + prompt }] }] })
+                body: JSON.stringify({ contents: [{ parts: [{ text: system }] }] })
             });
             const data = await res.json();
-            let code = data.candidates[0].content.parts[0].text.replace(/```html|```/g, '').trim();
             
-            document.getElementById('code-editor').value = code;
-            aiStatus.innerText = '生成完了！「実行」タブを確認してください。';
+            if(data.error) throw new Error(data.error.message);
             
-            // プレビューへ自動切り替え
-            setTimeout(() => showPage('preview', document.querySelector('[onclick="showPage(\'preview\', this)"]')), 1500);
+            let result = data.candidates[0].content.parts[0].text.replace(/```html|```/g, '').trim();
+            document.getElementById('code-editor').value = result;
+            aiMsg.innerText = '生成完了。RUNタブを確認してください。';
+            
+            setTimeout(() => showPage('preview', document.querySelector('[onclick*="preview"]')), 1000);
         } catch (e) {
-            aiStatus.innerText = 'エラー：' + e.message;
+            aiMsg.innerText = 'Error: ' + e.message;
         }
     }
 </script>
