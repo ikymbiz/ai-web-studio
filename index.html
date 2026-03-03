@@ -74,7 +74,7 @@
 
         /* 添付ボタンとメニューのスタイル */
         .file-label { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px;
-        background: #333; border-radius: 50%; cursor: pointer; font-size: 20px; flex-shrink: 0; transition: background 0.2s;
+        background: #333; border-radius: 50%; cursor: pointer; font-size: 20px; flex-shrink: 0; transition: background 0.2s, color 0.2s;
         }
         .file-label:active { background: #444; }
 
@@ -261,6 +261,7 @@
 
 <script>
     let currentImageBase64 = null;
+    let currentMimeType = null; // ファイルの種類を記憶する変数
     let conversationContext = ""; 
     const pagesList = ['chat', 'editor', 'preview', 'settings'];
 
@@ -301,12 +302,27 @@
     function handleAttachment(input) {
         const file = input.files[0];
         if (!file) return;
+
+        currentMimeType = file.type; // ファイルのMIMEタイプを保存
+
         const reader = new FileReader();
         reader.onloadend = () => {
             currentImageBase64 = reader.result.split(',')[1];
             const preview = document.getElementById('file-preview');
-            preview.src = reader.result;
-            preview.style.display = 'block';
+            const label = document.querySelector('.file-label');
+
+            // 画像の場合のみプレビューを表示
+            if (currentMimeType.startsWith('image/')) {
+                preview.src = reader.result;
+                preview.style.display = 'block';
+                label.innerText = '＋'; // ラベルを戻す
+                label.style.background = '#333';
+            } else {
+                // 画像以外（PDF等）はプレビューを隠し、ボタンの色を変えて「添付済み」を示す
+                preview.style.display = 'none';
+                label.innerText = '✓'; // チェックマークに変更
+                label.style.background = '#10b981'; // 緑色に変更
+            }
         };
         reader.readAsDataURL(file);
         input.value = ''; // 同じファイルを再選択できるようにリセット
@@ -394,7 +410,17 @@
 5. **2026年基準の品質**: 
    - モダン、高速、かつアクセシブルなWebサイトを目指すディレクションを行ってください。`;
         const contents = [{ parts: [{ text: system + "\n\n会話:" + conversationContext }] }];
-        if (currentImageBase64) contents[0].parts.push({ inline_data: { mime_type: "image/png", data: currentImageBase64 } });
+        
+        // 正しいMIMEタイプで添付データを送信
+        if (currentImageBase64 && currentMimeType) {
+            contents[0].parts.push({ 
+                inline_data: { 
+                    mime_type: currentMimeType, 
+                    data: currentImageBase64 
+                } 
+            });
+        }
+        
         try {
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${key}`, {
                 method: 'POST',
@@ -434,7 +460,13 @@
             btnWrapper.appendChild(genBtn);
             aiMsg.appendChild(btnWrapper);
             log.scrollTop = log.scrollHeight;
+            
+            // 送信完了後のリセット処理
             currentImageBase64 = null;
+            currentMimeType = null;
+            document.querySelector('.file-label').style.background = '#333';
+            document.querySelector('.file-label').innerText = '＋';
+
         } catch (e) { aiMsg.textContent = 'エラー: ' + e.message;
         }
     }
