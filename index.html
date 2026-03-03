@@ -260,8 +260,11 @@
 </div>
 
 <script>
+
+        /* --- 状態管理変数 --- */
     let currentImageBase64 = null;
-    let currentMimeType = null; // ファイルの種類を記憶する変数
+    let currentMimeType = null;
+    let currentFileName = null; // 追加：ファイル名を保持
     let conversationContext = ""; 
     const pagesList = ['chat', 'editor', 'preview', 'settings'];
 
@@ -289,38 +292,94 @@
         element.style.height = (element.scrollHeight) + "px";
     }
 
-    /* --- MENU ATTACHMENT LOGIC --- */
+    /* --- アタッチメント（添付）ロジック --- */
     function toggleAttachmentMenu() {
+        // すでにファイルが添付されている場合はメニューを開かず削除する
+        if (currentFileName) {
+            removeAttachment();
+            return;
+        }
         document.getElementById('attach-menu').classList.toggle('show');
     }
 
     function triggerFile(type) {
         document.getElementById('file-' + type).click();
-        toggleAttachmentMenu(); // 選択後にメニューを閉じる
+        const menu = document.getElementById('attach-menu');
+        if (menu) menu.classList.remove('show'); // 選択後にメニューを閉じる
     }
-    
 
     function handleAttachment(input) {
         const file = input.files[0];
         if (!file) return;
 
         currentMimeType = file.type;
-        currentFileName = file.name; // ファイル名を保持
+        currentFileName = file.name;
 
         const reader = new FileReader();
         reader.onloadend = () => {
             currentImageBase64 = reader.result.split(',')[1];
             const preview = document.getElementById('file-preview');
             const label = document.querySelector('.file-label');
-            const fileNameDisplay = document.getElementById('file-name-display'); // 名前表示用（後述のHTML参照）
+            const fileNameDisplay = document.getElementById('file-name-display');
 
-            // 共通の処理：ボタンを「添付済み」の状態にする
-            label.innerHTML = '✕'; // クリックで削除できるように「✕」に変更
-            label.style.background = '#ef4444'; // 削除を連想させる赤色に変更
-            label.onclick = (e) => { 
-                e.preventDefault(); 
-                removeAttachment(); 
-            };
+            // UI更新：ボタンを「✕（削除）」状態にする
+            label.innerHTML = '✕';
+            label.style.background = '#ef4444'; // 削除用の赤色
+            label.title = "添付を削除";
+
+            if (currentMimeType.startsWith('image/')) {
+                // 画像：プレビューを表示
+                if (preview) {
+                    preview.src = reader.result;
+                    preview.style.display = 'block';
+                }
+                if (fileNameDisplay) fileNameDisplay.style.display = 'none';
+            } else {
+                // テキスト・MD等：ファイル名を表示
+                if (preview) preview.style.display = 'none';
+                if (fileNameDisplay) {
+                    fileNameDisplay.innerText = `📄 ${currentFileName}`;
+                    fileNameDisplay.style.display = 'inline-block';
+                }
+            }
+        };
+        reader.readAsDataURL(file);
+        input.value = ''; // 同じファイルを再度選べるようにリセット
+    }
+
+    function removeAttachment() {
+        currentImageBase64 = null;
+        currentMimeType = null;
+        currentFileName = null;
+
+        const preview = document.getElementById('file-preview');
+        const label = document.querySelector('.file-label');
+        const fileNameDisplay = document.getElementById('file-name-display');
+
+        // UIを元に戻す
+        if (preview) {
+            preview.src = '';
+            preview.style.display = 'none';
+        }
+        if (fileNameDisplay) {
+            fileNameDisplay.innerText = '';
+            fileNameDisplay.style.display = 'none';
+        }
+        
+        label.innerHTML = '＋';
+        label.style.background = '#333'; // 元の色
+        label.title = "ファイルを添付";
+    }
+
+    // メニュー外クリックで閉じる処理
+    document.addEventListener('click', (e) => {
+        const menu = document.getElementById('attach-menu');
+        const label = document.querySelector('.file-label');
+        if (menu && menu.classList.contains('show') && !menu.contains(e.target) && !label.contains(e.target)) {
+            menu.classList.remove('show');
+        }
+    });
+
 
             // ファイル形式に応じた表示切り替え
             if (currentMimeType.startsWith('image/')) {
