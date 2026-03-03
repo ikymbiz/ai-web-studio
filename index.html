@@ -298,10 +298,7 @@
         document.getElementById('file-' + type).click();
         toggleAttachmentMenu(); // 選択後にメニューを閉じる
     }
-    // 添付ファイルの状態を管理する変数
-    let currentImageBase64 = null;
-    let currentMimeType = null;
-    let currentFileName = null; // ファイル名保存用
+    
 
     function handleAttachment(input) {
         const file = input.files[0];
