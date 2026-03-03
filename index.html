@@ -298,44 +298,82 @@
         document.getElementById('file-' + type).click();
         toggleAttachmentMenu(); // 選択後にメニューを閉じる
     }
+    // 添付ファイルの状態を管理する変数
+    let currentImageBase64 = null;
+    let currentMimeType = null;
+    let currentFileName = null; // ファイル名保存用
 
     function handleAttachment(input) {
         const file = input.files[0];
         if (!file) return;
 
-        currentMimeType = file.type; // ファイルのMIMEタイプを保存
+        currentMimeType = file.type;
+        currentFileName = file.name; // ファイル名を保持
 
         const reader = new FileReader();
         reader.onloadend = () => {
             currentImageBase64 = reader.result.split(',')[1];
             const preview = document.getElementById('file-preview');
             const label = document.querySelector('.file-label');
+            const fileNameDisplay = document.getElementById('file-name-display'); // 名前表示用（後述のHTML参照）
 
-            // 画像の場合のみプレビューを表示
+            // 共通の処理：ボタンを「添付済み」の状態にする
+            label.innerHTML = '✕'; // クリックで削除できるように「✕」に変更
+            label.style.background = '#ef4444'; // 削除を連想させる赤色に変更
+            label.onclick = (e) => { 
+                e.preventDefault(); 
+                removeAttachment(); 
+            };
+
+            // ファイル形式に応じた表示切り替え
             if (currentMimeType.startsWith('image/')) {
+                // 画像の場合
                 preview.src = reader.result;
                 preview.style.display = 'block';
-                label.innerText = '＋'; // ラベルを戻す
-                label.style.background = '#333';
+                if(fileNameDisplay) fileNameDisplay.innerText = ''; 
             } else {
-                // 画像以外（PDF等）はプレビューを隠し、ボタンの色を変えて「添付済み」を示す
+                // テキスト、Markdown、PDFなどの場合
                 preview.style.display = 'none';
-                label.innerText = '✓'; // チェックマークに変更
-                label.style.background = '#10b981'; // 緑色に変更
+                // ファイル名を表示エリアに出力
+                if(fileNameDisplay) {
+                    fileNameDisplay.innerText = `📄 ${currentFileName}`;
+                    fileNameDisplay.style.display = 'block';
+                }
             }
         };
         reader.readAsDataURL(file);
-        input.value = ''; // 同じファイルを再選択できるようにリセット
+        input.value = ''; // リセット
+    }
+
+    // 添付ファイルを削除する関数
+    function removeAttachment() {
+        currentImageBase64 = null;
+        currentMimeType = null;
+        currentFileName = null;
+
+        const preview = document.getElementById('file-preview');
+        const label = document.querySelector('.file-label');
+        const fileNameDisplay = document.getElementById('file-name-display');
+
+        // UIを初期状態に戻す
+        preview.src = '';
+        preview.style.display = 'none';
+        if(fileNameDisplay) fileNameDisplay.innerText = '';
+        
+        label.innerHTML = '＋'; // 元のアイコンに戻す
+        label.style.background = '#333'; // 元の色に戻す
+        label.onclick = null; // 削除機能を解除（通常のクリック＝ファイル選択に戻る）
     }
 
     // メニュー外クリックで閉じる処理
     document.addEventListener('click', (e) => {
         const menu = document.getElementById('attach-menu');
         const label = document.querySelector('.file-label');
-        if (menu.classList.contains('show') && !menu.contains(e.target) && !label.contains(e.target)) {
+        if (menu && menu.classList.contains('show') && !menu.contains(e.target) && !label.contains(e.target)) {
             menu.classList.remove('show');
         }
     });
+
 
     function saveSettings() {
         localStorage.setItem('g_key', document.getElementById('api-key').value);
