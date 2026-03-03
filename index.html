@@ -90,7 +90,6 @@
     </style>
 </head>
 <body>
-
 <div class="tabs">
     <button class="tab-btn active" id="tab-chat" onclick="showPage('chat', this)">CHAT</button>
     <button class="tab-btn" id="tab-editor" onclick="showPage('editor', this)">CODE</button>
@@ -369,7 +368,7 @@
 3. コードは書かず、仕様合意に徹する。
 4. 仕様が固まったら「素晴らしいプランです。⚡️コードを作成 ボタンから実装を開始しましょう」と促す。`;
 
-        cconst userContent = { role: "user", parts: [{ text: system + "\n\n会話履歴:\n" + conversationContext }] };
+        const userContent = { role: "user", parts: [{ text: system + "\n\n会話履歴:\n" + conversationContext }] };
         
         if (currentImageBase64 && currentMimeType) {
             userContent.parts.push({ inline_data: { mime_type: currentMimeType, data: currentImageBase64 } });
