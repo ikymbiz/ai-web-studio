@@ -13,7 +13,7 @@
         body { font-family: -apple-system, system-ui, sans-serif; margin: 0; height: 100dvh; display: flex;
 flex-direction: column; background: var(--bg); color: var(--text); overflow: hidden; }
 
-        /* ナビゲーション */
+        [cite_start]/* ナビゲーション [cite: 5-8] */
         .tabs { display: flex;
 background: var(--sidebar); border-bottom: 1px solid #333; flex-shrink: 0; }
         .tab-btn { flex: 1;
@@ -22,7 +22,7 @@ padding: 15px 0; border: none; background: none; font-size: 13px; font-weight: 6
         .tab-btn.active { color: #fff; border-bottom: 2px solid #fff;
 }
 
-        /* メインコンテンツ */
+        [cite_start]/* メインコンテンツ [cite: 9-11] */
         .content { flex: 1;
 position: relative; overflow: hidden; display: flex; flex-direction: column; }
         .page { display: none;
@@ -30,7 +30,7 @@ height: 100%; flex-direction: column; overflow: hidden; }
         .page.active { display: flex;
 }
 
-        /* チャットヘッダー */
+        [cite_start]/* チャットヘッダー [cite: 12-16] */
         .chat-header { display: flex;
 justify-content: space-between; align-items: center; padding: 10px 15px; background: var(--sidebar); border-bottom: 1px solid #333;
 }
@@ -41,7 +41,7 @@ padding: 4px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; }
         .reset-btn:hover { background: var(--danger);
 border-color: var(--danger); }
 
-        /* チャットエリア */
+        [cite_start]/* チャットエリア [cite: 17-21] */
         #chat-log { flex: 1;
 padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; background: var(--bg);
 }
@@ -62,7 +62,7 @@ display: inline-block; vertical-align: middle; margin-right: 10px;
         @keyframes spin { 100% { transform: rotate(360deg);
 } }
 
-        /* 入力エリア */
+        [cite_start]/* 入力エリア [cite: 25-29] */
         .input-container { padding: 15px;
 background: var(--bg); border-top: 1px solid #333; display: flex; flex-direction: column; gap: 10px;
 }
@@ -84,14 +84,14 @@ border: 1px solid var(--primary); margin-bottom: 5px; }
 border: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
 }
 
-        /* ボタン類 */
+        [cite_start]/* ボタン類 [cite: 36-39] */
         .generate-btn-wrapper { margin-top: 15px;
 display: flex; justify-content: flex-end; }
         .generate-btn { background: var(--success); color: white; border: none;
 height: 38px; padding: 0 18px; border-radius: 19px; font-weight: bold; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px;
 box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
 
-        /* エディタ */
+        [cite_start]/* エディタ [cite: 40-47] */
         .editor-wrapper { flex: 1;
 position: relative; display: flex; }
         #code-editor { flex: 1; border: none;
@@ -104,14 +104,13 @@ border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; opacity
 }
         .copy-btn { background: rgba(255, 255, 255, 0.15);
 }
-        .download-btn { background: var(--primary);
-}
+        .download-btn { background: var(--primary); }
         .deploy-btn { background: var(--accent);
 }
         .action-btn:hover { opacity: 1; transform: translateY(-1px);
 }
 
-        /* プレビュー */
+        [cite_start]/* プレビュー [cite: 48-54] */
         #preview-frame { flex: 1;
 border: none; background: #fff; width: 100%; height: 100%; }
         .debug-panel { background: var(--bg);
@@ -124,7 +123,7 @@ border: 1px solid #444; border-radius: 20px; padding: 10px 15px; color: #fff; fo
 padding: 0 16px; border-radius: 20px; font-weight: bold; cursor: pointer; flex-shrink: 0; font-size: 13px;
 }
 
-        /* 設定 */
+        [cite_start]/* 設定 [cite: 55-66] */
         .settings { padding: 25px;
 overflow-y: auto; }
         .field-row { display: flex; gap: 15px; margin-bottom: 20px;
@@ -429,7 +428,7 @@ const data = await res.json();
 }
     }
 
-        // --- DEPLOYER 連携 (READMEをGeminiが生成) ---
+    // --- DEPLOYER 連携 (READMEをGeminiが生成) ---
     async function openDeployer() {
         const code = document.getElementById('code-editor').value;
         const key = document.getElementById('api-key').value;
@@ -438,49 +437,30 @@ const data = await res.json();
         if (!code) return alert("デプロイするコードがありません。");
         if (!key) return alert("README生成のためにAPIキーが必要です。設定タブを確認してください。");
 
-        // README生成用のプロンプト作成
         const systemPrompt = `あなたはプロフェッショナルなテクニカルライターです。
-提供された「ソースコード」と「開発の会話履歴」を分析し、GitHubのリポジトリに最適な、美しく詳細なREADME.mdを作成してください。
-【構成案】
-- プロジェクト名（会話から推測）
-- 概要
-- 主な機能
-- 技術スタック
-- 使い方
-- 開発の背景（会話履歴に基づく）
-
-出力はMarkdown形式のテキストのみ（\`\`\`markdown などの囲みは不要）としてください。`;
+提供された「ソースコード」と「開発の会話履歴」を分析し、GitHubのリポジトリに最適なREADME.mdを作成してください。
+出力はMarkdown形式のテキストのみ（\`\`\` markdownなどの囲みは不要）としてください。`;
 
         const userPrompt = `【ソースコード】\n${code}\n\n【会話履歴】\n${conversationContext}`;
 
         try {
-            // README生成の待機中に状況を通知（任意ですが、UXのためalert等でなくコンソールやログが望ましい）
-            console.log("Gemini is generating README...");
-            
+            console.log("README生成中...");
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    contents: [{ parts: [{ text: systemPrompt + "\n\n" + userPrompt }] }] 
-                })
+                body: JSON.stringify({ contents: [{ parts: [{ text: systemPrompt + "\n\n" + userPrompt }] }] })
             });
 
             const data = await res.json();
-            if (data.error) throw new Error(data.error.message);
-
             const readme = data.candidates[0].content.parts[0].text.replace(/```markdown\n?/g, '').replace(/```/g, '').trim();
 
-            // データの保存と遷移
             localStorage.setItem('pending_deploy_code', code);
             localStorage.setItem('pending_deploy_readme', readme);
             window.open('Deployer.html', '_blank');
-
         } catch (e) {
-            alert('README生成中にエラーが発生しました。コードのみで続行します: ' + e.message);
-            // エラー時は最小限のREADMEで代用
-            const fallbackReadme = `# Project\nGenerated by AI Web Studio Pro 2026\n\n## Conversations\n${conversationContext}`;
+            alert('README生成中にエラーが発生しました。最小限の情報で続行します。');
             localStorage.setItem('pending_deploy_code', code);
-            localStorage.setItem('pending_deploy_readme', fallbackReadme);
+            localStorage.setItem('pending_deploy_readme', `# Project\n${conversationContext}`);
             window.open('Deployer.html', '_blank');
         }
     }
@@ -516,7 +496,7 @@ navigator.clipboard.writeText(codeEditor.value).then(() => alert("Copied!"));
         URL.revokeObjectURL(url);
     }
 
-    // スワイプ処理
+    [cite_start]// スワイプ処理 [cite: 119-122]
     let touchStartX = 0;
 document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
 document.addEventListener('touchend', e => {
