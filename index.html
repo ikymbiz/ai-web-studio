@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Web Studio</title>
+    <title>AI Web Studio Pro 2026</title>
     <style>
         :root { --bg: #212121; --sidebar: #171717; --primary: #3b82f6; --text: #ececec; --user-msg: #303030; --ai-msg: #212121; --danger: #ef4444; --success: #10b981; --accent: #8b5cf6; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -106,7 +106,7 @@
         </div>
        
         <div id="chat-log">
-            <div class="msg ai">要件を教えてください。プランが固まったら「⚡️コードを作成」ボタンを表示します。</div>
+            <div class="msg ai">Gemini Web Studio 2026 起動。<br>要件を教えてください。プランが固まったら「⚡️コードを作成」ボタンを表示します。</div>
         </div>
         
         <div class="input-container">
@@ -154,7 +154,6 @@
     </div>
 
     <div id="p-settings" class="page settings">
-         <div id="p-settings" class="page settings">
         <div class="field-row">
             <div class="field">
                 <label>CHAT MODEL (PLAN)</label>
@@ -370,7 +369,7 @@
 3. コードは書かず、仕様合意に徹する。
 4. 仕様が固まったら「素晴らしいプランです。⚡️コードを作成 ボタンから実装を開始しましょう」と促す。`;
 
-        const userContent = { role: "user", parts: [{ text: system + "\n\n会話履歴:\n" + conversationContext }] };
+        cconst userContent = { role: "user", parts: [{ text: system + "\n\n会話履歴:\n" + conversationContext }] };
         
         if (currentImageBase64 && currentMimeType) {
             userContent.parts.push({ inline_data: { mime_type: currentMimeType, data: currentImageBase64 } });
@@ -383,6 +382,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [userContent] })
             });
+            
+            if (!res.ok) throw new Error(`API Error: ${res.status} ${res.statusText} (Model: ${model})`);
 
             const reader = res.body.getReader();
             const decoder = new TextDecoder("utf-8");
@@ -452,6 +453,7 @@
                 body: JSON.stringify({ contents: [{ parts: [{ text: system }] }] })
             });
             const data = await res.json();
+            
             if(data.error) throw new Error(data.error.message);
 
             let result = data.candidates[0].content.parts[0].text;
