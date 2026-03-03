@@ -3,168 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Web Studio Pro 2026</title>
+    <title>AI Web Studio Pro 2026 (Fixed)</title>
     <style>
-        :root { --bg: #212121;
-        --sidebar: #171717; --primary: #3b82f6; --text: #ececec; --user-msg: #303030; --ai-msg: #212121; --danger: #ef4444; --success: #10b981; --accent: #8b5cf6;
-        }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent;
-        }
-        body { font-family: -apple-system, system-ui, sans-serif; margin: 0; height: 100dvh; display: flex;
-        flex-direction: column; background: var(--bg); color: var(--text); overflow: hidden; }
+        :root { --bg: #212121; --sidebar: #171717; --primary: #3b82f6; --text: #ececec; --user-msg: #303030; --ai-msg: #212121; --danger: #ef4444; --success: #10b981; --accent: #8b5cf6; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, system-ui, sans-serif; margin: 0; height: 100dvh; display: flex; flex-direction: column; background: var(--bg); color: var(--text); overflow: hidden; }
 
         /* ナビゲーション */
-        .tabs { display: flex;
-        background: var(--sidebar); border-bottom: 1px solid #333; flex-shrink: 0; }
-        .tab-btn { flex: 1;
-        padding: 15px 0; border: none; background: none; font-size: 13px; font-weight: 600; color: #9b9b9b; cursor: pointer; transition: 0.2s;
-        }
-        .tab-btn.active { color: #fff; border-bottom: 2px solid #fff;
-        }
+        .tabs { display: flex; background: var(--sidebar); border-bottom: 1px solid #333; flex-shrink: 0; }
+        .tab-btn { flex: 1; padding: 15px 0; border: none; background: none; font-size: 13px; font-weight: 600; color: #9b9b9b; cursor: pointer; transition: 0.2s; }
+        .tab-btn.active { color: #fff; border-bottom: 2px solid #fff; }
 
         /* メインコンテンツ */
-        .content { flex: 1;
-        position: relative; overflow: hidden; display: flex; flex-direction: column; }
-        .page { display: none;
-        height: 100%; flex-direction: column; overflow: hidden; }
-        .page.active { display: flex;
-        }
+        .content { flex: 1; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+        .page { display: none; height: 100%; flex-direction: column; overflow: hidden; }
+        .page.active { display: flex; }
 
         /* チャットヘッダー */
-        .chat-header { display: flex;
-        justify-content: space-between; align-items: center; padding: 10px 15px; background: var(--sidebar); border-bottom: 1px solid #333;
-        }
-        .header-title { font-size: 12px; font-weight: bold; color: #888;
-        }
-        .reset-btn { background: #333; color: #eee; border: 1px solid #444;
-        padding: 4px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; }
-        .reset-btn:hover { background: var(--danger);
-        border-color: var(--danger); }
+        .chat-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: var(--sidebar); border-bottom: 1px solid #333; }
+        .header-title { font-size: 12px; font-weight: bold; color: #888; }
+        .reset-btn { background: #333; color: #eee; border: 1px solid #444; padding: 4px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+        .reset-btn:hover { background: var(--danger); border-color: var(--danger); }
 
         /* チャットエリア */
-        #chat-log { flex: 1;
-        padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; background: var(--bg);
-        }
-        .msg { max-width: 95%; padding: 12px 16px; border-radius: 18px; font-size: 15px;
-        line-height: 1.6; word-wrap: break-word; white-space: pre-wrap; }
-        .user { align-self: flex-end; background: var(--user-msg);
-        color: #fff; }
-        .ai { align-self: flex-start; background: var(--ai-msg); border: 1px solid #333;
-        width: 100%; }
+        #chat-log { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; background: var(--bg); }
+        .msg { max-width: 95%; padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.6; word-wrap: break-word; white-space: pre-wrap; }
+        .user { align-self: flex-end; background: var(--user-msg); color: #fff; }
+        .ai { align-self: flex-start; background: var(--ai-msg); border: 1px solid #333; width: 100%; }
 
-        .spinner {
-            width: 20px;
-            height: 20px; border: 3px solid rgba(255, 255, 255, 0.2);
-            border-top: 3px solid var(--primary); border-radius: 50%;
-            animation: spin 1s linear infinite;
-            display: inline-block; vertical-align: middle; margin-right: 10px;
-        }
-        @keyframes spin { 100% { transform: rotate(360deg);
-        } }
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255, 255, 255, 0.2); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
 
         /* 入力エリア */
-        .input-container { padding: 15px;
-        background: var(--bg); border-top: 1px solid #333; display: flex; flex-direction: column; gap: 10px; position: relative;
-        }
-        .input-row { display: flex; gap: 10px; align-items: flex-end;
-        }
-        #user-prompt { flex: 1; min-height: 44px; max-height: 150px; background: #2f2f2f;
-        border: 1px solid #444; border-radius: 22px; padding: 10px 20px; color: #fff; font-size: 16px; outline: none; resize: none;
-        }
+        .input-container { padding: 15px; background: var(--bg); border-top: 1px solid #333; display: flex; flex-direction: column; gap: 10px; position: relative; }
+        .input-row { display: flex; gap: 10px; align-items: flex-end; }
+        #user-prompt { flex: 1; min-height: 44px; max-height: 150px; background: #2f2f2f; border: 1px solid #444; border-radius: 22px; padding: 10px 20px; color: #fff; font-size: 16px; outline: none; resize: none; }
 
-        /* 添付ボタンとメニューのスタイル */
-        .file-label { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px;
-        background: #333; border-radius: 50%; cursor: pointer; font-size: 20px; flex-shrink: 0; transition: background 0.2s, color 0.2s;
-        }
+        /* 添付ボタンとメニュー */
+        .file-label { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: #333; border-radius: 50%; cursor: pointer; font-size: 20px; flex-shrink: 0; transition: background 0.2s, color 0.2s; }
         .file-label:active { background: #444; }
 
-        .attachment-menu {
-            display: none; position: absolute; bottom: 80px; left: 15px;
-            background: #2a2a2a; border: 1px solid #444; border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5); z-index: 1000; width: 160px;
-        }
+        .attachment-menu { display: none; position: absolute; bottom: 80px; left: 15px; background: #2a2a2a; border: 1px solid #444; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); z-index: 1000; width: 160px; }
         .attachment-menu.show { display: block; animation: menuFade 0.2s ease; }
         @keyframes menuFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .menu-item {
-            padding: 12px 16px; font-size: 14px; display: flex; align-items: center; gap: 10px;
-            cursor: pointer; transition: background 0.2s; color: #eee;
-        }
+
+        .menu-item { padding: 12px 16px; font-size: 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.2s; color: #eee; }
         .menu-item:hover { background: #383838; }
         .menu-item:first-child { border-radius: 12px 12px 0 0; }
         .menu-item:last-child { border-radius: 0 0 12px 12px; }
 
-        #file-input { display: none; } /* 旧互換用 */
-        
-        #file-preview { display: none; width: 60px; height: 60px; border-radius: 8px; object-fit: cover;
-        border: 1px solid var(--primary); margin-bottom: 5px; }
+        #file-preview { display: none; width: 60px; height: 60px; border-radius: 8px; object-fit: cover; border: 1px solid var(--primary); }
+        #file-name-display { display: none; font-size: 12px; color: #ccc; background: #333; padding: 4px 8px; border-radius: 4px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .send-btn { background: var(--primary); color: white;
-        border: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
-        }
+        .send-btn { background: var(--primary); color: white; border: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
 
         /* ボタン類 */
-        .generate-btn-wrapper { margin-top: 15px;
-        display: flex; justify-content: flex-end; }
-        .generate-btn { background: var(--success); color: white; border: none;
-        height: 38px; padding: 0 18px; border-radius: 19px; font-weight: bold; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+        .generate-btn-wrapper { margin-top: 15px; display: flex; justify-content: flex-end; }
+        .generate-btn { background: var(--success); color: white; border: none; height: 38px; padding: 0 18px; border-radius: 19px; font-weight: bold; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
 
         /* エディタ */
-        .editor-wrapper { flex: 1;
-        position: relative; display: flex; }
-        #code-editor { flex: 1; border: none;
-        padding: 50px 15px 15px 15px; font-family: 'Fira Code', monospace; background: #0d0d0d; color: #d1d1d1; font-size: 14px; outline: none; resize: none;
-        }
-        .editor-actions { position: absolute; top: 10px; right: 15px; display: flex; gap: 8px;
-        z-index: 10; }
-        .action-btn { color: #fff; border: none; padding: 6px 12px;
-        border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; opacity: 0.9; transition: 0.2s;
-        }
-        .copy-btn { background: rgba(255, 255, 255, 0.15);
-        }
-        .download-btn { background: var(--primary); 
-        }
-        .deploy-btn { background: var(--accent);
-        }
-        .action-btn:hover { opacity: 1; transform: translateY(-1px);
-        }
+        .editor-wrapper { flex: 1; position: relative; display: flex; }
+        #code-editor { flex: 1; border: none; padding: 50px 15px 15px 15px; font-family: 'Fira Code', monospace; background: #0d0d0d; color: #d1d1d1; font-size: 14px; outline: none; resize: none; }
+        .editor-actions { position: absolute; top: 10px; right: 15px; display: flex; gap: 8px; z-index: 10; }
+        .action-btn { color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; opacity: 0.9; transition: 0.2s; }
+        .copy-btn { background: rgba(255, 255, 255, 0.15); }
+        .download-btn { background: var(--primary); }
+        .deploy-btn { background: var(--accent); }
+        .action-btn:hover { opacity: 1; transform: translateY(-1px); }
 
         /* プレビュー */
-        #preview-frame { flex: 1;
-        border: none; background: #fff; width: 100%; height: 100%; }
-        .debug-panel { background: var(--bg);
-        border-top: 1px solid #333; padding: 12px 15px; display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0;
-        }
-        #debug-memo { flex: 1; min-height: 40px; max-height: 100px; background: #2f2f2f;
-        border: 1px solid #444; border-radius: 20px; padding: 10px 15px; color: #fff; font-size: 14px; outline: none; resize: none;
-        }
-        .debug-btn { background: #eab308; color: #000; border: none; height: 40px;
-        padding: 0 16px; border-radius: 20px; font-weight: bold; cursor: pointer; flex-shrink: 0; font-size: 13px;
-        }
+        #preview-frame { flex: 1; border: none; background: #fff; width: 100%; height: 100%; }
+        .debug-panel { background: var(--bg); border-top: 1px solid #333; padding: 12px 15px; display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; }
+        #debug-memo { flex: 1; min-height: 40px; max-height: 100px; background: #2f2f2f; border: 1px solid #444; border-radius: 20px; padding: 10px 15px; color: #fff; font-size: 14px; outline: none; resize: none; }
+        .debug-btn { background: #eab308; color: #000; border: none; height: 40px; padding: 0 16px; border-radius: 20px; font-weight: bold; cursor: pointer; flex-shrink: 0; font-size: 13px; }
 
         /* 設定 */
-        .settings { padding: 25px;
-        overflow-y: auto; }
-        .field-row { display: flex; gap: 15px; margin-bottom: 20px;
-        }
-        .field { flex: 1; margin-bottom: 20px;
-        }
-        label { display: block; font-size: 11px; color: #888; margin-bottom: 8px; font-weight: bold;
-        letter-spacing: 0.05em; }
-        input[type="password"], textarea.setting-input, select.setting-input { width: 100%; background: #2f2f2f;
-        border: 1px solid #444; border-radius: 8px; padding: 12px; color: #fff; font-size: 14px; outline: none; transition: border 0.2s;
-        }
-        input:focus, textarea:focus, select:focus { border-color: var(--primary);
-        }
-        select.setting-input { appearance: none; cursor: pointer;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C2.185 5.355 2.402 5 2.805 5h9.39c.403 0 .62.355.354.658l-4.796 5.482a.5.5 0 0 1-.748 0z'/%3E%3C/svg%3E");
-        background-repeat: no-repeat; background-position: right 12px center; }
-        .save-btn { background: #fff; color: #000;
-        border: none; padding: 15px; border-radius: 8px; font-weight: bold; width: 100%; margin-top: 10px; cursor: pointer; transition: 0.2s;
-        }
-        .save-btn:active { transform: scale(0.98);
-        }
+        .settings { padding: 25px; overflow-y: auto; }
+        .field-row { display: flex; gap: 15px; margin-bottom: 20px; }
+        .field { flex: 1; margin-bottom: 20px; }
+        label { display: block; font-size: 11px; color: #888; margin-bottom: 8px; font-weight: bold; letter-spacing: 0.05em; }
+        input[type="password"], textarea.setting-input, select.setting-input { width: 100%; background: #2f2f2f; border: 1px solid #444; border-radius: 8px; padding: 12px; color: #fff; font-size: 14px; outline: none; transition: border 0.2s; }
+        input:focus, textarea:focus, select:focus { border-color: var(--primary); }
+        select.setting-input { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C2.185 5.355 2.402 5 2.805 5h9.39c.403 0 .62.355.354.658l-4.796 5.482a.5.5 0 0 1-.748 0z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+        .save-btn { background: #fff; color: #000; border: none; padding: 15px; border-radius: 8px; font-weight: bold; width: 100%; margin-top: 10px; cursor: pointer; transition: 0.2s; }
+        .save-btn:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
@@ -186,6 +108,7 @@
         <div id="chat-log">
             <div class="msg ai">Gemini Web Studio 2026 起動。<br>要件を教えてください。プランが固まったら「⚡️コードを作成」ボタンを表示します。</div>
         </div>
+        
         <div class="input-container">
             <div id="attach-menu" class="attachment-menu">
                 <div class="menu-item" onclick="triggerFile('camera')">📸 カメラ</div>
@@ -193,11 +116,14 @@
                 <div class="menu-item" onclick="triggerFile('files')">📁 ファイル</div>
             </div>
 
-            <img id="file-preview">
-            
+            <div style="display:flex; align-items:center; gap:10px; padding-bottom:5px;">
+                <img id="file-preview">
+                <span id="file-name-display"></span>
+            </div>
+
             <div class="input-row">
-                <div class="file-label" onclick="toggleAttachmentMenu()">＋</div>
-                
+                <div class="file-label" onclick="toggleAttachmentMenu()" title="ファイルを添付">＋</div>
+
                 <input type="file" id="file-camera" accept="image/*" capture="environment" style="display:none" onchange="handleAttachment(this)">
                 <input type="file" id="file-gallery" accept="image/*" style="display:none" onchange="handleAttachment(this)">
                 <input type="file" id="file-files" accept="*/*" style="display:none" onchange="handleAttachment(this)">
@@ -209,13 +135,13 @@
     </div>
 
     <div id="p-editor" class="page">
-        <div class="editor-wrapper">
+         <div class="editor-wrapper">
             <div class="editor-actions">
                 <button class="action-btn copy-btn" onclick="copyCode()">Copy</button>
                 <button class="action-btn download-btn" onclick="downloadCode()">Download</button>
                 <button class="action-btn deploy-btn" onclick="openDeployer()">🚀 GitHub Deploy</button>
             </div>
-            <textarea id="code-editor" spellcheck="false" oninput="updatePreview()" placeholder="ここにソースコードが生成されます..."></textarea>
+             <textarea id="code-editor" spellcheck="false" oninput="updatePreview()" placeholder="ここにソースコードが生成されます..."></textarea>
         </div>
     </div>
 
@@ -232,19 +158,16 @@
             <div class="field">
                 <label>CHAT MODEL (PLAN)</label>
                 <select id="chat-model" class="setting-input">
-                    <option value="gemini-3-flash-preview">3 Flash (Fast & Frontier)</option>
-                    <option value="gemini-2.5-flash">2.5 Flash (Balanced)</option>
-                    <option value="gemini-2.5-pro">2.5 Pro (High-Quality Reasoning)</option>
-                    <option value="deep-research-pro-preview-12-2025">Deep Research (Agentic Plan)</option>
+                    <option value="gemini-2.0-flash">2.0 Flash (Balanced)</option>
+                    <option value="gemini-2.0-pro-exp-02-05">2.0 Pro (High-Quality)</option>
                 </select>
             </div>
             <div class="field">
-                <label>CODE MODEL (BUILD)</label>
+                 <label>CODE MODEL (BUILD)</label>
                 <select id="code-model" class="setting-input">
-                    <option value="gemini-3.1-pro-preview">3.1 Pro (Vibe Coding / Best)</option>
-                    <option value="gemini-2.5-pro">2.5 Pro (Deep Reasoning)</option>
-                    <option value="gemini-3-flash-preview">3 Flash (High-Speed Build)</option>
-                </select>
+                    <option value="gemini-2.0-flash">2.0 Flash (Fast Build)</option>
+                    <option value="gemini-2.0-pro-exp-02-05">2.0 Pro (Deep Logic)</option>
+                 </select>
             </div>
         </div>
         <div class="field">
@@ -260,21 +183,18 @@
 </div>
 
 <script>
-
-        /* --- 状態管理変数 --- */
+    /* --- 状態管理変数 --- */
     let currentImageBase64 = null;
     let currentMimeType = null;
-    let currentFileName = null; // 追加：ファイル名を保持
-    let conversationContext = ""; 
+    let currentFileName = null;
+    let conversationContext = "";
     const pagesList = ['chat', 'editor', 'preview', 'settings'];
 
     window.onload = () => {
         document.getElementById('api-key').value = localStorage.getItem('g_key') || '';
         document.getElementById('user-profile').value = localStorage.getItem('g_prof') || '';
-
         const savedChatModel = localStorage.getItem('g_chat_model');
         if (savedChatModel) document.getElementById('chat-model').value = savedChatModel;
-
         const savedCodeModel = localStorage.getItem('g_code_model');
         if (savedCodeModel) document.getElementById('code-model').value = savedCodeModel;
     };
@@ -305,7 +225,7 @@
     function triggerFile(type) {
         document.getElementById('file-' + type).click();
         const menu = document.getElementById('attach-menu');
-        if (menu) menu.classList.remove('show'); // 選択後にメニューを閉じる
+        if (menu) menu.classList.remove('show');
     }
 
     function handleAttachment(input) {
@@ -317,25 +237,26 @@
 
         const reader = new FileReader();
         reader.onloadend = () => {
-            currentImageBase64 = reader.result.split(',')[1];
+            currentImageBase64 = reader.result.split(',')[1]; // Base64抽出
+            
             const preview = document.getElementById('file-preview');
             const label = document.querySelector('.file-label');
             const fileNameDisplay = document.getElementById('file-name-display');
 
-            // UI更新：ボタンを「✕（削除）」状態にする
+            // UI更新：削除ボタン化
             label.innerHTML = '✕';
-            label.style.background = '#ef4444'; // 削除用の赤色
+            label.style.background = '#ef4444';
             label.title = "添付を削除";
 
             if (currentMimeType.startsWith('image/')) {
-                // 画像：プレビューを表示
+                // 画像
                 if (preview) {
                     preview.src = reader.result;
                     preview.style.display = 'block';
                 }
                 if (fileNameDisplay) fileNameDisplay.style.display = 'none';
             } else {
-                // テキスト・MD等：ファイル名を表示
+                // その他ファイル
                 if (preview) preview.style.display = 'none';
                 if (fileNameDisplay) {
                     fileNameDisplay.innerText = `📄 ${currentFileName}`;
@@ -344,7 +265,7 @@
             }
         };
         reader.readAsDataURL(file);
-        input.value = ''; // 同じファイルを再度選べるようにリセット
+        input.value = ''; // リセット
     }
 
     function removeAttachment() {
@@ -356,7 +277,7 @@
         const label = document.querySelector('.file-label');
         const fileNameDisplay = document.getElementById('file-name-display');
 
-        // UIを元に戻す
+        // UI初期化
         if (preview) {
             preview.src = '';
             preview.style.display = 'none';
@@ -365,63 +286,15 @@
             fileNameDisplay.innerText = '';
             fileNameDisplay.style.display = 'none';
         }
-        
+
         label.innerHTML = '＋';
-        label.style.background = '#333'; // 元の色
+        label.style.background = '#333';
         label.title = "ファイルを添付";
-    }
-
-    // メニュー外クリックで閉じる処理
-    document.addEventListener('click', (e) => {
-        const menu = document.getElementById('attach-menu');
-        const label = document.querySelector('.file-label');
-        if (menu && menu.classList.contains('show') && !menu.contains(e.target) && !label.contains(e.target)) {
-            menu.classList.remove('show');
-        }
-    });
-
-
-            // ファイル形式に応じた表示切り替え
-            if (currentMimeType.startsWith('image/')) {
-                // 画像の場合
-                preview.src = reader.result;
-                preview.style.display = 'block';
-                if(fileNameDisplay) fileNameDisplay.innerText = ''; 
-            } else {
-                // テキスト、Markdown、PDFなどの場合
-                preview.style.display = 'none';
-                // ファイル名を表示エリアに出力
-                if(fileNameDisplay) {
-                    fileNameDisplay.innerText = `📄 ${currentFileName}`;
-                    fileNameDisplay.style.display = 'block';
-                }
-            }
-        };
-        reader.readAsDataURL(file);
-        input.value = ''; // リセット
-    }
-
-    // 添付ファイルを削除する関数
-    function removeAttachment() {
-        currentImageBase64 = null;
-        currentMimeType = null;
-        currentFileName = null;
-
-        const preview = document.getElementById('file-preview');
-        const label = document.querySelector('.file-label');
-        const fileNameDisplay = document.getElementById('file-name-display');
-
-        // UIを初期状態に戻す
-        preview.src = '';
-        preview.style.display = 'none';
-        if(fileNameDisplay) fileNameDisplay.innerText = '';
         
-        label.innerHTML = '＋'; // 元のアイコンに戻す
-        label.style.background = '#333'; // 元の色に戻す
-        label.onclick = null; // 削除機能を解除（通常のクリック＝ファイル選択に戻る）
+        document.getElementById('attach-menu').classList.remove('show');
     }
 
-    // メニュー外クリックで閉じる処理
+    // メニュー外クリックで閉じる
     document.addEventListener('click', (e) => {
         const menu = document.getElementById('attach-menu');
         const label = document.querySelector('.file-label');
@@ -429,7 +302,6 @@
             menu.classList.remove('show');
         }
     });
-
 
     function saveSettings() {
         localStorage.setItem('g_key', document.getElementById('api-key').value);
@@ -445,6 +317,7 @@
             document.getElementById('chat-log').innerHTML = '<div class="msg ai">会話をリセットしました。</div>';
             document.getElementById('code-editor').value = "";
             document.getElementById('preview-frame').srcdoc = "";
+            removeAttachment();
         }
     }
 
@@ -460,7 +333,9 @@
         const model = document.getElementById('chat-model').value;
         const input = document.getElementById('user-prompt');
         const promptText = input.value.trim();
-        if(!key || !promptText) return alert('APIキーと入力を確認してください');
+
+        if(!key) return alert('設定タブでAPIキーを入力してください');
+        if(!promptText && !currentFileName) return alert('入力またはファイルが必要です');
 
         const log = document.getElementById('chat-log');
         document.querySelectorAll('.generate-btn-wrapper').forEach(el => el.remove());
@@ -468,64 +343,49 @@
         const userMsg = document.createElement('div');
         userMsg.className = 'msg user';
         userMsg.textContent = promptText; 
+        if(currentFileName) userMsg.textContent += `\n[添付: ${currentFileName}]`;
         log.appendChild(userMsg);
 
         const aiMsg = document.createElement('div');
         aiMsg.className = 'msg ai';
         aiMsg.innerHTML = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>考案中...</span></div>';
         log.appendChild(aiMsg);
+        
         input.value = '';
         input.style.height = "44px";
-        document.getElementById('file-preview').style.display = 'none';
         log.scrollTop = log.scrollHeight;
 
         conversationContext += `\nユーザー: ${promptText}`;
-        const system = `あなたはプロのWeb開発ディレクター兼アシスタントです。
-ユーザーのアイディアを具体化し、Geminiでの実装（BUILD）に向けた完璧な設計図を作成するのが任務です。
+        if(currentFileName) conversationContext += ` (添付ファイル: ${currentFileName})`;
 
-開発プロファイル: ${prof}
+        const system = `あなたはプロのWeb開発ディレクターです。ユーザーのアイディアを具体化し、実装（BUILD）に向けた設計図を作成します。
+プロファイル: ${prof}
+ガイドライン:
+1. アプリ名、ターゲット、機能をヒアリング。
+2. 簡潔に箇条書きで返答。
+3. コードは書かず、仕様合意に徹する。
+4. 仕様が固まったら「素晴らしいプランです。⚡️コードを作成 ボタンから実装を開始しましょう」と促す。`;
 
-【対話のガイドライン】
-1. **構造化されたヒアリング**: 
-   - アプリ名、ターゲット、主要機能（MVP）、デザインの方向性を段階的に確認してください。
-   - README.mdの「概要」や「機能一覧」にそのまま使える形で情報を整理してください。
-
-2. **簡潔なレスポンス**: 
-   - 長文は避け、要点を箇条書きでまとめてください。
-   - ユーザーの熱量や入力量に合わせ、適度なステップ数で対話を回してください。
-
-3. **技術的な提案**: 
-   - 開発プロファイルに基づき、最適なライブラリ（Tailwind, Lucide icons, Chart.js等）や構成を先回りして提案してください。
-
-4. **コード出力の禁止**: 
-   - ここではコードを出力せず、仕様の合意に徹してください。
-   - 仕様が固まったら「素晴らしいプランです。⚡️コードを作成 ボタンから実装を開始しましょう」と促してください。
-
-5. **2026年基準の品質**: 
-   - モダン、高速、かつアクセシブルなWebサイトを目指すディレクションを行ってください。`;
-        const contents = [{ parts: [{ text: system + "\n\n会話:" + conversationContext }] }];
+        const userContent = { role: "user", parts: [{ text: system + "\n\n会話履歴:\n" + conversationContext }] };
         
-        // 正しいMIMEタイプで添付データを送信
         if (currentImageBase64 && currentMimeType) {
-            contents[0].parts.push({ 
-                inline_data: { 
-                    mime_type: currentMimeType, 
-                    data: currentImageBase64 
-                } 
-            });
+            userContent.parts.push({ inline_data: { mime_type: currentMimeType, data: currentImageBase64 } });
+            removeAttachment(); // 送信後はクリア
         }
-        
+
         try {
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${key}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents })
+                body: JSON.stringify({ contents: [userContent] })
             });
+
             const reader = res.body.getReader();
             const decoder = new TextDecoder("utf-8");
             let aiText = "";
             let buffer = "";
             aiMsg.innerHTML = "";
+
             while (true) {
                 const { value, done } = await reader.read();
                 if (done) break;
@@ -537,14 +397,14 @@
                         try {
                             const data = JSON.parse(line.slice(6));
                             const textChunk = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                            if (textChunk) { aiText += textChunk; aiMsg.textContent = aiText; log.scrollTop = log.scrollHeight;
-                            }
+                            if (textChunk) { aiText += textChunk; aiMsg.innerText = aiText; log.scrollTop = log.scrollHeight; }
                         } catch (e) {}
                     }
                 }
             }
 
             conversationContext += `\nアシスタント: ${aiText}`;
+            
             const btnWrapper = document.createElement('div');
             btnWrapper.className = 'generate-btn-wrapper';
             const genBtn = document.createElement('button');
@@ -554,15 +414,8 @@
             btnWrapper.appendChild(genBtn);
             aiMsg.appendChild(btnWrapper);
             log.scrollTop = log.scrollHeight;
-            
-            // 送信完了後のリセット処理
-            currentImageBase64 = null;
-            currentMimeType = null;
-            document.querySelector('.file-label').style.background = '#333';
-            document.querySelector('.file-label').innerText = '＋';
 
-        } catch (e) { aiMsg.textContent = 'エラー: ' + e.message;
-        }
+        } catch (e) { aiMsg.textContent = 'エラー: ' + e.message; }
     }
 
     // --- CODE (BUILD) ---
@@ -576,81 +429,46 @@
         document.querySelectorAll('.generate-btn-wrapper').forEach(el => el.remove());
         const aiMsg = document.createElement('div');
         aiMsg.className = 'msg ai';
-        aiMsg.innerHTML = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>構築中...</span></div>';
+        aiMsg.innerHTML = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>構築中... (しばらくお待ちください)</span></div>';
         log.appendChild(aiMsg);
         log.scrollTop = log.scrollHeight;
+
         const system = `Expert Full-stack Web Developerとして、完全なHTML/CSS/JSコードを1つのファイルで作成してください。
 プロファイル: ${prof}
-【ルール】
-- Markdown記号（\`\`\`htmlなど）は一切不要。<!DOCTYPE html>から開始。
-- 既存コードがある場合はそれを修正/拡張。
-- 現在のコード: ${currentCode || "なし"}
-- 会話履歴: ${conversationContext}`;
-        const contents = [{ parts: [{ text: system }] }];
+ルール:
+- Markdown記号は不要。<!DOCTYPE html>から開始。
+- 既存コード修正/拡張。
+- 外部ライブラリはCDN利用。
+現在のコード: ${currentCode || "なし"}
+会話履歴: ${conversationContext}`;
+
         try {
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents })
+                body: JSON.stringify({ contents: [{ parts: [{ text: system }] }] })
             });
             const data = await res.json();
-            let result = data.candidates[0].content.parts[0].text.replace(/```[a-z]*\n?/g, '').replace(/```/g, '').trim();
+            if(data.error) throw new Error(data.error.message);
+
+            let result = data.candidates[0].content.parts[0].text;
+            result = result.replace(/^```html\s*/i, '').replace(/^```\s*/, '').replace(/```$/g, '').trim();
+            
             document.getElementById('code-editor').value = result;
             aiMsg.innerHTML = '✨ 構築完了。PREVIEWを確認してください。';
             showPage('preview', document.getElementById('tab-preview'));
-        } catch (e) { aiMsg.textContent = 'エラー: ' + e.message;
-        }
+            updatePreview();
+        } catch (e) { aiMsg.innerHTML = '<span style="color:var(--danger)">エラー: ' + e.message + '</span>'; }
     }
 
-    // --- DEPLOYER 連携 (READMEをGeminiが生成) ---
+    // --- DEPLOYER ---
     async function openDeployer() {
         const code = document.getElementById('code-editor').value;
-        const key = document.getElementById('api-key').value;
-        const model = document.getElementById('code-model').value;
-
         if (!code) return alert("デプロイするコードがありません。");
-        if (!key) return alert("README生成のためにAPIキーが必要です。設定タブを確認してください。");
-
-        const systemPrompt = `あなたはプロフェッショナルなテクニカルライターです。
-提供された「ソースコード」と「開発の会話履歴」を分析し、GitHubのリポジトリに最適な、美しく詳細なREADME.mdを作成してください。
-【構成案】
-- プロジェクト名（会話から推測）
-- 概要
-- 主な機能
-- 技術スタック
-- 使い方
-- 開発の背景（会話履歴に基づく）
-
-出力はMarkdown形式のテキストのみ（\`\`\`markdown などの囲みは不要）としてください。`;
-
-        const userPrompt = `【ソースコード】\n${code}\n\n【会話履歴】\n${conversationContext}`;
-
-        try {
-            console.log("Gemini is generating README...");
-            
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    contents: [{ parts: [{ text: systemPrompt + "\n\n" + userPrompt }] }] 
-                })
-            });
-
-            const data = await res.json();
-            if (data.error) throw new Error(data.error.message);
-
-            const readme = data.candidates[0].content.parts[0].text.replace(/```markdown\n?/g, '').replace(/```/g, '').trim();
-
-            localStorage.setItem('pending_deploy_code', code);
-            localStorage.setItem('pending_deploy_readme', readme);
-            window.open('Deployer.html', '_blank');
-
-        } catch (e) {
-            alert('README生成中にエラーが発生しました。コードのみで続行します: ' + e.message);
-            const fallbackReadme = `# Project\nGenerated by AI Web Studio Pro 2026\n\n## Conversations\n${conversationContext}`;
-            localStorage.setItem('pending_deploy_code', code);
-            localStorage.setItem('pending_deploy_readme', fallbackReadme);
-            window.open('Deployer.html', '_blank');
-        }
+        // 単純化のため、ローカルストレージに保存して別窓を開くロジックのみ維持
+        // 実際のDeployer.htmlがサーバー上に必要です
+        localStorage.setItem('pending_deploy_code', code);
+        alert("コードを保存しました。デプロイツール(Deployer.html)を同じフォルダに配置して実行してください。");
+        window.open('Deployer.html', '_blank');
     }
 
     function sendDebugRequest() {
@@ -670,10 +488,9 @@
         navigator.clipboard.writeText(codeEditor.value).then(() => alert("Copied!"));
     }
 
-    /* --- DOWNLOAD --- */
     function downloadCode() {
         const code = document.getElementById('code-editor').value;
-        if (!code) return alert("ダウンロードするコードがありません。");
+        if (!code) return alert("コードがありません。");
         const blob = new Blob([code], { type: 'text/html' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -694,8 +511,7 @@
         const currentIndex = pagesList.indexOf(activePage.id.replace('p-', ''));
         if (Math.abs(dx) > 120) {
             if (dx < 0 && currentIndex < pagesList.length - 1) showPage(pagesList[currentIndex + 1], document.querySelectorAll('.tab-btn')[currentIndex + 1]);
-            else if (dx > 0 && currentIndex > 0) showPage(pagesList[currentIndex 
-            - 1], document.querySelectorAll('.tab-btn')[currentIndex - 1]);
+            else if (dx > 0 && currentIndex > 0) showPage(pagesList[currentIndex - 1], document.querySelectorAll('.tab-btn')[currentIndex - 1]);
         }
     }, {passive: true});
 </script>
