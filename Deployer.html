@@ -137,13 +137,25 @@
     function addFileRow(name = '', content = '', removable = true) {
         const div = document.createElement('div');
         div.className = 'file-item';
-        div.innerHTML = `
-            <div class="file-header">
-                <div class="file-info">📄 <input type="text" class="filename" value="${name}" style="width:150px; font-weight:bold; border:none; background:none; padding:0;"></div>
-                ${removable ? `<button class="remove-btn" onclick="this.parentElement.parentElement.remove()">Remove</button>` : ''}
-            </div>
-            <textarea class="filecontent" rows="8">${content}</textarea>
-        `;
+        function addFileRow(name = '', content = '', removable = true) {
+    const div = document.createElement('div');
+    div.className = 'file-item';
+    
+    // 構造だけを作成し、中身は空にする
+    div.innerHTML = `
+        <div class="file-header">
+            <div class="file-info">📄 <input type="text" class="filename" value="${name}" style="width:150px; font-weight:bold; border:none; background:none; padding:0;"></div>
+            ${removable ? `<button class="remove-btn" onclick="this.parentElement.parentElement.remove()">Remove</button>` : ''}
+        </div>
+        <textarea class="filecontent" rows="8"></textarea>
+    `;
+    
+    // ここで安全に値をセットする（これでタグが漏れ出さなくなります）
+    div.querySelector('.filecontent').value = content;
+    
+    document.getElementById('fileContainer').appendChild(div);
+}
+
         document.getElementById('fileContainer').appendChild(div);
     }
 
