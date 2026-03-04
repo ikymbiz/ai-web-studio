@@ -472,7 +472,6 @@
         // 単純化のため、ローカルストレージに保存して別窓を開くロジックのみ維持
         // 実際のDeployer.htmlがサーバー上に必要です
         localStorage.setItem('pending_deploy_code', code);
-        alert("コードを保存しました。デプロイツール(Deployer.html)を同じフォルダに配置して実行してください。");
         window.open('Deployer.html', '_blank');
     }
 
