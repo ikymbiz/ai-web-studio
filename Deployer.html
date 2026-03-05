@@ -2,21 +2,21 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GitHub Instant Deployer v15.5</title>
     <style>
         :root {
             --bg: #f6f8fa; --card-bg: #ffffff; --text: #24292f;
             --border: #d0d7de; --primary: #2da44e; --input-bg: #ffffff;
             --log-bg: #24292f; --log-text: #adbac7; --accent: #0969da;
-            --error: #cf222e; --warning: #fff8c5;
+            --error: #cf222e; --warning: #fff8c5; --guide-bg: #f0f7ff;
         }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; line-height: 1.5; }
         .card { background: var(--card-bg); padding: 25px; border-radius: 12px; border: 1px solid var(--border); max-width: 700px; margin: auto; box-shadow: 0 8px 24px rgba(140,149,159,0.2); }
         .header { border-bottom: 1px solid var(--border); margin-bottom: 20px; padding-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
         .header h2 { margin: 0; font-size: 1.25rem; display: flex; align-items: center; gap: 8px; }
-        
-        .setup-link { background: var(--guide-bg); border: 1px solid var(--accent); padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 20px; color: var(--text); }
+
+        .setup-link { background: var(--guide-bg); border: 1px solid var(--accent); padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 20px; color: var(--text); text-align: center; }
         .setup-link a { color: var(--accent); font-weight: bold; text-decoration: none; }
 
         label { display: block; margin-top: 15px; font-weight: 600; font-size: 0.85rem; color: #57606a; }
@@ -35,24 +35,21 @@
         .repo-meta { font-size: 11px; color: #6e7781; }
 
         /* File List */
-        #fileContainer { margin-top: 20px; }
-        .file-item { background: #fff; border: 1px solid var(--border); padding: 15px; border-radius: 8px; margin-bottom: 12px; position: relative; }
+        .file-item { background: #fff; border: 1px solid var(--border); padding: 15px; border-radius: 8px; margin-top: 12px; position: relative; }
         .file-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .file-info { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; font-weight: bold; }
-        .remove-btn { color: var(--error); cursor: pointer; border: none; background: none; font-size: 0.75rem; }
-        .filecontent { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 12px; background: #f6f8fa; }
+        .remove-btn { color: var(--error); cursor: pointer; border: none; background: none; font-size: 0.75rem; font-weight: bold; }
+        .filecontent { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 12px; background: #f6f8fa; border: 1px solid var(--border); border-radius: 4px; }
 
-        /* Buttons & Progress */
         .add-btn { background: none; border: 1px dashed var(--border); color: #57606a; width: 100%; padding: 8px; margin-top: 10px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-        .add-btn:hover { background: #f6f8fa; }
-        
+
         button.main-btn { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: 600; font-size: 1rem; margin-top: 25px; transition: 0.2s; }
         button.main-btn:hover { background: #2c974b; }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        #log { margin-top: 20px; font-size: 12px; background: var(--log-bg); color: var(--log-text); padding: 12px; border-radius: 6px; height: 120px; overflow-y: auto; font-family: monospace; border: 1px solid #444; }
-        
-        #progressContainer { display: none; margin-top: 20px; text-align: center; background: #fff8c5; padding: 15px; border-radius: 8px; border: 1px solid #d4a017; }
+        #log { margin-top: 20px; font-size: 11px; background: var(--log-bg); color: var(--log-text); padding: 12px; border-radius: 6px; height: 120px; overflow-y: auto; font-family: monospace; border: 1px solid #444; }
+
+        #progressContainer { display: none; margin-top: 20px; text-align: center; background: var(--warning); padding: 15px; border-radius: 8px; border: 1px solid #d4a017; }
         .spinner { border: 3px solid rgba(0,0,0,0.1); border-left-color: var(--primary); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 0 auto 10px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -74,11 +71,17 @@
     <label>Access Token</label>
     <input type="password" id="token" placeholder="ghp_xxxxxxxxxxxx" oninput="saveToken(); fetchRepoList()">
 
-    <label>Repository Name</label>
+    <label>Repository Name (検索または新規作成)</label>
     <div class="repo-select-container">
         <input type="text" id="repoName" placeholder="my-awesome-app" oninput="filterRepos(); syncReadme()">
         <div id="repoDropdown" class="dropdown-list"></div>
     </div>
+
+    <label id="visibilityLabel">公開設定 (新規作成時):</label>
+    <select id="repoVisibility">
+        <option value="false">Public (公開)</option>
+        <option value="true">Private (非公開)</option>
+    </select>
 
     <div id="fileContainer"></div>
     <button class="add-btn" onclick="addFileRow()">+ ファイルを追加</button>
@@ -88,7 +91,6 @@
     <div id="progressContainer">
         <div class="spinner"></div>
         <div id="waitMsg">ビルド反映待ち... <span id="timer">60</span>s</div>
-        <p style="font-size: 11px; color: #666; margin: 5px 0 0;">GitHub Pagesの生成には通常1分ほどかかります</p>
     </div>
 
     <div id="log"></div>
@@ -113,22 +115,16 @@
 
         // Web Studioからのデータ受信
         const pendingCode = localStorage.getItem('pending_deploy_code');
-        const pendingReadme = localStorage.getItem('pending_deploy_readme');
-
         if (pendingCode) {
             addFileRow('index.html', pendingCode, false);
-            
-            // 404.html 自動生成
+            // 404.html
             const default404 = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>404</title><style>body{background:#1a1a1a;color:#eee;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;}a{color:#3b82f6;text-decoration:none;border:1px solid #3b82f6;padding:10px 20px;border-radius:20px;}</style></head><body><h1>404</h1><p>Page Not Found</p><a href="./">Return Home</a></body></html>`;
             addFileRow('404.html', default404, true);
+            // README.md
+            addFileRow('README.md', `# New Project\n\nAI Web Studio で生成されたプロジェクトです。`, true);
 
-            // README.md AI詳細版 or テンプレート
-            const readmeContent = pendingReadme || `# New Project\n\nAI Web Studio Pro 2026 で生成されたプロジェクトです。\n\n## 機能\n- 自動生成されたインターフェース\n- モダンダークモードUI`;
-            addFileRow('README.md', readmeContent, true);
-
-            addLog("AIが生成したコードとプロ級のREADMEを受信しました。");
+            addLog("Web Studio からコードを受信しました。");
             localStorage.removeItem('pending_deploy_code');
-            localStorage.removeItem('pending_deploy_readme');
         } else {
             addFileRow('index.html', '<h1>Ready to Deploy</h1>', false);
         }
@@ -137,25 +133,14 @@
     function addFileRow(name = '', content = '', removable = true) {
         const div = document.createElement('div');
         div.className = 'file-item';
-        function addFileRow(name = '', content = '', removable = true) {
-    const div = document.createElement('div');
-    div.className = 'file-item';
-    
-    // 構造だけを作成し、中身は空にする
-    div.innerHTML = `
-        <div class="file-header">
-            <div class="file-info">📄 <input type="text" class="filename" value="${name}" style="width:150px; font-weight:bold; border:none; background:none; padding:0;"></div>
-            ${removable ? `<button class="remove-btn" onclick="this.parentElement.parentElement.remove()">Remove</button>` : ''}
-        </div>
-        <textarea class="filecontent" rows="8"></textarea>
-    `;
-    
-    // ここで安全に値をセットする（これでタグが漏れ出さなくなります）
-    div.querySelector('.filecontent').value = content;
-    
-    document.getElementById('fileContainer').appendChild(div);
-}
-
+        div.innerHTML = `
+            <div class="file-header">
+                <div class="file-info">📄 <input type="text" class="filename" value="${name}" style="width:150px; font-weight:bold; border:none; background:none; padding:0;"></div>
+                ${removable ? `<button class="remove-btn" onclick="this.parentElement.parentElement.remove()">Remove</button>` : ''}
+            </div>
+            <textarea class="filecontent" rows="8"></textarea>
+        `;
+        div.querySelector('.filecontent').value = content;
         document.getElementById('fileContainer').appendChild(div);
     }
 
@@ -166,14 +151,13 @@
             const fInput = row.querySelector('.filename');
             if (fInput.value === 'README.md') {
                 const area = row.querySelector('.filecontent');
-                if (area.value.startsWith('# ')) {
+                if (area.value.includes('# ')) {
                     area.value = area.value.replace(/^# .*/, `# ${name || 'New Project'}`);
                 }
             }
         });
     }
 
-    // --- GitHub API Logic ---
     function saveToken() { localStorage.setItem('gh_token', document.getElementById('token').value.trim()); }
 
     async function fetchRepoList() {
@@ -183,9 +167,11 @@
             const h = { 'Authorization': `Bearer ${token}` };
             const u = await fetch('https://api.github.com/user', { headers: h });
             if (u.ok) currentUsername = (await u.json()).login;
-            const r = await fetch('https://api.github.com/user/repos?sort=updated', { headers: h });
-            if (r.ok) allRepos = await r.json();
-            addLog(`Connected as ${currentUsername}. ${allRepos.length} repos found.`);
+            const r = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100', { headers: h });
+            if (r.ok) {
+                allRepos = await r.json();
+                addLog(`Connected as ${currentUsername}. ${allRepos.length} repos found.`);
+            }
         } catch (e) { addLog("Auth failed."); }
     }
 
@@ -194,36 +180,53 @@
         const dl = document.getElementById('repoDropdown');
         dl.innerHTML = '';
         if(!val) { dl.style.display = 'none'; return; }
-        
+
         const matches = allRepos.filter(r => r.name.toLowerCase().includes(val));
         
-        // 新規作成オプション
-        const div = document.createElement('div');
-        div.className = 'dropdown-item';
-        div.innerHTML = `<strong>+ Create New: "${val}"</strong>`;
-        div.onclick = () => { document.getElementById('repoName').value = val; dl.style.display='none'; };
-        dl.appendChild(div);
+        const createItem = document.createElement('div');
+        createItem.className = 'dropdown-item';
+        createItem.innerHTML = `<strong>✨ 新規作成: "${val}"</strong>`;
+        createItem.onclick = () => { document.getElementById('repoName').value = val; dl.style.display='none'; selectRepoStatus(true); };
+        dl.appendChild(createItem);
 
         matches.forEach(m => {
             const item = document.createElement('div');
             item.className = 'dropdown-item';
-            item.innerHTML = `<strong>${m.name}</strong><br><span class="repo-meta">Updated: ${new Date(m.updated_at).toLocaleDateString()}</span>`;
-            item.onclick = () => { document.getElementById('repoName').value = m.name; dl.style.display='none'; syncReadme(); };
+            item.innerHTML = `<strong>${m.name} ${m.private ? '🔒' : '🌐'}</strong><br><span class="repo-meta">Update: ${new Date(m.updated_at).toLocaleDateString()}</span>`;
+            item.onclick = () => { 
+                document.getElementById('repoName').value = m.name; 
+                dl.style.display='none'; 
+                selectRepoStatus(false);
+                syncReadme(); 
+            };
             dl.appendChild(item);
         });
         dl.style.display = 'block';
     }
 
+    function selectRepoStatus(isNew) {
+        const vis = document.getElementById('repoVisibility');
+        const lbl = document.getElementById('visibilityLabel');
+        if(!isNew) {
+            vis.style.opacity = "0.5";
+            lbl.innerText = "公開設定 (既存のため変更不可)";
+        } else {
+            vis.style.opacity = "1";
+            lbl.innerText = "公開設定 (新規作成時):";
+        }
+    }
+
     function addLog(m) { const l = document.getElementById('log'); l.innerHTML += `<div>> ${m}</div>`; l.scrollTop = l.scrollHeight; }
 
     async function run() {
-        const token = document.getElementById('token').value.trim();
+        const token = document.getElementById('token').value.replace(/[\s\u3000]/g, '');
         const repoName = document.getElementById('repoName').value.trim();
+        const isPrivate = document.getElementById('repoVisibility').value === 'true';
         if (!token || !repoName) return alert("Required fields missing.");
 
         const btn = document.getElementById('execBtn');
         btn.disabled = true;
-        addLog("Starting deployment...");
+        addLog("Deployment started...");
 
         const h = { 
             'Authorization': `Bearer ${token}`, 
@@ -237,7 +240,7 @@
             if (!res.ok) {
                 addLog(`Creating repository "${repoName}"...`);
                 await fetch('https://api.github.com/user/repos', {
-                    method: 'POST', headers: h, body: JSON.stringify({ name: repoName, auto_init: true })
+                    method: 'POST', headers: h, body: JSON.stringify({ name: repoName, auto_init: true, private: isPrivate })
                 });
                 await new Promise(r => setTimeout(r, 2000));
             }
@@ -247,23 +250,29 @@
             for (const i of items) {
                 const name = i.querySelector('.filename').value.trim();
                 const content = i.querySelector('.filecontent').value;
-                addLog(`Uploading ${name}...`);
+                if(!name) continue;
                 
+                addLog(`Uploading ${name}...`);
                 const fRes = await fetch(`https://api.github.com/repos/${currentUsername}/${repoName}/contents/${name}`, { headers: h });
                 const sha = fRes.ok ? (await fRes.json()).sha : null;
-                const b64 = btoa(unescape(encodeURIComponent(content)));
+
+                // UTF-8 対応のBase64エンコード
+                const uint8 = new TextEncoder().encode(content);
+                const b64 = btoa(String.fromCharCode(...uint8));
 
                 await fetch(`https://api.github.com/repos/${currentUsername}/${repoName}/contents/${name}`, {
                     method: 'PUT', headers: h,
-                    body: JSON.stringify({ message: 'Update', content: b64, sha })
+                    body: JSON.stringify({ message: 'Update via AI Web Studio', content: b64, sha })
                 });
             }
 
-            // Enable Pages
-            addLog("Configuring GitHub Pages...");
-            await fetch(`https://api.github.com/repos/${currentUsername}/${repoName}/pages`, {
-                method: 'POST', headers: h, body: JSON.stringify({ source: { branch: "main", path: "/" } })
-            }).catch(() => {});
+            // Pages Enable
+            try {
+                addLog("Checking GitHub Pages...");
+                await fetch(`https://api.github.com/repos/${currentUsername}/${repoName}/pages`, {
+                    method: 'POST', headers: h, body: JSON.stringify({ source: { branch: "main", path: "/" } })
+                });
+            } catch (e) {}
 
             document.getElementById('progressContainer').style.display = 'block';
             let sec = 60;
@@ -283,6 +292,12 @@
 
         } catch (e) { addLog("Error: " + e.message); btn.disabled = false; }
     }
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.repo-select-container')) {
+            document.getElementById('repoDropdown').style.display = 'none';
+        }
+    });
 </script>
 </body>
 </html>
