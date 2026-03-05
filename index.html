@@ -67,6 +67,7 @@
         .editor-actions { position: absolute; top: 10px; right: 15px; display: flex; gap: 8px; z-index: 10; }
         .action-btn { color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; opacity: 0.9; transition: 0.2s; }
         .copy-btn { background: rgba(255, 255, 255, 0.15); }
+        .upload-btn { background: #4b5563; } /* 追加：Uploadボタンの色 */
         .download-btn { background: var(--primary); }
         .deploy-btn { background: var(--accent); }
         .action-btn:hover { opacity: 1; transform: translateY(-1px); }
@@ -103,11 +104,11 @@
             <span class="header-title">CONVERSATION (PLAN)</span>
             <button class="reset-btn" onclick="confirmReset()">＋ New Project</button>
         </div>
-       
+
         <div id="chat-log">
             <div class="msg ai">Gemini Web Studio 2026 起動。<br>要件を教えてください。プランが固まったら「⚡️コードを作成」ボタンを表示します。</div>
         </div>
-        
+
         <div class="input-container">
             <div id="attach-menu" class="attachment-menu">
                 <div class="menu-item" onclick="triggerFile('camera')">📸 カメラ</div>
@@ -136,11 +137,12 @@
     <div id="p-editor" class="page">
          <div class="editor-wrapper">
             <div class="editor-actions">
-                <button class="action-btn copy-btn" onclick="copyCode()">Copy</button>
+                <button class="action-btn upload-btn" onclick="triggerCodeUpload()">Upload</button> <button class="action-btn copy-btn" onclick="copyCode()">Copy</button>
                 <button class="action-btn download-btn" onclick="downloadCode()">Download</button>
                 <button class="action-btn deploy-btn" onclick="openDeployer()">🚀 GitHub Deploy</button>
             </div>
-             <textarea id="code-editor" spellcheck="false" oninput="updatePreview()" placeholder="ここにソースコードが生成されます..."></textarea>
+            <input type="file" id="code-upload-input" style="display:none" accept=".html,.css,.js,.txt" onchange="handleCodeUpload(this)">
+            <textarea id="code-editor" spellcheck="false" oninput="updatePreview()" placeholder="ここにソースコードが生成されます..."></textarea>
         </div>
     </div>
 
@@ -216,7 +218,6 @@
 
     /* --- アタッチメント（添付）ロジック --- */
     function toggleAttachmentMenu() {
-        // すでにファイルが添付されている場合はメニューを開かず削除する
         if (currentFileName) {
             removeAttachment();
             return;
@@ -233,70 +234,57 @@
     function handleAttachment(input) {
         const file = input.files[0];
         if (!file) return;
-
         currentMimeType = file.type;
         currentFileName = file.name;
-
         const reader = new FileReader();
         reader.onloadend = () => {
-            currentImageBase64 = reader.result.split(',')[1]; // Base64抽出
-            
+            currentImageBase64 = reader.result.split(',')[1];
             const preview = document.getElementById('file-preview');
             const label = document.querySelector('.file-label');
             const fileNameDisplay = document.getElementById('file-name-display');
-
-            // UI更新：削除ボタン化
             label.innerHTML = '✕';
             label.style.background = '#ef4444';
-            label.title = "添付を削除";
-
             if (currentMimeType.startsWith('image/')) {
-                // 画像
-                if (preview) {
-                    preview.src = reader.result;
-                    preview.style.display = 'block';
-                }
+                if (preview) { preview.src = reader.result; preview.style.display = 'block'; }
                 if (fileNameDisplay) fileNameDisplay.style.display = 'none';
             } else {
-                // その他ファイル
                 if (preview) preview.style.display = 'none';
-                if (fileNameDisplay) {
-                    fileNameDisplay.innerText = `📄 ${currentFileName}`;
-                    fileNameDisplay.style.display = 'inline-block';
-                }
+                if (fileNameDisplay) { fileNameDisplay.innerText = `📄 ${currentFileName}`; fileNameDisplay.style.display = 'inline-block'; }
             }
         };
         reader.readAsDataURL(file);
-        input.value = ''; // リセット
+        input.value = '';
     }
 
     function removeAttachment() {
-        currentImageBase64 = null;
-        currentMimeType = null;
-        currentFileName = null;
-
+        currentImageBase64 = null; currentMimeType = null; currentFileName = null;
         const preview = document.getElementById('file-preview');
         const label = document.querySelector('.file-label');
         const fileNameDisplay = document.getElementById('file-name-display');
-
-        // UI初期化
-        if (preview) {
-            preview.src = '';
-            preview.style.display = 'none';
-        }
-        if (fileNameDisplay) {
-            fileNameDisplay.innerText = '';
-            fileNameDisplay.style.display = 'none';
-        }
-
-        label.innerHTML = '＋';
-        label.style.background = '#333';
-        label.title = "ファイルを添付";
-        
+        if (preview) { preview.src = ''; preview.style.display = 'none'; }
+        if (fileNameDisplay) { fileNameDisplay.innerText = ''; fileNameDisplay.style.display = 'none'; }
+        label.innerHTML = '＋'; label.style.background = '#333';
         document.getElementById('attach-menu').classList.remove('show');
     }
 
-    // メニュー外クリックで閉じる
+    // --- 新規：CODE画面用アップロード機能 ---
+    function triggerCodeUpload() {
+        document.getElementById('code-upload-input').click();
+    }
+
+    function handleCodeUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('code-editor').value = e.target.result;
+            updatePreview();
+            alert(`「${file.name}」を読み込みました`);
+        };
+        reader.readAsText(file);
+        input.value = ''; // 連続選択を可能にする
+    }
+
     document.addEventListener('click', (e) => {
         const menu = document.getElementById('attach-menu');
         const label = document.querySelector('.file-label');
@@ -328,149 +316,74 @@
         document.getElementById('preview-frame').srcdoc = code;
     }
 
-    // --- CHAT (PLAN) ---
     async function askGemini() {
         const key = document.getElementById('api-key').value;
         const prof = document.getElementById('user-profile').value;
         const model = document.getElementById('chat-model').value;
         const input = document.getElementById('user-prompt');
         const promptText = input.value.trim();
-
         if(!key) return alert('設定タブでAPIキーを入力してください');
         if(!promptText && !currentFileName) return alert('入力またはファイルが必要です');
-
         const log = document.getElementById('chat-log');
         document.querySelectorAll('.generate-btn-wrapper').forEach(el => el.remove());
-
         const userMsg = document.createElement('div');
         userMsg.className = 'msg user';
         userMsg.textContent = promptText; 
         if(currentFileName) userMsg.textContent += `\n[添付: ${currentFileName}]`;
         log.appendChild(userMsg);
-
         const aiMsg = document.createElement('div');
         aiMsg.className = 'msg ai';
         aiMsg.innerHTML = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>考案中...</span></div>';
         log.appendChild(aiMsg);
-        
-        input.value = '';
-        input.style.height = "44px";
-        log.scrollTop = log.scrollHeight;
-
+        input.value = ''; input.style.height = "44px"; log.scrollTop = log.scrollHeight;
         conversationContext += `\nユーザー: ${promptText}`;
         if(currentFileName) conversationContext += ` (添付ファイル: ${currentFileName})`;
-
         const system = `あなたはプロのWeb開発ディレクターです。ユーザーのアイディアを具体化し、実装（BUILD）に向けた設計図を作成します。
 プロファイル: ${prof}
-ガイドライン:
-1. アプリ名、ターゲット、機能をヒアリング。
-2. 簡潔に箇条書きで返答。
-3. コードは書かず、仕様合意に徹する。
-4. 仕様が固まったら「素晴らしいプランです。⚡️コードを作成 ボタンから実装を開始しましょう」と促す。`;
-
+ガイドライン: 1. アプリ名、ターゲット、機能をヒアリング。2. 簡潔に箇条書きで返答。3. コードは書かず、仕様合意に徹する。4. 仕様が固まったら「素晴らしいプランです。⚡️コードを作成 ボタンから実装を開始しましょう」と促す。`;
         const userContent = { role: "user", parts: [{ text: system + "\n\n会話履歴:\n" + conversationContext }] };
-        
         if (currentImageBase64 && currentMimeType) {
             userContent.parts.push({ inline_data: { mime_type: currentMimeType, data: currentImageBase64 } });
-            removeAttachment(); // 送信後はクリア
-        }
-
-        try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${key}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [userContent] })
-            });
-            
-            if (!res.ok) throw new Error(`API Error: ${res.status} ${res.statusText} (Model: ${model})`);
-
-            const reader = res.body.getReader();
-            const decoder = new TextDecoder("utf-8");
-            let aiText = "";
-            let buffer = "";
-            aiMsg.innerHTML = "";
-
+            removeAttachment();
+        } 
+        try { 
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${key}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [userContent] }) });
+            if (!res.ok) throw new Error(`API Error: ${res.status} (Model: ${model})`);
+            const reader = res.body.getReader(); const decoder = new TextDecoder("utf-8"); let aiText = ""; let buffer = ""; aiMsg.innerHTML = "";
             while (true) {
-                const { value, done } = await reader.read();
-                if (done) break;
-                buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split('\n');
-                buffer = lines.pop();
-                for (const line of lines) {
-                    if (line.startsWith('data: ')) {
-                        try {
-                            const data = JSON.parse(line.slice(6));
-                            const textChunk = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                            if (textChunk) { aiText += textChunk; aiMsg.innerText = aiText; log.scrollTop = log.scrollHeight; }
-                        } catch (e) {}
-                    }
-                }
+                const { value, done } = await reader.read(); if (done) break;
+                buffer += decoder.decode(value, { stream: true }); const lines = buffer.split('\n'); buffer = lines.pop();
+                for (const line of lines) { if (line.startsWith('data: ')) { try { const data = JSON.parse(line.slice(6)); const textChunk = data.candidates?.[0]?.content?.parts?.[0]?.text; if (textChunk) { aiText += textChunk; aiMsg.innerText = aiText; log.scrollTop = log.scrollHeight; } } catch (e) {} } }
             }
-
             conversationContext += `\nアシスタント: ${aiText}`;
-            
-            const btnWrapper = document.createElement('div');
-            btnWrapper.className = 'generate-btn-wrapper';
-            const genBtn = document.createElement('button');
-            genBtn.className = 'generate-btn';
-            genBtn.innerHTML = '⚡️ コードを作成 (BUILD)';
-            genBtn.onclick = generateCode;
-            btnWrapper.appendChild(genBtn);
-            aiMsg.appendChild(btnWrapper);
-            log.scrollTop = log.scrollHeight;
-
+            const btnWrapper = document.createElement('div'); btnWrapper.className = 'generate-btn-wrapper';
+            const genBtn = document.createElement('button'); genBtn.className = 'generate-btn'; genBtn.innerHTML = '⚡️ コードを作成 (BUILD)';
+            genBtn.onclick = generateCode; btnWrapper.appendChild(genBtn); aiMsg.appendChild(btnWrapper); log.scrollTop = log.scrollHeight;
         } catch (e) { aiMsg.textContent = 'エラー: ' + e.message; }
     }
 
-    // --- CODE (BUILD) ---
     async function generateCode() {
         const key = document.getElementById('api-key').value;
         const prof = document.getElementById('user-profile').value;
         const model = document.getElementById('code-model').value;
         const currentCode = document.getElementById('code-editor').value;
-
         const log = document.getElementById('chat-log');
         document.querySelectorAll('.generate-btn-wrapper').forEach(el => el.remove());
-        const aiMsg = document.createElement('div');
-        aiMsg.className = 'msg ai';
-        aiMsg.innerHTML = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>構築中... (しばらくお待ちください)</span></div>';
-        log.appendChild(aiMsg);
-        log.scrollTop = log.scrollHeight;
-
-        const system = `Expert Full-stack Web Developerとして、完全なHTML/CSS/JSコードを1つのファイルで作成してください。
-プロファイル: ${prof}
-ルール:
-- Markdown記号は不要。<!DOCTYPE html>から開始。
-- 既存コード修正/拡張。
-- 外部ライブラリはCDN利用。
-現在のコード: ${currentCode || "なし"}
-会話履歴: ${conversationContext}`;
-
+        const aiMsg = document.createElement('div'); aiMsg.className = 'msg ai'; aiMsg.innerHTML = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>構築中...</span></div>';
+        log.appendChild(aiMsg); log.scrollTop = log.scrollHeight;
+        const system = `Expert Full-stack Web Developerとして、完全なHTML/CSS/JSコードを1つのファイルで作成してください。 プロファイル: ${prof} ルール: Markdown不要。<!DOCTYPE html>から開始。 既存コード修正/拡張。 外部ライブラリはCDN。 現在のコード: ${currentCode || "なし"} 会話履歴: ${conversationContext}`;
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: system }] }] })
-            });
-            const data = await res.json();
-            
-            if(data.error) throw new Error(data.error.message);
-
-            let result = data.candidates[0].content.parts[0].text;
-            result = result.replace(/^```html\s*/i, '').replace(/^```\s*/, '').replace(/```$/g, '').trim();
-            
-            document.getElementById('code-editor').value = result;
-            aiMsg.innerHTML = '✨ 構築完了。PREVIEWを確認してください。';
-            showPage('preview', document.getElementById('tab-preview'));
-            updatePreview();
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: system }] }] }) });
+            const data = await res.json(); if(data.error) throw new Error(data.error.message);
+            let result = data.candidates[0].content.parts[0].text; result = result.replace(/^```html\s*/i, '').replace(/^```\s*/, '').replace(/```$/g, '').trim();
+            document.getElementById('code-editor').value = result; aiMsg.innerHTML = '✨ 構築完了。PREVIEWを確認してください。'; showPage('preview', document.getElementById('tab-preview')); updatePreview();
         } catch (e) { aiMsg.innerHTML = '<span style="color:var(--danger)">エラー: ' + e.message + '</span>'; }
     }
 
-    // --- DEPLOYER ---
+
     async function openDeployer() {
         const code = document.getElementById('code-editor').value;
         if (!code) return alert("デプロイするコードがありません。");
-        // 単純化のため、ローカルストレージに保存して別窓を開くロジックのみ維持
-        // 実際のDeployer.htmlがサーバー上に必要です
         localStorage.setItem('pending_deploy_code', code);
         window.open('Deployer.html', '_blank');
     }
@@ -482,9 +395,7 @@
         showPage('chat', document.getElementById('tab-chat'));
         const chatInput = document.getElementById('user-prompt');
         chatInput.value = `【修正依頼】\n${memoText}`;
-        autoGrow(chatInput);
-        memoInput.value = '';
-        askGemini();
+        autoGrow(chatInput); memoInput.value = ''; askGemini();
     }
 
     function copyCode() {
@@ -497,16 +408,10 @@
         if (!code) return alert("コードがありません。");
         const blob = new Blob([code], { type: 'text/html' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'index.html';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        const a = document.createElement('a'); a.href = url; a.download = 'index.html';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
     }
 
-    // スワイプ処理
     let touchStartX = 0;
     document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
     document.addEventListener('touchend', e => {
