@@ -71,6 +71,30 @@
         .download-btn { background: var(--primary); }
         .deploy-btn { background: var(--accent); }
         .action-btn:hover { opacity: 1; transform: translateY(-1px); }
+        .import-btn { background: #1f6feb; }
+
+        /* GitHub Import Modal */
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; align-items:center; justify-content:center; }
+        .modal-overlay.show { display:flex; }
+        .modal { background:#1e1e1e; border:1px solid #444; border-radius:12px; width:90%; max-width:500px; max-height:80vh; display:flex; flex-direction:column; overflow:hidden; }
+        .modal-header { display:flex; justify-content:space-between; align-items:center; padding:16px; border-bottom:1px solid #333; }
+        .modal-header h3 { margin:0; font-size:15px; color:#fff; }
+        .modal-close { background:none; border:none; color:#888; font-size:20px; cursor:pointer; }
+        .modal-body { padding:16px; overflow-y:auto; flex:1; }
+        .modal-input { width:100%; background:#2a2a2a; border:1px solid #444; border-radius:8px; padding:10px 12px; color:#fff; font-size:14px; outline:none; margin-bottom:12px; box-sizing:border-box; }
+        .modal-input:focus { border-color:var(--primary); }
+        .repo-list, .file-list { list-style:none; padding:0; margin:0; }
+        .repo-list li, .file-list li { padding:10px 12px; border-bottom:1px solid #2a2a2a; cursor:pointer; font-size:13px; color:#ccc; transition:background 0.15s; display:flex; justify-content:space-between; align-items:center; }
+        .repo-list li:hover, .file-list li:hover { background:#2a2a2a; }
+        .repo-list li .repo-meta-sm { font-size:11px; color:#666; }
+        .modal-status { font-size:12px; color:#888; padding:8px 0; text-align:center; }
+        .modal-btn { background:var(--primary); color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:bold; width:100%; margin-top:8px; }
+        .modal-btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+        /* SW Background notification */
+        .bg-notify { display:none; position:fixed; top:10px; right:10px; background:#1e40af; color:#fff; padding:10px 16px; border-radius:8px; font-size:12px; z-index:3000; box-shadow:0 4px 12px rgba(0,0,0,0.4); animation:fadeIn 0.3s; }
+        .bg-notify.show { display:flex; align-items:center; gap:8px; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
 
         /* プレビュー */
         #preview-frame { flex: 1; border: none; background: #fff; width: 100%; height: 100%; }
@@ -137,6 +161,7 @@
     <div id="p-editor" class="page">
          <div class="editor-wrapper">
             <div class="editor-actions">
+                <button class="action-btn import-btn" onclick="openGitHubImport()">📥 Import</button>
                 <button class="action-btn upload-btn" onclick="triggerCodeUpload()">Upload</button> <button class="action-btn copy-btn" onclick="copyCode()">Copy</button>
                 <button class="action-btn download-btn" onclick="downloadCode()">Download</button>
                 <button class="action-btn deploy-btn" onclick="openDeployer()">🚀 GitHub Deploy</button>
@@ -186,6 +211,34 @@
     </div>
 </div>
 
+<!-- GitHub Import Modal -->
+<div id="gh-import-modal" class="modal-overlay" onclick="if(event.target===this)closeGitHubImport()">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>📥 GitHub Import</h3>
+            <button class="modal-close" onclick="closeGitHubImport()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div id="gh-step-repo">
+                <input id="gh-repo-search" class="modal-input" placeholder="リポジトリを検索..." oninput="filterImportRepos()">
+                <div id="gh-modal-status" class="modal-status"></div>
+                <ul id="gh-repo-list" class="repo-list"></ul>
+            </div>
+            <div id="gh-step-file" style="display:none">
+                <button class="modal-btn" style="background:#333;margin-bottom:12px" onclick="backToRepoList()">← リポジトリ一覧に戻る</button>
+                <div id="gh-file-status" class="modal-status"></div>
+                <ul id="gh-file-list" class="file-list"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Background generation notification -->
+<div id="bg-notify" class="bg-notify">
+    <div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0"></div>
+    <span>バックグラウンドで生成中...</span>
+</div>
+
 <script>
     /* --- 状態管理変数 --- */
     let currentImageBase64 = null;
@@ -193,14 +246,239 @@
     let currentFileName = null;
     let conversationContext = "";
     const pagesList = ['chat', 'editor', 'preview', 'settings'];
+    let ghImportRepos = [];
+    let swRegistration = null;
 
-    window.onload = () => {
+    /* --- IndexedDB ヘルパー --- */
+    function openDB() {
+        return new Promise((resolve, reject) => {
+            const req = indexedDB.open('WebStudioBG', 1);
+            req.onupgradeneeded = () => req.result.createObjectStore('tasks');
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
+    async function saveToDB(key, value) {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('tasks', 'readwrite');
+            tx.objectStore('tasks').put(value, key);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+    async function getFromDB(key) {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('tasks', 'readonly');
+            const req = tx.objectStore('tasks').get(key);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
+    async function deleteFromDB(key) {
+        const db = await openDB();
+        return new Promise((resolve) => {
+            const tx = db.transaction('tasks', 'readwrite');
+            tx.objectStore('tasks').delete(key);
+            tx.oncomplete = () => resolve();
+        });
+    }
+
+    /* --- Service Worker 登録 (Blob URL方式) --- */
+    const swCode = `
+        self.addEventListener('message', async (e) => {
+            if (e.data.type === 'generate') {
+                try {
+                    const res = await fetch(e.data.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: e.data.body });
+                    const data = await res.json();
+                    if (data.error) throw new Error(data.error.message);
+                    let result = data.candidates[0].content.parts[0].text;
+                    result = result.replace(/^\`\`\`html\\s*/i, '').replace(/^\`\`\`\\s*/, '').replace(/\`\`\`$/g, '').trim();
+                    // IndexedDB に保存
+                    const dbReq = indexedDB.open('WebStudioBG', 1);
+                    dbReq.onupgradeneeded = () => dbReq.result.createObjectStore('tasks');
+                    dbReq.onsuccess = () => {
+                        const db = dbReq.result;
+                        const tx = db.transaction('tasks', 'readwrite');
+                        tx.objectStore('tasks').put({ code: result, done: true, ts: Date.now() }, 'bgResult');
+                        tx.oncomplete = () => {
+                            self.clients.matchAll().then(clients => clients.forEach(c => c.postMessage({ type: 'generateDone', code: result })));
+                        };
+                    };
+                } catch (err) {
+                    const dbReq = indexedDB.open('WebStudioBG', 1);
+                    dbReq.onupgradeneeded = () => dbReq.result.createObjectStore('tasks');
+                    dbReq.onsuccess = () => {
+                        const db = dbReq.result;
+                        const tx = db.transaction('tasks', 'readwrite');
+                        tx.objectStore('tasks').put({ error: err.message, done: true, ts: Date.now() }, 'bgResult');
+                        tx.oncomplete = () => {
+                            self.clients.matchAll().then(clients => clients.forEach(c => c.postMessage({ type: 'generateError', error: err.message })));
+                        };
+                    };
+                }
+            }
+        });
+    `;
+    async function registerSW() {
+        if (!('serviceWorker' in navigator)) return;
+        try {
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            swRegistration = await navigator.serviceWorker.register(swUrl);
+            navigator.serviceWorker.addEventListener('message', (e) => {
+                const notify = document.getElementById('bg-notify');
+                if (e.data.type === 'generateDone') {
+                    document.getElementById('code-editor').value = e.data.code;
+                    updatePreview();
+                    notify.classList.remove('show');
+                    const log = document.getElementById('chat-log');
+                    const aiMsg = document.createElement('div'); aiMsg.className = 'msg ai';
+                    aiMsg.innerHTML = '✨ バックグラウンド構築完了。PREVIEWを確認してください。';
+                    log.appendChild(aiMsg); log.scrollTop = log.scrollHeight;
+                    deleteFromDB('bgResult');
+                } else if (e.data.type === 'generateError') {
+                    notify.classList.remove('show');
+                    const log = document.getElementById('chat-log');
+                    const aiMsg = document.createElement('div'); aiMsg.className = 'msg ai';
+                    aiMsg.innerHTML = '<span style="color:var(--danger)">BG エラー: ' + e.data.error + '</span>';
+                    log.appendChild(aiMsg);
+                    deleteFromDB('bgResult');
+                }
+            });
+        } catch (e) { console.log('SW registration skipped:', e); }
+    }
+
+    /* --- GitHub Import 関数群 --- */
+    function openGitHubImport() {
+        const token = localStorage.getItem('gh_token');
+        if (!token) return alert('GitHubトークンが未設定です。\nDeployer.html でトークンを保存してください。');
+        const modal = document.getElementById('gh-import-modal');
+        modal.classList.add('show');
+        document.getElementById('gh-step-repo').style.display = '';
+        document.getElementById('gh-step-file').style.display = 'none';
+        document.getElementById('gh-repo-search').value = '';
+        fetchImportRepos(token);
+    }
+    function closeGitHubImport() { document.getElementById('gh-import-modal').classList.remove('show'); }
+
+    async function fetchImportRepos(token) {
+        const status = document.getElementById('gh-modal-status');
+        status.textContent = '読み込み中...';
+        try {
+            const res = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (!res.ok) throw new Error('認証エラー (' + res.status + ')');
+            ghImportRepos = await res.json();
+            status.textContent = ghImportRepos.length + ' 件のリポジトリ';
+            renderImportRepos(ghImportRepos);
+        } catch (e) { status.textContent = 'エラー: ' + e.message; }
+    }
+    function renderImportRepos(repos) {
+        const list = document.getElementById('gh-repo-list');
+        list.innerHTML = '';
+        repos.forEach(r => {
+            const li = document.createElement('li');
+            li.innerHTML = '<span>' + (r.private ? '🔒 ' : '🌐 ') + r.name + '</span><span class="repo-meta-sm">' + new Date(r.updated_at).toLocaleDateString() + '</span>';
+            li.onclick = () => selectImportRepo(r);
+            list.appendChild(li);
+        });
+    }
+    function filterImportRepos() {
+        const q = document.getElementById('gh-repo-search').value.toLowerCase();
+        renderImportRepos(ghImportRepos.filter(r => r.name.toLowerCase().includes(q)));
+    }
+    async function selectImportRepo(repo) {
+        document.getElementById('gh-step-repo').style.display = 'none';
+        document.getElementById('gh-step-file').style.display = '';
+        const status = document.getElementById('gh-file-status');
+        status.textContent = repo.full_name + ' のファイルを取得中...';
+        const token = localStorage.getItem('gh_token');
+        try {
+            const res = await fetch('https://api.github.com/repos/' + repo.full_name + '/git/trees/main?recursive=1', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (!res.ok) {
+                // mainブランチが無い場合masterを試す
+                const res2 = await fetch('https://api.github.com/repos/' + repo.full_name + '/git/trees/master?recursive=1', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!res2.ok) throw new Error('ブランチが見つかりません');
+                return renderFileTree(await res2.json(), repo.full_name);
+            }
+            renderFileTree(await res.json(), repo.full_name);
+        } catch (e) { status.textContent = 'エラー: ' + e.message; }
+    }
+    function renderFileTree(tree, fullName) {
+        const list = document.getElementById('gh-file-list');
+        const status = document.getElementById('gh-file-status');
+        list.innerHTML = '';
+        const files = tree.tree.filter(f => f.type === 'blob');
+        status.textContent = files.length + ' ファイル';
+        files.forEach(f => {
+            const li = document.createElement('li');
+            const ext = f.path.split('.').pop().toLowerCase();
+            const icon = ['html','htm'].includes(ext) ? '🌐' : ['js'].includes(ext) ? '📜' : ['css'].includes(ext) ? '🎨' : ['md'].includes(ext) ? '📝' : '📄';
+            li.innerHTML = '<span>' + icon + ' ' + f.path + '</span><span class="repo-meta-sm">' + (f.size > 1024 ? (f.size/1024).toFixed(1)+'KB' : f.size+'B') + '</span>';
+            li.onclick = () => loadFileFromRepo(fullName, f.path);
+            list.appendChild(li);
+        });
+    }
+    async function loadFileFromRepo(fullName, path) {
+        const token = localStorage.getItem('gh_token');
+        const status = document.getElementById('gh-file-status');
+        status.textContent = path + ' を読み込み中...';
+        try {
+            const res = await fetch('https://api.github.com/repos/' + fullName + '/contents/' + path, {
+                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3.raw' }
+            });
+            if (!res.ok) throw new Error('ファイル取得エラー');
+            const text = await res.text();
+            document.getElementById('code-editor').value = text;
+            updatePreview();
+            closeGitHubImport();
+            showPage('editor', document.getElementById('tab-editor'));
+            alert('「' + path + '」をインポートしました');
+        } catch (e) { status.textContent = 'エラー: ' + e.message; }
+    }
+    function backToRepoList() {
+        document.getElementById('gh-step-repo').style.display = '';
+        document.getElementById('gh-step-file').style.display = 'none';
+    }
+
+    window.onload = async () => {
         document.getElementById('api-key').value = localStorage.getItem('g_key') || '';
         document.getElementById('user-profile').value = localStorage.getItem('g_prof') || '';
         const savedChatModel = localStorage.getItem('g_chat_model');
         if (savedChatModel) document.getElementById('chat-model').value = savedChatModel;
         const savedCodeModel = localStorage.getItem('g_code_model');
         if (savedCodeModel) document.getElementById('code-model').value = savedCodeModel;
+
+        // Service Worker 登録
+        await registerSW();
+
+        // バックグラウンド生成結果の復帰チェック
+        try {
+            const bgResult = await getFromDB('bgResult');
+            if (bgResult && bgResult.done) {
+                if (bgResult.code) {
+                    document.getElementById('code-editor').value = bgResult.code;
+                    updatePreview();
+                    const log = document.getElementById('chat-log');
+                    const aiMsg = document.createElement('div'); aiMsg.className = 'msg ai';
+                    aiMsg.innerHTML = '✨ バックグラウンド構築完了（復帰）。PREVIEWを確認してください。';
+                    log.appendChild(aiMsg);
+                } else if (bgResult.error) {
+                    const log = document.getElementById('chat-log');
+                    const aiMsg = document.createElement('div'); aiMsg.className = 'msg ai';
+                    aiMsg.innerHTML = '<span style="color:var(--danger)">前回のBG生成エラー: ' + bgResult.error + '</span>';
+                    log.appendChild(aiMsg);
+                }
+                await deleteFromDB('bgResult');
+            }
+        } catch(e) {}
     };
 
     function showPage(id, btn) {
@@ -369,22 +647,75 @@
         const currentCode = document.getElementById('code-editor').value;
         const log = document.getElementById('chat-log');
         document.querySelectorAll('.generate-btn-wrapper').forEach(el => el.remove());
-        const aiMsg = document.createElement('div'); aiMsg.className = 'msg ai'; aiMsg.innerHTML = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>構築中...</span></div>';
+        const aiMsg = document.createElement('div'); aiMsg.className = 'msg ai'; aiMsg.innerHTML = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>構築中...（タブを閉じてもOK）</span></div>';
         log.appendChild(aiMsg); log.scrollTop = log.scrollHeight;
-        const system = `Expert Full-stack Web Developerとして、完全なHTML/CSS/JSコードを1つのファイルで作成してください。 プロファイル: ${prof} ルール: Markdown不要。<!DOCTYPE html>から開始。 既存コード修正/拡張。 外部ライブラリはCDN。 現在のコード: ${currentCode || "なし"} 会話履歴: ${conversationContext}`;
-        try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: system }] }] }) });
-            const data = await res.json(); if(data.error) throw new Error(data.error.message);
-            let result = data.candidates[0].content.parts[0].text; result = result.replace(/^```html\s*/i, '').replace(/^```\s*/, '').replace(/```$/g, '').trim();
-            document.getElementById('code-editor').value = result; aiMsg.innerHTML = '✨ 構築完了。PREVIEWを確認してください。'; showPage('preview', document.getElementById('tab-preview')); updatePreview();
-        } catch (e) { aiMsg.innerHTML = '<span style="color:var(--danger)">エラー: ' + e.message + '</span>'; }
+
+        const codeRule = currentCode
+            ? `【重要】以下の既存コードが存在します。構造・変数名・スタイル・レイアウトを最大限維持し、会話で合意した差分のみを変更・追加してください。全面書き換えは厳禁です。\n既存コード:\n${currentCode}`
+            : '既存コードはありません。新規に完全なコードを作成してください。';
+        const system = `Expert Full-stack Web Developerとして、完全なHTML/CSS/JSコードを1つのファイルで出力してください。
+プロファイル: ${prof}
+ルール: Markdownのコードブロック不要。<!DOCTYPE html>から開始。外部ライブラリはCDN使用。
+${codeRule}
+会話履歴: ${conversationContext}`;
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+        const body = JSON.stringify({ contents: [{ parts: [{ text: system }] }] });
+
+        // Service Worker が利用可能ならバックグラウンド実行
+        if (swRegistration && swRegistration.active) {
+            document.getElementById('bg-notify').classList.add('show');
+            await saveToDB('bgResult', { done: false, ts: Date.now() });
+            swRegistration.active.postMessage({ type: 'generate', url, body });
+            aiMsg.innerHTML = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>バックグラウンドで構築中... タブを閉じても処理は継続します。</span></div>';
+        } else {
+            // フォールバック：従来のフォアグラウンド実行
+            try {
+                const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+                const data = await res.json(); if(data.error) throw new Error(data.error.message);
+                let result = data.candidates[0].content.parts[0].text; result = result.replace(/^```html\s*/i, '').replace(/^```\s*/, '').replace(/```$/g, '').trim();
+                document.getElementById('code-editor').value = result; aiMsg.innerHTML = '✨ 構築完了。PREVIEWを確認してください。'; showPage('preview', document.getElementById('tab-preview')); updatePreview();
+            } catch (e) { aiMsg.innerHTML = '<span style="color:var(--danger)">エラー: ' + e.message + '</span>'; }
+        }
     }
 
 
     async function openDeployer() {
         const code = document.getElementById('code-editor').value;
         if (!code) return alert("デプロイするコードがありません。");
+        const key = document.getElementById('api-key').value;
+        const model = document.getElementById('code-model').value;
         localStorage.setItem('pending_deploy_code', code);
+
+        // Gemini で README.md を自動生成
+        if (key) {
+            try {
+                const readmePrompt = `以下のHTMLコードを分析し、高品質なREADME.mdを日本語と英語の併記で作成してください。
+以下のセクションを含めてください:
+- プロジェクト名（コードから推測）
+- 概要・説明（何のアプリか、主な特徴）
+- 主な機能一覧
+- 使用技術・ライブラリ
+- セットアップ・使い方
+- スクリーンショット（プレースホルダー）
+- ライセンス
+
+Markdownのコードブロックで囲まないでください。直接Markdown記法で出力してください。
+
+コード:
+${code}`;
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: readmePrompt }] }] })
+                });
+                const data = await res.json();
+                if (!data.error && data.candidates?.[0]) {
+                    let readme = data.candidates[0].content.parts[0].text;
+                    readme = readme.replace(/^```markdown\s*/i, '').replace(/^```\s*/, '').replace(/```$/g, '').trim();
+                    localStorage.setItem('pending_deploy_readme', readme);
+                }
+            } catch (e) { console.log('README生成スキップ:', e); }
+        }
         window.open('Deployer.html', '_blank');
     }
 

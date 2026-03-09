@@ -115,16 +115,20 @@
 
         // Web Studioからのデータ受信
         const pendingCode = localStorage.getItem('pending_deploy_code');
+        const pendingReadme = localStorage.getItem('pending_deploy_readme');
         if (pendingCode) {
             addFileRow('index.html', pendingCode, false);
             // 404.html
             const default404 = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>404</title><style>body{background:#1a1a1a;color:#eee;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;}a{color:#3b82f6;text-decoration:none;border:1px solid #3b82f6;padding:10px 20px;border-radius:20px;}</style></head><body><h1>404</h1><p>Page Not Found</p><a href="./">Return Home</a></body></html>`;
             addFileRow('404.html', default404, true);
-            // README.md
-            addFileRow('README.md', `# New Project\n\nAI Web Studio で生成されたプロジェクトです。`, true);
+            // README.md（Gemini生成があればそちらを使用）
+            const readmeContent = pendingReadme || `# New Project\n\nAI Web Studio で生成されたプロジェクトです。`;
+            addFileRow('README.md', readmeContent, true);
 
             addLog("Web Studio からコードを受信しました。");
+            if (pendingReadme) addLog("README.md をGeminiが自動生成しました。");
             localStorage.removeItem('pending_deploy_code');
+            localStorage.removeItem('pending_deploy_readme');
         } else {
             addFileRow('index.html', '<h1>Ready to Deploy</h1>', false);
         }
