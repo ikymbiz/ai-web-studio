@@ -65,12 +65,13 @@
         .editor-wrapper { flex: 1; position: relative; display: flex; }
         #code-editor { flex: 1; border: none; padding: 50px 15px 15px 15px; font-family: 'Fira Code', monospace; background: #0d0d0d; color: #d1d1d1; font-size: 14px; outline: none; resize: none; }
         .editor-actions { position: absolute; top: 10px; right: 15px; display: flex; gap: 8px; z-index: 10; }
-        .action-btn { color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; opacity: 0.9; transition: 0.2s; }
+        .action-btn { color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; opacity: 0.9; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; }
+        .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .copy-btn { background: rgba(255, 255, 255, 0.15); }
-        .upload-btn { background: #4b5563; } /* 追加：Uploadボタンの色 */
+        .upload-btn { background: #4b5563; }
         .download-btn { background: var(--primary); }
         .deploy-btn { background: var(--accent); }
-        .action-btn:hover { opacity: 1; transform: translateY(-1px); }
+        .action-btn:hover:not(:disabled) { opacity: 1; transform: translateY(-1px); }
         .import-btn { background: #1f6feb; }
 
         /* GitHub Import Modal */
@@ -185,7 +186,7 @@
                 <label>CHAT MODEL (PLAN)</label>
                 <select id="chat-model" class="setting-input">
                     <option value="gemini-3-flash-preview">3 Flash (Fast & Frontier)</option>
-                    <option value="gemini-2.5-flash">2.5 Flash (Balanced)</option>
+                    <option value="gemini-2.5-flash" selected>2.5 Flash (Balanced)</option>
                     <option value="gemini-2.5-pro">2.5 Pro (High-Quality Reasoning)</option>
                     <option value="deep-research-pro-preview-12-2025">Deep Research (Agentic Plan)</option>
                 </select>
@@ -195,13 +196,14 @@
                 <select id="code-model" class="setting-input">
                     <option value="gemini-3.1-pro-preview">3.1 Pro (Vibe Coding / Best)</option>
                     <option value="gemini-2.5-pro">2.5 Pro (Deep Reasoning)</option>
+                    <option value="gemini-2.5-flash" selected>2.5 Flash (Balanced)</option>
                     <option value="gemini-3-flash-preview">3 Flash (High-Speed Build)</option>
                  </select>
             </div>
         </div>
         <div class="field">
             <label>API KEY</label>
-            <input type="password" id="api-key" placeholder="AIzaSy...">
+            <input type="password" id="api-key" placeholder="AIzaSy... (未設定時はプロキシを使用します)">
         </div>
         <div class="field">
             <label>DEVELOPER PROFILE</label>
@@ -248,6 +250,7 @@
     const pagesList = ['chat', 'editor', 'preview', 'settings'];
     let ghImportRepos = [];
     let swRegistration = null;
+    const PROXY_WORKER_URL = 'https://green-credit-a6fb.ikymbiz.workers.dev';
 
     /* --- IndexedDB ヘルパー --- */
     function openDB() {
@@ -293,7 +296,7 @@
                     const res = await fetch(e.data.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: e.data.body });
                     const data = await res.json();
                     if (data.error) throw new Error(data.error.message);
-                    let result = data.candidates[0].content.parts[0].text;
+                    let result = data.candidates ? data.candidates[0].content.parts[0].text : (data.response || data.text || (typeof data === 'string' ? data : JSON.stringify(data)));
                     result = result.replace(/^\`\`\`html\\s*/i, '').replace(/^\`\`\`\\s*/, '').replace(/\`\`\`$/g, '').trim();
                     // IndexedDB に保存
                     const dbReq = indexedDB.open('WebStudioBG', 1);
@@ -545,7 +548,6 @@
         document.getElementById('attach-menu').classList.remove('show');
     }
 
-    // --- 新規：CODE画面用アップロード機能 ---
     function triggerCodeUpload() {
         document.getElementById('code-upload-input').click();
     }
@@ -600,39 +602,71 @@
         const model = document.getElementById('chat-model').value;
         const input = document.getElementById('user-prompt');
         const promptText = input.value.trim();
-        if(!key) return alert('設定タブでAPIキーを入力してください');
+        
         if(!promptText && !currentFileName) return alert('入力またはファイルが必要です');
+        
         const log = document.getElementById('chat-log');
         document.querySelectorAll('.generate-btn-wrapper').forEach(el => el.remove());
+        
         const userMsg = document.createElement('div');
         userMsg.className = 'msg user';
         userMsg.textContent = promptText; 
         if(currentFileName) userMsg.textContent += `\n[添付: ${currentFileName}]`;
         log.appendChild(userMsg);
+        
         const aiMsg = document.createElement('div');
         aiMsg.className = 'msg ai';
         aiMsg.innerHTML = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>考案中...</span></div>';
         log.appendChild(aiMsg);
+        
         input.value = ''; input.style.height = "44px"; log.scrollTop = log.scrollHeight;
         conversationContext += `\nユーザー: ${promptText}`;
         if(currentFileName) conversationContext += ` (添付ファイル: ${currentFileName})`;
+
+        // コードエディタの内容がある場合はシステムプロンプトに含める
+        const currentCode = document.getElementById('code-editor').value;
+        const codeContext = currentCode 
+            ? `\n\n【現在のコード】\n\`\`\`html\n${currentCode}\n\`\`\`\n※上記コードを踏まえて、内容を大きく変更せずに修正案や設計の提案を行ってください。` 
+            : "";
+
         const system = `あなたはプロのWeb開発ディレクターです。ユーザーのアイディアを具体化し、実装（BUILD）に向けた設計図を作成します。
 プロファイル: ${prof}
-ガイドライン: 1. アプリ名、ターゲット、機能をヒアリング。2. 簡潔に箇条書きで返答。3. コードは書かず、仕様合意に徹する。4. 仕様が固まったら「素晴らしいプランです。⚡️コードを作成 ボタンから実装を開始しましょう」と促す。`;
-        const userContent = { role: "user", parts: [{ text: system + "\n\n会話履歴:\n" + conversationContext }] };
-        if (currentImageBase64 && currentMimeType) {
-            userContent.parts.push({ inline_data: { mime_type: currentMimeType, data: currentImageBase64 } });
-            removeAttachment();
-        } 
+ガイドライン: 1. アプリ名、ターゲット、機能をヒアリング。2. 簡潔に箇条書きで返答。3. コードは書かず、仕様合意に徹する。4. 仕様が固まったら「素晴らしいプランです。⚡️コードを作成 ボタンから実装を開始しましょう」と促す。${codeContext}`;
+        
+        let aiText = "";
         try { 
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${key}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [userContent] }) });
-            if (!res.ok) throw new Error(`API Error: ${res.status} (Model: ${model})`);
-            const reader = res.body.getReader(); const decoder = new TextDecoder("utf-8"); let aiText = ""; let buffer = ""; aiMsg.innerHTML = "";
-            while (true) {
-                const { value, done } = await reader.read(); if (done) break;
-                buffer += decoder.decode(value, { stream: true }); const lines = buffer.split('\n'); buffer = lines.pop();
-                for (const line of lines) { if (line.startsWith('data: ')) { try { const data = JSON.parse(line.slice(6)); const textChunk = data.candidates?.[0]?.content?.parts?.[0]?.text; if (textChunk) { aiText += textChunk; aiMsg.innerText = aiText; log.scrollTop = log.scrollHeight; } } catch (e) {} } }
+            if (key) {
+                // API Keyがある場合は既存の直接通信 (SSE対応)
+                const userContent = { role: "user", parts: [{ text: system + "\n\n会話履歴:\n" + conversationContext }] };
+                if (currentImageBase64 && currentMimeType) {
+                    userContent.parts.push({ inline_data: { mime_type: currentMimeType, data: currentImageBase64 } });
+                    removeAttachment();
+                }
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${key}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [userContent] }) });
+                if (!res.ok) throw new Error(`API Error: ${res.status} (Model: ${model})`);
+                const reader = res.body.getReader(); const decoder = new TextDecoder("utf-8"); let buffer = ""; aiMsg.innerHTML = "";
+                while (true) {
+                    const { value, done } = await reader.read(); if (done) break;
+                    buffer += decoder.decode(value, { stream: true }); const lines = buffer.split('\n'); buffer = lines.pop();
+                    for (const line of lines) { if (line.startsWith('data: ')) { try { const data = JSON.parse(line.slice(6)); const textChunk = data.candidates?.[0]?.content?.parts?.[0]?.text; if (textChunk) { aiText += textChunk; aiMsg.innerText = aiText; log.scrollTop = log.scrollHeight; } } catch (e) {} } }
+                }
+            } else {
+                // Cloudflare Proxy経由
+                let combinedPrompt = system + "\n\n会話履歴:\n" + conversationContext;
+                if (currentImageBase64 && currentMimeType) {
+                    combinedPrompt += "\n[ユーザーから画像が添付されています]";
+                    removeAttachment();
+                }
+                const res = await fetch(PROXY_WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: combinedPrompt })
+                });
+                const data = await res.json();
+                aiText = data.candidates ? data.candidates[0].content.parts[0].text : (data.response || data.text || (typeof data === 'string' ? data : JSON.stringify(data)));
+                aiMsg.innerText = aiText;
             }
+
             conversationContext += `\nアシスタント: ${aiText}`;
             const btnWrapper = document.createElement('div'); btnWrapper.className = 'generate-btn-wrapper';
             const genBtn = document.createElement('button'); genBtn.className = 'generate-btn'; genBtn.innerHTML = '⚡️ コードを作成 (BUILD)';
@@ -659,21 +693,27 @@
 ${codeRule}
 会話履歴: ${conversationContext}`;
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-        const body = JSON.stringify({ contents: [{ parts: [{ text: system }] }] });
+        const googleUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+        const googleBody = JSON.stringify({ contents: [{ parts: [{ text: system }] }] });
+        const proxyBody = JSON.stringify({ prompt: system });
+
+        const targetUrl = key ? googleUrl : PROXY_WORKER_URL;
+        const targetBody = key ? googleBody : proxyBody;
 
         // Service Worker が利用可能ならバックグラウンド実行
         if (swRegistration && swRegistration.active) {
             document.getElementById('bg-notify').classList.add('show');
             await saveToDB('bgResult', { done: false, ts: Date.now() });
-            swRegistration.active.postMessage({ type: 'generate', url, body });
+            swRegistration.active.postMessage({ type: 'generate', url: targetUrl, body: targetBody });
             aiMsg.innerHTML = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>バックグラウンドで構築中... タブを閉じても処理は継続します。</span></div>';
         } else {
             // フォールバック：従来のフォアグラウンド実行
             try {
-                const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
-                const data = await res.json(); if(data.error) throw new Error(data.error.message);
-                let result = data.candidates[0].content.parts[0].text; result = result.replace(/^```html\s*/i, '').replace(/^```\s*/, '').replace(/```$/g, '').trim();
+                const res = await fetch(targetUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: targetBody });
+                const data = await res.json(); 
+                if(data.error) throw new Error(data.error.message);
+                let result = data.candidates ? data.candidates[0].content.parts[0].text : (data.response || data.text || (typeof data === 'string' ? data : JSON.stringify(data))); 
+                result = result.replace(/^```html\s*/i, '').replace(/^```\s*/, '').replace(/```$/g, '').trim();
                 document.getElementById('code-editor').value = result; aiMsg.innerHTML = '✨ 構築完了。PREVIEWを確認してください。'; showPage('preview', document.getElementById('tab-preview')); updatePreview();
             } catch (e) { aiMsg.innerHTML = '<span style="color:var(--danger)">エラー: ' + e.message + '</span>'; }
         }
@@ -687,35 +727,54 @@ ${codeRule}
         const model = document.getElementById('code-model').value;
         localStorage.setItem('pending_deploy_code', code);
 
-        // Gemini で README.md を自動生成
-        if (key) {
-            try {
-                const readmePrompt = `以下のHTMLコードを分析し、高品質なREADME.mdを日本語と英語の併記で作成してください。
+        const deployBtn = document.querySelector('.deploy-btn');
+        const originalText = deployBtn.innerHTML;
+        // くるくるを回してReAdme作成中と表示
+        deployBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 6px 0 0;"></div>README作成中...';
+        deployBtn.disabled = true;
+
+        const readmePrompt = `以下のHTMLコードを分析し、高品質なREADME.mdを日本語で作成してください。
 以下のセクションを含めてください:
 - プロジェクト名（コードから推測）
 - 概要・説明（何のアプリか、主な特徴）
 - 主な機能一覧
 - 使用技術・ライブラリ
 - セットアップ・使い方
-- スクリーンショット（プレースホルダー）
-- ライセンス
 
 Markdownのコードブロックで囲まないでください。直接Markdown記法で出力してください。
 
 コード:
 ${code}`;
+
+        try {
+            let readme = "";
+            if (key) {
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: readmePrompt }] }] })
                 });
                 const data = await res.json();
                 if (!data.error && data.candidates?.[0]) {
-                    let readme = data.candidates[0].content.parts[0].text;
-                    readme = readme.replace(/^```markdown\s*/i, '').replace(/^```\s*/, '').replace(/```$/g, '').trim();
-                    localStorage.setItem('pending_deploy_readme', readme);
+                    readme = data.candidates[0].content.parts[0].text;
                 }
-            } catch (e) { console.log('README生成スキップ:', e); }
-        }
+            } else {
+                const res = await fetch(PROXY_WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: readmePrompt })
+                });
+                const data = await res.json();
+                readme = data.candidates ? data.candidates[0].content.parts[0].text : (data.response || data.text || (typeof data === 'string' ? data : JSON.stringify(data)));
+            }
+
+            if (readme) {
+                readme = readme.replace(/^```markdown\s*/i, '').replace(/^```\s*/, '').replace(/```$/g, '').trim();
+                localStorage.setItem('pending_deploy_readme', readme);
+            }
+        } catch (e) { console.log('README生成スキップ:', e); }
+
+        deployBtn.innerHTML = originalText;
+        deployBtn.disabled = false;
         window.open('Deployer.html', '_blank');
     }
 
