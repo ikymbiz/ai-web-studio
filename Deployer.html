@@ -171,12 +171,13 @@
             const h = { 'Authorization': `Bearer ${token}` };
             const u = await fetch('https://api.github.com/user', { headers: h });
             if (u.ok) currentUsername = (await u.json()).login;
+            else { addLog("Auth failed: invalid token."); return; }
             const r = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100', { headers: h });
             if (r.ok) {
                 allRepos = await r.json();
                 addLog(`Connected as ${currentUsername}. ${allRepos.length} repos found.`);
             }
-        } catch (e) { addLog("Auth failed."); }
+        } catch (e) { addLog("Auth failed: " + e.message); }
     }
 
     function filterRepos() {
@@ -243,9 +244,13 @@
             let res = await fetch(`https://api.github.com/repos/${currentUsername}/${repoName}`, { headers: h });
             if (!res.ok) {
                 addLog(`Creating repository "${repoName}"...`);
-                await fetch('https://api.github.com/user/repos', {
+                const createRes = await fetch('https://api.github.com/user/repos', {
                     method: 'POST', headers: h, body: JSON.stringify({ name: repoName, auto_init: true, private: isPrivate })
                 });
+                if (!createRes.ok) {
+                    const err = await createRes.json().catch(() => ({}));
+                    throw new Error(err.message || 'Failed to create repository');
+                }
                 await new Promise(r => setTimeout(r, 2000));
             }
 
@@ -258,16 +263,27 @@
                 
                 addLog(`Uploading ${name}...`);
                 const fRes = await fetch(`https://api.github.com/repos/${currentUsername}/${repoName}/contents/${name}`, { headers: h });
-                const sha = fRes.ok ? (await fRes.json()).sha : null;
+                let sha = null;
+                if (fRes.ok) {
+                    try { sha = (await fRes.json()).sha; } catch(e) { /* ignore */ }
+                }
 
-                // UTF-8 対応のBase64エンコード
+                // UTF-8 対応のBase64エンコード（大きなファイルにも対応）
                 const uint8 = new TextEncoder().encode(content);
-                const b64 = btoa(String.fromCharCode(...uint8));
+                let binary = '';
+                for (let j = 0; j < uint8.length; j++) {
+                    binary += String.fromCharCode(uint8[j]);
+                }
+                const b64 = btoa(binary);
 
-                await fetch(`https://api.github.com/repos/${currentUsername}/${repoName}/contents/${name}`, {
+                const putRes = await fetch(`https://api.github.com/repos/${currentUsername}/${repoName}/contents/${name}`, {
                     method: 'PUT', headers: h,
                     body: JSON.stringify({ message: 'Update via AI Web Studio', content: b64, sha })
                 });
+                if (!putRes.ok) {
+                    const err = await putRes.json().catch(() => ({}));
+                    addLog(`⚠️ ${name}: ${err.message || 'Upload failed'}`);
+                }
             }
 
             // Pages Enable
