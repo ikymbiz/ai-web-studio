@@ -2,36 +2,48 @@
 
 ## 🇯🇵 日本語
 
-### 概要
-AI Web Studio Pro 2026は、Gemini AIモデルを活用して、チャットベースでWebアプリケーション（HTML/CSS/JS）の設計・生成・プレビュー・デプロイを行うことができるオールインワンのブラウザベース開発環境です。モバイル対応のUIを備え、画像添付による視覚的要件定義（Vibe Coding）や、バックグラウンドでのコード生成、GitHubとのシームレスな連携をサポートしています。
+### プロジェクト名
+AI Web Studio Pro 2026
+
+### 概要・説明
+AI Web Studio Pro 2026 は、ブラウザ上で完結するAI駆動型のフルスタックWeb開発スタジオです。
+自然言語によるチャットベースの指示や画像（UIモックアップ等）の添付を通じて、Gemini AIが要件定義からコーディングまでを自動で行います。チャット、コードエディタ、リアルタイムプレビューをシームレスに行き来し、スピーディーなWebアプリ開発を実現します。
+モバイル対応のUIやService Workerを利用したバックグラウンド生成機能など、モダンで実用的な機能が搭載されています。
 
 ### 主な機能一覧
-- **AIチャットアシスタント:** アプリの要件定義からコード生成のプランニングまで、AIと対話しながら進めることができます。
-- **マルチモーダル入力:** カメラ、画像ギャラリー、ファイルから画像を添付し、手書きのモックアップやデザイン画像から直接コードを生成可能です。
-- **リアルタイムプレビュー＆エディタ:** 生成されたコードを内蔵のコードエディタで確認・編集し、「PREVIEW」タブで即座に動作確認ができます。
-- **バックグラウンド生成:** Service WorkerとIndexedDBを活用し、タブを切り替えても裏側でコード生成タスクを継続します。
-- **GitHub連携:** GitHubのトークンを利用して、ご自身のリポジトリから直接ファイルをインポートしたり、生成したコードを直接デプロイ（Deployer.html連携）することが可能です。
-- **柔軟なモデル選択:** 要件定義用（CHAT）とコード生成用（BUILD）で、Gemini 2.5 Flash/ProやGemini 3 Previewなど、最適なモデルを個別に選択できます。
-- **ファイル操作機能:** 生成されたコードのダウンロード、クリップボードへのコピー、および既存ローカルファイルのアップロード機能を提供します。
+- **AIチャットによる要件定義**: 自然言語で作りたいアプリを指示し、AIと機能のプランをすり合わせます。
+- **マルチモーダル対応**: カメラ撮影、ギャラリー、ファイルから画像を添付し、画像に基づいたUI/コード生成が可能です。
+- **高度なコード生成**: Google Gemini API (2.5 Flash/Pro, 3.0 Flash/Pro等) を活用し、単一ファイル(HTML/CSS/JS)に最適化されたコードを出力します。
+- **統合されたエディタ＆プレビュー**: 生成されたコードを直接編集し、リアルタイムでプレビューを確認できます。
+- **バックグラウンド生成 (Service Worker)**: タブを閉じてもバックグラウンドでコード生成を継続し、IndexedDBを利用して進捗と結果を復元します。
+- **GitHub連携**: GitHubリポジトリからのファイルインポートや、ワンクリックでのデプロイ準備をサポートしています。
+- **マルチデバイス対応**: スワイプジェスチャーによるタブ切り替えに対応した、モバイルフレンドリーなPWAライクの設計です。
 
 ### 使用技術・ライブラリ
-- **フロントエンド:** HTML5, CSS3, Vanilla JavaScript (フレームワーク不使用)
-- **バックグラウンド処理:** Service Worker (Blob URL方式), IndexedDB
-- **API通信:** Gemini API (SSEストリーミング対応), GitHub REST API
-- **プロキシ:** Cloudflare Workers (APIキー未設定時のフォールバック通信用)
-- **フォント:** Fira Code (コードエディタ用)
+- HTML5, CSS3, Vanilla JavaScript (フロントエンド)
+- Google Gemini API (AI推論・コード生成)
+- GitHub REST API (ソースコードのインポート)
+- Service Worker & IndexedDB (バックグラウンド処理と状態キャッシュ)
+- Cloudflare Workers (APIプロキシ通信)
 
 ### セットアップ・使い方
-1. **起動:** 本HTMLファイルをモダンブラウザで開きます（Service Workerを有効にするため、ローカルサーバー環境 `http://localhost...` での実行を推奨します）。
-2. **設定:** 「SET」タブを開き、必要に応じてGoogle GeminiのAPIキーと、開発者プロファイル（好みのコーディングスタイルなど）を入力して保存します。
-3. **要件を伝える:** 「CHAT」タブで、AIに作りたいアプリのアイデアを入力します。必要に応じて「＋」ボタンから画像を添付してください。
-4. **生成開始:** 仕様が固まったらAIが提示する「⚡️ コードを作成 (BUILD)」ボタンを押し、コードを生成します。
-5. **プレビューと修正:** 「PREVIEW」タブで生成されたアプリの動作を確認します。修正が必要な場合は、画面下のデバッグパネルから修正指示を送信してください。
-6. **保存・デプロイ:** 「CODE」タブから、完成したコードをダウンロードするか、「🚀 GitHub Deploy」ボタンからデプロイプロセスに進みます。
+#### セットアップ
+1. 本プロジェクトのHTMLファイル（`index.html`など）をダウンロード、またはホスティング環境に配置します。
+2. ファイルを任意のモダンWebブラウザ（Chrome, Safari, Edgeなど）で開きます。
+3. （推奨）「SET (設定)」タブを開き、ご自身の **Google Gemini APIキー** を入力してください。未入力の場合はデフォルトのプロキシサーバー経由で動作します。
+
+#### 使い方
+1. **チャットで指示**: 「CHAT」タブで、作成したいWebアプリのアイデアを入力し、送信します（例: 「ダークモード対応の計算機アプリを作りたい」）。必要に応じて左下の「＋」ボタンから画像を添付します。
+2. **プランの確認と生成**: AIが要件を整理して返答します。内容に問題がなければ、チャット内に表示される「⚡️コードを作成 (BUILD)」ボタンをクリックします。
+3. **プレビューと修正**: コード生成が完了すると「PREVIEW」タブで実際の動作を確認できます。修正したい場合は、画面下部のデバッグパネルから追加の指示を出力します。
+4. **エクスポート/デプロイ**: 「CODE」タブから、ソースコードのダウンロード（Download）、クリップボードへのコピー（Copy）、またはGitHubへのデプロイ（🚀 GitHub Deploy）が可能です。
 
 ### スクリーンショット
-![Chat Interface](https://via.placeholder.com/800x450?text=Chat+Interface)
-![Code Editor & Preview](https://via.placeholder.com/800x450?text=Code+Editor+%26+Preview)
+> [ここにチャット画面のスクリーンショットを挿入]
+> 
+> [ここにコードエディタ画面のスクリーンショットを挿入]
+> 
+> [ここにプレビュー画面のスクリーンショットを挿入]
 
 ### ライセンス
 MIT License
@@ -40,36 +52,48 @@ MIT License
 
 ## 🇬🇧 English
 
-### Overview
-AI Web Studio Pro 2026 is an all-in-one, browser-based development environment that leverages Gemini AI models to design, generate, preview, and deploy web applications (HTML/CSS/JS) via a conversational interface. It features a mobile-friendly UI and supports multimodal visual requirement definition (Vibe Coding), background code generation, and seamless GitHub integration.
+### Project Name
+AI Web Studio Pro 2026
 
-### Features
-- **AI Chat Assistant:** Discuss project requirements and formulate a build plan through natural conversation with the AI.
-- **Multimodal Inputs:** Attach images directly from your camera, gallery, or local files to generate code from hand-drawn mockups or design screenshots.
-- **Real-time Preview & Editor:** View and manually tweak the generated code in the built-in code editor, and instantly test the results in the "PREVIEW" tab.
-- **Background Generation:** Utilizes Service Workers and IndexedDB to keep the code generation running in the background, even if you switch tabs or minimize the browser.
-- **GitHub Integration:** Import files directly from your GitHub repositories and seamlessly deploy your generated code (integrated with Deployer.html) using a GitHub Personal Access Token.
-- **Flexible AI Models:** Select the most appropriate Gemini models (e.g., Gemini 2.5 Flash/Pro, Gemini 3 Preview) separately for the chatting phase and the code-building phase.
-- **File Management:** Download the generated source code locally, copy it to the clipboard, or upload existing local files for further AI-assisted editing.
+### Overview & Description
+AI Web Studio Pro 2026 is an AI-driven, full-stack web development studio that runs entirely in your browser.
+By simply providing natural language instructions or attaching UI mockups, the integrated Gemini AI handles everything from requirement planning to coding. It offers a seamless experience with an integrated chat interface, code editor, and real-time preview, enabling rapid web application prototyping and development.
+Packed with modern features such as a mobile-friendly UI and background code generation via Service Workers, it is designed for maximum productivity.
 
-### Technologies
-- **Frontend:** HTML5, CSS3, Vanilla JavaScript (No frameworks used)
-- **Background Processing:** Service Worker (Blob URL), IndexedDB
-- **APIs:** Gemini API (with SSE streaming support), GitHub REST API
-- **Proxy:** Cloudflare Workers (used as a fallback when no API key is provided)
-- **Typography:** Fira Code (used for the code editor)
+### Key Features
+- **AI-Powered Requirement Planning**: Describe the app you want to build using natural language, and let the Gemini AI structure the plan.
+- **Multimodal Inputs**: Attach images via camera, gallery, or file upload to generate code based on visual UI mockups.
+- **Advanced Code Generation**: Utilizes Google Gemini API (2.5 Flash/Pro, 3.0 Flash/Pro, etc.) to output optimized single-file applications (HTML/CSS/JS).
+- **Integrated Editor & Preview**: Edit the generated code on the fly and immediately see the results in the real-time preview tab.
+- **Background Generation**: Leverages Service Workers to keep generating code even if you close the tab, restoring the state seamlessly using IndexedDB.
+- **GitHub Integration**: Import files directly from GitHub repositories and easily transition to the deployment phase.
+- **Mobile-Friendly UI**: Optimized for mobile devices with swipe gestures for intuitive tab navigation.
+
+### Technologies & Libraries
+- HTML5, CSS3, Vanilla JavaScript (No heavy frameworks)
+- Google Gemini API (AI reasoning & code generation)
+- GitHub REST API (Repository imports)
+- Service Worker & IndexedDB (Background tasks & state persistence)
+- Cloudflare Workers (API proxy communication)
 
 ### Setup & Usage
-1. **Launch:** Open the HTML file in any modern web browser (Running on a local server environment like `http://localhost...` is recommended to enable Service Workers).
-2. **Configuration:** Navigate to the "SET" tab. Enter your Google Gemini API Key and a Developer Profile (your preferred coding guidelines), then click save.
-3. **Define Requirements:** In the "CHAT" tab, describe the application you want to build. Use the "+" button to attach reference images if necessary.
-4. **Generate Code:** Once the requirements are finalized, click the "⚡️ Generate Code (BUILD)" button provided by the AI to start generating the source code.
-5. **Preview & Refine:** Check the generated application in the "PREVIEW" tab. If you need adjustments, use the debug panel at the bottom to send feedback/correction requests to the AI.
-6. **Save & Deploy:** Go to the "CODE" tab to download your completed code, or click "🚀 GitHub Deploy" to start the deployment process.
+#### Setup
+1. Download the main HTML file of this project (e.g., `index.html`) or host it on your preferred server.
+2. Open the file in any modern web browser (Chrome, Safari, Edge, etc.).
+3. (Optional) Navigate to the "SET" (Settings) tab and enter your **Google Gemini API Key**. If left blank, the app will use a default proxy server to function.
+
+#### Usage
+1. **Chat & Instruct**: In the "CHAT" tab, type in your web app idea (e.g., "Create a calculator app with dark mode") and send it. You can also attach images using the "+" button.
+2. **Review & Build**: The AI will respond with a development plan. Once you agree with the specifications, click the "⚡️ Generate Code (BUILD)" button that appears in the chat log.
+3. **Preview & Debug**: Once generation is complete, check your app's functionality in the "PREVIEW" tab. Use the debug panel at the bottom to request specific modifications.
+4. **Export & Deploy**: Go to the "CODE" tab to copy the code to your clipboard, download it as an `.html` file, or initiate a deployment to GitHub.
 
 ### Screenshots
-![Chat Interface](https://via.placeholder.com/800x450?text=Chat+Interface)
-![Code Editor & Preview](https://via.placeholder.com/800x450?text=Code+Editor+%26+Preview)
+> [Insert screenshot of the Chat screen here]
+> 
+> [Insert screenshot of the Code Editor screen here]
+> 
+> [Insert screenshot of the Preview screen here]
 
 ### License
 MIT License
