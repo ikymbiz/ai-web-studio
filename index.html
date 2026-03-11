@@ -74,7 +74,7 @@
         .action-btn:hover:not(:disabled) { opacity: 1; transform: translateY(-1px); }
         .import-btn { background: #1f6feb; }
 
-        /* GitHub Import Modal */
+        /* Modal Base */
         .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; align-items:center; justify-content:center; }
         .modal-overlay.show { display:flex; }
         .modal { background:#1e1e1e; border:1px solid #444; border-radius:12px; width:90%; max-width:500px; max-height:80vh; display:flex; flex-direction:column; overflow:hidden; }
@@ -89,7 +89,7 @@
         .repo-list li:hover, .file-list li:hover { background:#2a2a2a; }
         .repo-list li .repo-meta-sm { font-size:11px; color:#666; }
         .modal-status { font-size:12px; color:#888; padding:8px 0; text-align:center; }
-        .modal-btn { background:var(--primary); color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:bold; width:100%; margin-top:8px; }
+        .modal-btn { background:var(--primary); color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:bold; width:100%; margin-top:8px; display:inline-flex; align-items:center; justify-content:center; }
         .modal-btn:disabled { opacity:0.5; cursor:not-allowed; }
 
         /* SW Background notification */
@@ -235,6 +235,62 @@
     </div>
 </div>
 
+<!-- GitHub Deploy Modal -->
+<div id="gh-deploy-modal" class="modal-overlay" onclick="if(event.target===this)closeGitHubDeploy()">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>🚀 GitHub Deploy</h3>
+            <button class="modal-close" onclick="closeGitHubDeploy()">✕</button>
+        </div>
+        <div class="modal-body" style="display:flex; flex-direction:column; gap:12px;">
+            <!-- Step 1: Token -->
+            <div id="deploy-step-token">
+                <p style="font-size:13px; color:#ccc; margin-top:0;">GitHub Personal Access Token (repo scope) を設定してください。</p>
+                <input type="password" id="deploy-token-input" class="modal-input" placeholder="ghp_...">
+                <button class="modal-btn" onclick="saveDeployToken()">保存 & 認証</button>
+                <div id="deploy-token-status" class="modal-status"></div>
+            </div>
+
+            <!-- Step 2: Repositories -->
+            <div id="deploy-step-repo" style="display:none">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <button class="modal-btn" style="background:#333; width:auto; margin:0; padding:6px 12px; font-size:11px;" onclick="showDeployStep('token')">← トークン設定</button>
+                    <button class="modal-btn" style="background:#333; width:auto; margin:0; padding:6px 12px; font-size:11px;" onclick="fetchDeployRepos()">🔄 更新</button>
+                </div>
+                <input id="deploy-repo-search" class="modal-input" placeholder="リポジトリを検索..." oninput="filterDeployRepos()">
+                <div id="deploy-repo-status" class="modal-status"></div>
+                <ul id="deploy-repo-list" class="repo-list"></ul>
+            </div>
+
+            <!-- Step 3: Details & Execute -->
+            <div id="deploy-step-details" style="display:none; flex-direction:column; gap:12px;">
+                <button class="modal-btn" style="background:#333; width:auto; align-self:flex-start; margin:0; padding:6px 12px; font-size:11px;" onclick="showDeployStep('repo')">← リポジトリ選択に戻る</button>
+                
+                <div style="font-size:13px; color:#fff;">デプロイ先: <strong id="deploy-target-repo-name" style="color:var(--primary);"></strong></div>
+                
+                <div style="display:flex; gap:10px;">
+                    <div style="flex:1;">
+                        <label style="display:block; font-size:11px; color:#888; margin-bottom:4px;">ブランチ</label>
+                        <input id="deploy-branch" class="modal-input" value="main">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="display:block; font-size:11px; color:#888; margin-bottom:4px;">ファイルパス</label>
+                        <input id="deploy-filepath" class="modal-input" value="index.html">
+                    </div>
+                </div>
+
+                <div>
+                    <label style="display:block; font-size:11px; color:#888; margin-bottom:4px;">README.md</label>
+                    <textarea id="deploy-readme-content" class="modal-input" rows="6" style="resize:vertical; font-family:monospace; font-size:12px;" placeholder="READMEの内容..."></textarea>
+                </div>
+
+                <div id="deploy-execute-status" class="modal-status" style="text-align:left; color:#ccc;"></div>
+                <button class="modal-btn" id="deploy-exec-btn" onclick="executeDeploy()" style="background:var(--accent);">🚀 デプロイ実行</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Background generation notification -->
 <div id="bg-notify" class="bg-notify">
     <div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0"></div>
@@ -354,9 +410,9 @@
     }
 
     /* --- GitHub Import 関数群 --- */
-    function openGitHubImport() {
-        const token = localStorage.getItem('gh_token');
-        if (!token) return alert('GitHubトークンが未設定です。\nDeployer.html でトークンを保存してください。');
+    async function openGitHubImport() {
+        const token = await getFromDB('gh_token');
+        if (!token) return alert('GitHubトークンが未設定です。\nDeployの「🚀 GitHub Deploy」から先にトークンを設定してください。');
         const modal = document.getElementById('gh-import-modal');
         modal.classList.add('show');
         document.getElementById('gh-step-repo').style.display = '';
@@ -398,13 +454,12 @@
         document.getElementById('gh-step-file').style.display = '';
         const status = document.getElementById('gh-file-status');
         status.textContent = repo.full_name + ' のファイルを取得中...';
-        const token = localStorage.getItem('gh_token');
+        const token = await getFromDB('gh_token');
         try {
             const res = await fetch('https://api.github.com/repos/' + repo.full_name + '/git/trees/main?recursive=1', {
                 headers: { 'Authorization': 'Bearer ' + token }
             });
             if (!res.ok) {
-                // mainブランチが無い場合masterを試す
                 const res2 = await fetch('https://api.github.com/repos/' + repo.full_name + '/git/trees/master?recursive=1', {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
@@ -430,7 +485,7 @@
         });
     }
     async function loadFileFromRepo(fullName, path) {
-        const token = localStorage.getItem('gh_token');
+        const token = await getFromDB('gh_token');
         const status = document.getElementById('gh-file-status');
         status.textContent = path + ' を読み込み中...';
         try {
@@ -451,13 +506,187 @@
         document.getElementById('gh-step-file').style.display = 'none';
     }
 
+    /* --- GitHub Deploy 関数群 --- */
+    let deployRepos = [];
+    let selectedDeployRepo = null;
+
+    async function openGitHubDeploy() {
+        document.getElementById('gh-deploy-modal').classList.add('show');
+        const token = await getFromDB('gh_token');
+        if (token) {
+            showDeployStep('repo');
+            fetchDeployRepos();
+        } else {
+            showDeployStep('token');
+        }
+    }
+
+    function closeGitHubDeploy() {
+        document.getElementById('gh-deploy-modal').classList.remove('show');
+    }
+
+    function showDeployStep(step) {
+        document.getElementById('deploy-step-token').style.display = step === 'token' ? 'block' : 'none';
+        document.getElementById('deploy-step-repo').style.display = step === 'repo' ? 'block' : 'none';
+        document.getElementById('deploy-step-details').style.display = step === 'details' ? 'flex' : 'none';
+    }
+
+    async function saveDeployToken() {
+        const input = document.getElementById('deploy-token-input').value.trim();
+        const status = document.getElementById('deploy-token-status');
+        if (!input) return status.textContent = 'トークンを入力してください';
+        
+        status.textContent = '認証中...';
+        try {
+            const res = await fetch('https://api.github.com/user', {
+                headers: { 'Authorization': 'Bearer ' + input }
+            });
+            if (!res.ok) throw new Error('認証失敗');
+            
+            await saveToDB('gh_token', input);
+            status.textContent = '認証成功！';
+            setTimeout(() => {
+                showDeployStep('repo');
+                fetchDeployRepos();
+            }, 500);
+        } catch (e) {
+            status.textContent = 'エラー: ' + e.message;
+        }
+    }
+
+    async function fetchDeployRepos() {
+        const token = await getFromDB('gh_token');
+        const status = document.getElementById('deploy-repo-status');
+        status.textContent = '読み込み中...';
+        try {
+            const res = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (!res.ok) throw new Error('認証エラー (' + res.status + ')');
+            deployRepos = await res.json();
+            status.textContent = deployRepos.length + ' 件のリポジトリ';
+            renderDeployRepos(deployRepos);
+        } catch (e) { status.textContent = 'エラー: ' + e.message; }
+    }
+
+    function renderDeployRepos(repos) {
+        const list = document.getElementById('deploy-repo-list');
+        list.innerHTML = '';
+        repos.forEach(r => {
+            const li = document.createElement('li');
+            li.innerHTML = '<span>' + (r.private ? '🔒 ' : '🌐 ') + r.name + '</span><span class="repo-meta-sm">' + new Date(r.updated_at).toLocaleDateString() + '</span>';
+            li.onclick = () => selectDeployRepo(r);
+            list.appendChild(li);
+        });
+    }
+
+    function filterDeployRepos() {
+        const q = document.getElementById('deploy-repo-search').value.toLowerCase();
+        renderDeployRepos(deployRepos.filter(r => r.name.toLowerCase().includes(q)));
+    }
+
+    async function selectDeployRepo(repo) {
+        selectedDeployRepo = repo;
+        document.getElementById('deploy-target-repo-name').textContent = repo.full_name;
+        
+        const pendingDeploy = await getFromDB('pending_deploy');
+        if (pendingDeploy && pendingDeploy.readme) {
+            document.getElementById('deploy-readme-content').value = pendingDeploy.readme;
+        } else {
+            document.getElementById('deploy-readme-content').value = '';
+        }
+
+        document.getElementById('deploy-execute-status').innerHTML = '';
+        showDeployStep('details');
+    }
+
+    function encodeBase64Unicode(str) {
+        return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+            function toSolidBytes(match, p1) {
+                return String.fromCharCode('0x' + p1);
+            }));
+    }
+
+    async function executeDeploy() {
+        if (!selectedDeployRepo) return;
+        const btn = document.getElementById('deploy-exec-btn');
+        const status = document.getElementById('deploy-execute-status');
+        const branch = document.getElementById('deploy-branch').value.trim() || 'main';
+        const filepath = document.getElementById('deploy-filepath').value.trim() || 'index.html';
+        const readmeContent = document.getElementById('deploy-readme-content').value;
+        
+        const pendingDeploy = await getFromDB('pending_deploy');
+        const codeContent = pendingDeploy ? pendingDeploy.code : document.getElementById('code-editor').value;
+
+        if (!codeContent) {
+            return status.innerHTML = '<span style="color:var(--danger)">エラー: デプロイするコードがありません。</span>';
+        }
+
+        btn.disabled = true;
+        status.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 6px 0 0;"></div>デプロイ準備中...';
+
+        const token = await getFromDB('gh_token');
+        const repoFullName = selectedDeployRepo.full_name;
+
+        const pushFile = async (path, content, message) => {
+            const url = `https://api.github.com/repos/${repoFullName}/contents/${path}`;
+            let sha = null;
+            try {
+                const getRes = await fetch(url + '?ref=' + branch, { headers: { 'Authorization': 'Bearer ' + token } });
+                if (getRes.ok) {
+                    const data = await getRes.json();
+                    sha = data.sha;
+                }
+            } catch (e) {}
+
+            const body = {
+                message: message,
+                content: encodeBase64Unicode(content),
+                branch: branch
+            };
+            if (sha) body.sha = sha;
+
+            const putRes = await fetch(url, {
+                method: 'PUT',
+                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (!putRes.ok) {
+                const err = await putRes.json();
+                throw new Error(err.message || 'Push failed');
+            }
+        };
+
+        try {
+            status.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 6px 0 0;"></div>コードをコミット中...';
+            await pushFile(filepath, codeContent, `Deploy ${filepath} via AI Web Studio Pro`);
+
+            if (readmeContent) {
+                status.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 6px 0 0;"></div>READMEをコミット中...';
+                await pushFile('README.md', readmeContent, 'Update README.md via AI Web Studio Pro');
+            }
+
+            status.innerHTML = '<span style="color:var(--success)">✅ デプロイ成功！</span> <a href="https://github.com/' + repoFullName + '" target="_blank" style="color:var(--primary)">リポジトリを開く</a>';
+            await deleteFromDB('pending_deploy');
+        } catch (e) {
+            status.innerHTML = '<span style="color:var(--danger)">❌ エラー: ' + e.message + '</span>';
+        }
+
+        btn.disabled = false;
+    }
+
+
     window.onload = async () => {
-        document.getElementById('api-key').value = localStorage.getItem('g_key') || '';
-        document.getElementById('user-profile').value = localStorage.getItem('g_prof') || '';
-        const savedChatModel = localStorage.getItem('g_chat_model');
-        if (savedChatModel) document.getElementById('chat-model').value = savedChatModel;
-        const savedCodeModel = localStorage.getItem('g_code_model');
-        if (savedCodeModel) document.getElementById('code-model').value = savedCodeModel;
+        try {
+            const settings = await getFromDB('settings');
+            if (settings) {
+                document.getElementById('api-key').value = settings.apiKey || '';
+                document.getElementById('user-profile').value = settings.userProfile || '';
+                if (settings.chatModel) document.getElementById('chat-model').value = settings.chatModel;
+                if (settings.codeModel) document.getElementById('code-model').value = settings.codeModel;
+            }
+        } catch(e) {}
 
         // Service Worker 登録
         await registerSW();
@@ -573,12 +802,19 @@
         }
     });
 
-    function saveSettings() {
-        localStorage.setItem('g_key', document.getElementById('api-key').value);
-        localStorage.setItem('g_prof', document.getElementById('user-profile').value);
-        localStorage.setItem('g_chat_model', document.getElementById('chat-model').value);
-        localStorage.setItem('g_code_model', document.getElementById('code-model').value);
-        alert('設定を保存しました');
+    async function saveSettings() {
+        const settings = {
+            apiKey: document.getElementById('api-key').value,
+            userProfile: document.getElementById('user-profile').value,
+            chatModel: document.getElementById('chat-model').value,
+            codeModel: document.getElementById('code-model').value
+        };
+        try {
+            await saveToDB('settings', settings);
+            alert('設定を保存しました');
+        } catch(e) {
+            alert('設定の保存に失敗しました: ' + e.message);
+        }
     }
 
     function confirmReset() {
@@ -623,7 +859,6 @@
         conversationContext += `\nユーザー: ${promptText}`;
         if(currentFileName) conversationContext += ` (添付ファイル: ${currentFileName})`;
 
-        // コードエディタの内容がある場合はシステムプロンプトに含める
         const currentCode = document.getElementById('code-editor').value;
         const codeContext = currentCode 
             ? `\n\n【現在のコード】\n\`\`\`html\n${currentCode}\n\`\`\`\n※上記コードを踏まえて、内容を大きく変更せずに修正案や設計の提案を行ってください。` 
@@ -636,7 +871,6 @@
         let aiText = "";
         try { 
             if (key) {
-                // API Keyがある場合は既存の直接通信 (SSE対応)
                 const userContent = { role: "user", parts: [{ text: system + "\n\n会話履歴:\n" + conversationContext }] };
                 if (currentImageBase64 && currentMimeType) {
                     userContent.parts.push({ inline_data: { mime_type: currentMimeType, data: currentImageBase64 } });
@@ -651,7 +885,6 @@
                     for (const line of lines) { if (line.startsWith('data: ')) { try { const data = JSON.parse(line.slice(6)); const textChunk = data.candidates?.[0]?.content?.parts?.[0]?.text; if (textChunk) { aiText += textChunk; aiMsg.innerText = aiText; log.scrollTop = log.scrollHeight; } } catch (e) {} } }
                 }
             } else {
-                // Cloudflare Proxy経由
                 let combinedPrompt = system + "\n\n会話履歴:\n" + conversationContext;
                 if (currentImageBase64 && currentMimeType) {
                     combinedPrompt += "\n[ユーザーから画像が添付されています]";
@@ -700,14 +933,12 @@ ${codeRule}
         const targetUrl = key ? googleUrl : PROXY_WORKER_URL;
         const targetBody = key ? googleBody : proxyBody;
 
-        // Service Worker が利用可能ならバックグラウンド実行
         if (swRegistration && swRegistration.active) {
             document.getElementById('bg-notify').classList.add('show');
             await saveToDB('bgResult', { done: false, ts: Date.now() });
             swRegistration.active.postMessage({ type: 'generate', url: targetUrl, body: targetBody });
             aiMsg.innerHTML = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>バックグラウンドで構築中... タブを閉じても処理は継続します。</span></div>';
         } else {
-            // フォールバック：従来のフォアグラウンド実行
             try {
                 const res = await fetch(targetUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: targetBody });
                 const data = await res.json(); 
@@ -719,17 +950,17 @@ ${codeRule}
         }
     }
 
-
     async function openDeployer() {
         const code = document.getElementById('code-editor').value;
         if (!code) return alert("デプロイするコードがありません。");
         const key = document.getElementById('api-key').value;
         const model = document.getElementById('code-model').value;
-        localStorage.setItem('pending_deploy_code', code);
+        
+        let pendingDeploy = { code: code, readme: "" };
+        await saveToDB('pending_deploy', pendingDeploy);
 
         const deployBtn = document.querySelector('.deploy-btn');
         const originalText = deployBtn.innerHTML;
-        // くるくるを回してReAdme作成中と表示
         deployBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 6px 0 0;"></div>README作成中...';
         deployBtn.disabled = true;
 
@@ -769,13 +1000,15 @@ ${code}`;
 
             if (readme) {
                 readme = readme.replace(/^```markdown\s*/i, '').replace(/^```\s*/, '').replace(/```$/g, '').trim();
-                localStorage.setItem('pending_deploy_readme', readme);
+                pendingDeploy.readme = readme;
+                await saveToDB('pending_deploy', pendingDeploy);
             }
         } catch (e) { console.log('README生成スキップ:', e); }
 
         deployBtn.innerHTML = originalText;
         deployBtn.disabled = false;
-        window.open('Deployer.html', '_blank');
+        
+        openGitHubDeploy();
     }
 
     function sendDebugRequest() {
