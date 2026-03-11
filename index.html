@@ -257,9 +257,33 @@
                     <button class="modal-btn" style="background:#333; width:auto; margin:0; padding:6px 12px; font-size:11px;" onclick="showDeployStep('token')">← トークン設定</button>
                     <button class="modal-btn" style="background:#333; width:auto; margin:0; padding:6px 12px; font-size:11px;" onclick="fetchDeployRepos()">🔄 更新</button>
                 </div>
+                <button class="modal-btn" style="background:var(--success); margin-bottom:12px;" onclick="showDeployStep('new-repo')">＋ 新規リポジトリを作成</button>
                 <input id="deploy-repo-search" class="modal-input" placeholder="リポジトリを検索..." oninput="filterDeployRepos()">
                 <div id="deploy-repo-status" class="modal-status"></div>
                 <ul id="deploy-repo-list" class="repo-list"></ul>
+            </div>
+
+            <!-- Step 2.5: New Repo -->
+            <div id="deploy-step-new-repo" style="display:none; flex-direction:column; gap:12px;">
+                <button class="modal-btn" style="background:#333; width:auto; align-self:flex-start; margin:0; padding:6px 12px; font-size:11px;" onclick="showDeployStep('repo')">← リポジトリ選択に戻る</button>
+                
+                <div>
+                    <label style="display:block; font-size:11px; color:#888; margin-bottom:4px;">リポジトリ名 <span style="color:var(--danger)">*</span></label>
+                    <input id="new-repo-name" class="modal-input" placeholder="my-awesome-project">
+                </div>
+                <div>
+                    <label style="display:block; font-size:11px; color:#888; margin-bottom:4px;">説明 (任意)</label>
+                    <input id="new-repo-desc" class="modal-input" placeholder="A great project built with AI">
+                </div>
+                <div>
+                    <label style="display:block; font-size:11px; color:#888; margin-bottom:4px;">公開設定</label>
+                    <select id="new-repo-private" class="modal-input" style="appearance:auto; background-image:none; padding-right:12px;">
+                        <option value="false">Public (公開)</option>
+                        <option value="true">Private (非公開)</option>
+                    </select>
+                </div>
+                <div id="new-repo-status" class="modal-status" style="text-align:left; color:#ccc;"></div>
+                <button class="modal-btn" id="new-repo-btn" onclick="createNewRepo()" style="background:var(--success);">✨ 作成してデプロイ準備</button>
             </div>
 
             <!-- Step 3: Details & Execute -->
@@ -528,6 +552,7 @@
     function showDeployStep(step) {
         document.getElementById('deploy-step-token').style.display = step === 'token' ? 'block' : 'none';
         document.getElementById('deploy-step-repo').style.display = step === 'repo' ? 'block' : 'none';
+        document.getElementById('deploy-step-new-repo').style.display = step === 'new-repo' ? 'flex' : 'none';
         document.getElementById('deploy-step-details').style.display = step === 'details' ? 'flex' : 'none';
     }
 
@@ -605,6 +630,56 @@
             function toSolidBytes(match, p1) {
                 return String.fromCharCode('0x' + p1);
             }));
+    }
+
+    async function createNewRepo() {
+        const name = document.getElementById('new-repo-name').value.trim();
+        const desc = document.getElementById('new-repo-desc').value.trim();
+        const isPrivate = document.getElementById('new-repo-private').value === 'true';
+        const status = document.getElementById('new-repo-status');
+        const btn = document.getElementById('new-repo-btn');
+
+        if (!name) return status.innerHTML = '<span style="color:var(--danger)">リポジトリ名を入力してください</span>';
+
+        btn.disabled = true;
+        status.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 6px 0 0;"></div>リポジトリを作成中...';
+
+        try {
+            const token = await getFromDB('gh_token');
+            const res = await fetch('https://api.github.com/user/repos', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: name,
+                    description: desc,
+                    private: isPrivate,
+                    auto_init: true // 初期化してmainブランチとREADMEを作成
+                })
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.message || '作成失敗');
+            }
+
+            const newRepo = await res.json();
+            status.innerHTML = '<span style="color:var(--success)">✅ 作成成功！</span>';
+            
+            setTimeout(() => {
+                btn.disabled = false;
+                document.getElementById('new-repo-name').value = '';
+                document.getElementById('new-repo-desc').value = '';
+                status.innerHTML = '';
+                selectDeployRepo(newRepo);
+            }, 1000);
+
+        } catch (e) {
+            status.innerHTML = '<span style="color:var(--danger)">❌ エラー: ' + e.message + '</span>';
+            btn.disabled = false;
+        }
     }
 
     async function executeDeploy() {
