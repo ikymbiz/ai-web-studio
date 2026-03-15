@@ -4,14 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AI Web Studio Pro 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #212121; --sidebar: #171717; --primary: #3b82f6; --text: #ececec; --user-msg: #303030; --ai-msg: #212121; --danger: #ef4444; --success: #10b981; --accent: #8b5cf6; }
+        /* ============================================
+           DESIGN SYSTEM - Obsidian Terminal
+           GenAI Chat App v2.0
+           ============================================ */
+        :root {
+            /* Backgrounds */
+            --color-bg-deep:       #0D0F14;
+            --color-bg-surface:    #161920;
+            --color-bg-elevated:   #1E2433;
+
+            /* Borders */
+            --color-border:        #2A2D36;
+            --color-border-focus:  #4A4F5E;
+
+            /* Text */
+            --color-text-primary:  #E8E4F0;
+            --color-text-secondary:#6B7280;
+            --color-text-muted:    #3D4251;
+
+            /* Typography */
+            --font-display: 'Syne',        sans-serif;
+            --font-body:    'DM Sans',     sans-serif;
+            --font-mono:    'JetBrains Mono', monospace;
+
+            /* Legacy Mappings */
+            --bg: var(--color-bg-deep);
+            --sidebar: var(--color-bg-surface);
+            --primary: #3b82f6;
+            --text: var(--color-text-primary);
+            --user-msg: var(--color-bg-elevated);
+            --ai-msg: var(--color-bg-deep);
+            --danger: #ef4444;
+            --success: #10b981;
+            --accent: #8b5cf6;
+        }
+
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, system-ui, sans-serif; margin: 0; height: 100dvh; display: flex; flex-direction: column; background: var(--bg); color: var(--text); overflow: hidden; }
+        body { font-family: var(--font-body); margin: 0; height: 100dvh; display: flex; flex-direction: column; background: var(--bg); color: var(--text); overflow: hidden; }
 
         /* ナビゲーション */
-        .tabs { display: flex; background: var(--sidebar); border-bottom: 1px solid #333; flex-shrink: 0; }
-        .tab-btn { flex: 1; padding: 15px 0; border: none; background: none; font-size: 13px; font-weight: 600; color: #9b9b9b; cursor: pointer; transition: 0.2s; }
+        .tabs { display: flex; background: var(--sidebar); border-bottom: 1px solid var(--color-border); flex-shrink: 0; }
+        .tab-btn { flex: 1; padding: 15px 0; border: none; background: none; font-size: 13px; font-weight: 600; color: var(--color-text-secondary); cursor: pointer; transition: 0.2s; font-family: var(--font-body); }
         .tab-btn.active { color: #fff; border-bottom: 2px solid #fff; }
 
         /* メインコンテンツ */
@@ -20,76 +56,94 @@
         .page.active { display: flex; }
 
         /* チャットヘッダー */
-        .chat-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: var(--sidebar); border-bottom: 1px solid #333; }
-        .header-title { font-size: 12px; font-weight: bold; color: #888; }
-        .reset-btn { background: #333; color: #eee; border: 1px solid #444; padding: 4px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+        .chat-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: var(--sidebar); border-bottom: 1px solid var(--color-border); }
+        .header-title { font-size: 12px; font-weight: bold; color: var(--color-text-secondary); font-family: var(--font-display); letter-spacing: 0.05em; }
+        .reset-btn { background: var(--color-bg-elevated); color: var(--color-text-primary); border: 1px solid var(--color-border); padding: 4px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; }
         .reset-btn:hover { background: var(--danger); border-color: var(--danger); }
 
         /* チャットエリア */
         #chat-log { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; background: var(--bg); }
-        .msg { max-width: 95%; padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.6; word-wrap: break-word; white-space: pre-wrap; }
+        .msg { position: relative; max-width: 95%; padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.6; word-wrap: break-word; white-space: pre-wrap; }
         .user { align-self: flex-end; background: var(--user-msg); color: #fff; }
-        .ai { align-self: flex-start; background: var(--ai-msg); border: 1px solid #333; width: 100%; }
+        .ai { align-self: flex-start; background: var(--ai-msg); border: 1px solid var(--color-border); width: 100%; }
+
+        /* チャットアクション＆コンテンツ */
+        .msg-content { outline: none; white-space: pre-wrap; word-wrap: break-word; transition: 0.2s; border-radius: 4px; }
+        .msg-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; opacity: 0.5; transition: opacity 0.2s; }
+        .msg:hover .msg-actions { opacity: 1; }
+        .msg-action-btn { background: transparent; border: none; color: #aaa; cursor: pointer; font-size: 14px; padding: 4px; border-radius: 4px; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+        .msg-action-btn:hover { background: var(--color-border-focus); color: #fff; }
 
         .spinner { width: 20px; height: 20px; border: 3px solid rgba(255, 255, 255, 0.2); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
         /* 入力エリア */
-        .input-container { padding: 15px; background: var(--bg); border-top: 1px solid #333; display: flex; flex-direction: column; gap: 10px; position: relative; }
+        .input-container { padding: 15px; background: var(--bg); border-top: 1px solid var(--color-border); display: flex; flex-direction: column; gap: 10px; position: relative; }
         .input-row { display: flex; gap: 10px; align-items: flex-end; }
-        #user-prompt { flex: 1; min-height: 44px; max-height: 150px; background: #2f2f2f; border: 1px solid #444; border-radius: 22px; padding: 10px 20px; color: #fff; font-size: 16px; outline: none; resize: none; }
+        #user-prompt { flex: 1; min-height: 44px; max-height: 150px; background: var(--color-bg-elevated); border: 1px solid var(--color-border-focus); border-radius: 22px; padding: 10px 20px; color: #fff; font-size: 16px; outline: none; resize: none; font-family: var(--font-body); }
 
         /* 添付ボタンとメニュー */
-        .file-label { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: #333; border-radius: 50%; cursor: pointer; font-size: 20px; flex-shrink: 0; transition: background 0.2s, color 0.2s; }
-        .file-label:active { background: #444; }
+        .file-label { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: var(--color-bg-elevated); border-radius: 50%; cursor: pointer; font-size: 20px; flex-shrink: 0; transition: background 0.2s, color 0.2s; border: 1px solid var(--color-border-focus); }
+        .file-label:active { background: var(--color-border); }
 
-        .attachment-menu { display: none; position: absolute; bottom: 80px; left: 15px; background: #2a2a2a; border: 1px solid #444; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); z-index: 1000; width: 160px; }
+        .attachment-menu { display: none; position: absolute; bottom: 80px; left: 15px; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); z-index: 1000; width: 160px; }
         .attachment-menu.show { display: block; animation: menuFade 0.2s ease; }
         @keyframes menuFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .menu-item { padding: 12px 16px; font-size: 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.2s; color: #eee; }
-        .menu-item:hover { background: #383838; }
+        .menu-item { padding: 12px 16px; font-size: 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.2s; color: var(--color-text-primary); }
+        .menu-item:hover { background: var(--color-bg-elevated); }
         .menu-item:first-child { border-radius: 12px 12px 0 0; }
         .menu-item:last-child { border-radius: 0 0 12px 12px; }
 
         #file-preview { display: none; width: 60px; height: 60px; border-radius: 8px; object-fit: cover; border: 1px solid var(--primary); }
-        #file-name-display { display: none; font-size: 12px; color: #ccc; background: #333; padding: 4px 8px; border-radius: 4px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #file-name-display { display: none; font-size: 12px; color: #ccc; background: var(--color-bg-elevated); padding: 4px 8px; border-radius: 4px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         .send-btn { background: var(--primary); color: white; border: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
 
         /* ボタン類 */
         .generate-btn-wrapper { margin-top: 15px; display: flex; justify-content: flex-end; }
-        .generate-btn { background: var(--success); color: white; border: none; height: 38px; padding: 0 18px; border-radius: 19px; font-weight: bold; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+        .generate-btn { background: var(--success); color: white; border: none; height: 38px; padding: 0 18px; border-radius: 19px; font-weight: bold; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); font-family: var(--font-body); }
 
         /* エディタ */
-        .editor-wrapper { flex: 1; position: relative; display: flex; }
-        #code-editor { flex: 1; border: none; padding: 50px 15px 15px 15px; font-family: 'Fira Code', monospace; background: #0d0d0d; color: #d1d1d1; font-size: 14px; outline: none; resize: none; }
-        .editor-actions { position: absolute; top: 10px; right: 15px; display: flex; gap: 8px; z-index: 10; }
-        .action-btn { color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; opacity: 0.9; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; }
+        .editor-wrapper { flex: 1; position: relative; display: flex; flex-direction: column; overflow: hidden; }
+        #code-editor-container { flex: 1; background: var(--color-bg-deep); overflow: hidden; position: relative; padding-top: 40px;}
+        .cm-editor { height: 100%; outline: none !important; }
+        .editor-actions { position: absolute; top: 10px; right: 15px; display: flex; gap: 8px; z-index: 10; align-items: center; }
+        .action-btn { color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; opacity: 0.9; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; height: 26px; font-family: var(--font-body); }
         .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .copy-btn { background: rgba(255, 255, 255, 0.15); }
         .upload-btn { background: #4b5563; }
         .download-btn { background: var(--primary); }
         .deploy-btn { background: var(--accent); }
-        .action-btn:hover:not(:disabled) { opacity: 1; transform: translateY(-1px); }
         .import-btn { background: #1f6feb; }
+        .search-btn { background: #374151; }
+        .action-btn:hover:not(:disabled) { opacity: 1; transform: translateY(-1px); }
+
+        /* 検索ナビボタン */
+        .search-nav-btn { background: #444; border: none; color: #fff; border-radius: 4px; cursor: pointer; padding: 2px 6px; font-size: 10px; transition: 0.2s; }
+        .search-nav-btn:hover { background: #666; }
+
+        /* トースト通知 */
+        .toast-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 9999; pointer-events: none; }
+        .toast { background: rgba(0, 0, 0, 0.85); color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); animation: toastFadeIn 0.3s, toastFadeOut 0.3s 2.7s forwards; }
+        @keyframes toastFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes toastFadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-20px); } }
 
         /* Modal Base */
         .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; align-items:center; justify-content:center; }
         .modal-overlay.show { display:flex; }
-        .modal { background:#1e1e1e; border:1px solid #444; border-radius:12px; width:90%; max-width:500px; max-height:80vh; display:flex; flex-direction:column; overflow:hidden; }
-        .modal-header { display:flex; justify-content:space-between; align-items:center; padding:16px; border-bottom:1px solid #333; }
-        .modal-header h3 { margin:0; font-size:15px; color:#fff; }
-        .modal-close { background:none; border:none; color:#888; font-size:20px; cursor:pointer; }
+        .modal { background:var(--color-bg-surface); border:1px solid var(--color-border); border-radius:12px; width:90%; max-width:500px; max-height:80vh; display:flex; flex-direction:column; overflow:hidden; }
+        .modal-header { display:flex; justify-content:space-between; align-items:center; padding:16px; border-bottom:1px solid var(--color-border); }
+        .modal-header h3 { margin:0; font-size:15px; color:#fff; font-family: var(--font-display); }
+        .modal-close { background:none; border:none; color:var(--color-text-secondary); font-size:20px; cursor:pointer; }
         .modal-body { padding:16px; overflow-y:auto; flex:1; }
-        .modal-input { width:100%; background:#2a2a2a; border:1px solid #444; border-radius:8px; padding:10px 12px; color:#fff; font-size:14px; outline:none; margin-bottom:12px; box-sizing:border-box; }
+        .modal-input { width:100%; background:var(--color-bg-elevated); border:1px solid var(--color-border-focus); border-radius:8px; padding:10px 12px; color:#fff; font-size:14px; outline:none; margin-bottom:12px; box-sizing:border-box; font-family: var(--font-body); }
         .modal-input:focus { border-color:var(--primary); }
         .repo-list, .file-list { list-style:none; padding:0; margin:0; }
-        .repo-list li, .file-list li { padding:10px 12px; border-bottom:1px solid #2a2a2a; cursor:pointer; font-size:13px; color:#ccc; transition:background 0.15s; display:flex; justify-content:space-between; align-items:center; }
-        .repo-list li:hover, .file-list li:hover { background:#2a2a2a; }
-        .repo-list li .repo-meta-sm { font-size:11px; color:#666; }
-        .modal-status { font-size:12px; color:#888; padding:8px 0; text-align:center; }
-        .modal-btn { background:var(--primary); color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:bold; width:100%; margin-top:8px; display:inline-flex; align-items:center; justify-content:center; }
+        .repo-list li, .file-list li { padding:10px 12px; border-bottom:1px solid var(--color-border); cursor:pointer; font-size:13px; color:var(--color-text-primary); transition:background 0.15s; display:flex; justify-content:space-between; align-items:center; }
+        .repo-list li:hover, .file-list li:hover { background:var(--color-bg-elevated); }
+        .repo-list li .repo-meta-sm { font-size:11px; color:var(--color-text-secondary); }
+        .modal-status { font-size:12px; color:var(--color-text-secondary); padding:8px 0; text-align:center; }
+        .modal-btn { background:var(--primary); color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:bold; width:100%; margin-top:8px; display:inline-flex; align-items:center; justify-content:center; font-family: var(--font-body); }
         .modal-btn:disabled { opacity:0.5; cursor:not-allowed; }
 
         /* SW Background notification */
@@ -99,23 +153,25 @@
 
         /* プレビュー */
         #preview-frame { flex: 1; border: none; background: #fff; width: 100%; height: 100%; }
-        .debug-panel { background: var(--bg); border-top: 1px solid #333; padding: 12px 15px; display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; }
-        #debug-memo { flex: 1; min-height: 40px; max-height: 100px; background: #2f2f2f; border: 1px solid #444; border-radius: 20px; padding: 10px 15px; color: #fff; font-size: 14px; outline: none; resize: none; }
-        .debug-btn { background: #eab308; color: #000; border: none; height: 40px; padding: 0 16px; border-radius: 20px; font-weight: bold; cursor: pointer; flex-shrink: 0; font-size: 13px; }
+        .debug-panel { background: var(--bg); border-top: 1px solid var(--color-border); padding: 12px 15px; display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; }
+        #debug-memo { flex: 1; min-height: 40px; max-height: 100px; background: var(--color-bg-elevated); border: 1px solid var(--color-border-focus); border-radius: 20px; padding: 10px 15px; color: #fff; font-size: 14px; outline: none; resize: none; font-family: var(--font-body); }
+        .debug-btn { background: #eab308; color: #000; border: none; height: 40px; padding: 0 16px; border-radius: 20px; font-weight: bold; cursor: pointer; flex-shrink: 0; font-size: 13px; font-family: var(--font-body); }
 
         /* 設定 */
         .settings { padding: 25px; overflow-y: auto; }
         .field-row { display: flex; gap: 15px; margin-bottom: 20px; }
         .field { flex: 1; margin-bottom: 20px; }
-        label { display: block; font-size: 11px; color: #888; margin-bottom: 8px; font-weight: bold; letter-spacing: 0.05em; }
-        input[type="password"], textarea.setting-input, select.setting-input { width: 100%; background: #2f2f2f; border: 1px solid #444; border-radius: 8px; padding: 12px; color: #fff; font-size: 14px; outline: none; transition: border 0.2s; }
+        label { display: block; font-size: 11px; color: var(--color-text-secondary); margin-bottom: 8px; font-weight: bold; letter-spacing: 0.05em; font-family: var(--font-display); }
+        input[type="password"], textarea.setting-input, select.setting-input { width: 100%; background: var(--color-bg-elevated); border: 1px solid var(--color-border-focus); border-radius: 8px; padding: 12px; color: #fff; font-size: 14px; outline: none; transition: border 0.2s; font-family: var(--font-body); }
         input:focus, textarea:focus, select:focus { border-color: var(--primary); }
         select.setting-input { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C2.185 5.355 2.402 5 2.805 5h9.39c.403 0 .62.355.354.658l-4.796 5.482a.5.5 0 0 1-.748 0z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
-        .save-btn { background: #fff; color: #000; border: none; padding: 15px; border-radius: 8px; font-weight: bold; width: 100%; margin-top: 10px; cursor: pointer; transition: 0.2s; }
+        .save-btn { background: #fff; color: #000; border: none; padding: 15px; border-radius: 8px; font-weight: bold; width: 100%; margin-top: 10px; cursor: pointer; transition: 0.2s; font-family: var(--font-body); }
         .save-btn:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
+<div class="toast-container" id="toast-container"></div>
+
 <div class="tabs">
     <button class="tab-btn active" id="tab-chat" onclick="showPage('chat', this)">CHAT</button>
     <button class="tab-btn" id="tab-editor" onclick="showPage('editor', this)">CODE</button>
@@ -131,7 +187,7 @@
         </div>
 
         <div id="chat-log">
-            <div class="msg ai">Gemini Web Studio 2026 起動。<br>要件を教えてください。プランが固まったら「⚡️コードを作成」ボタンを表示します。</div>
+            <!-- Messages will be rendered here dynamically -->
         </div>
 
         <div class="input-container">
@@ -163,12 +219,15 @@
          <div class="editor-wrapper">
             <div class="editor-actions">
                 <button class="action-btn import-btn" onclick="openGitHubImport()">📥 Import</button>
-                <button class="action-btn upload-btn" onclick="triggerCodeUpload()">Upload</button> <button class="action-btn copy-btn" onclick="copyCode()">Copy</button>
+                <button class="action-btn upload-btn" onclick="triggerCodeUpload()">Upload</button> 
+                <button class="action-btn search-btn" onclick="openSearchModal()">🔍 Search</button>
                 <button class="action-btn download-btn" onclick="downloadCode()">Download</button>
                 <button class="action-btn deploy-btn" onclick="openDeployer()">🚀 GitHub Deploy</button>
             </div>
+
             <input type="file" id="code-upload-input" style="display:none" accept=".html,.css,.js,.txt" onchange="handleCodeUpload(this)">
-            <textarea id="code-editor" spellcheck="false" oninput="updatePreview()" placeholder="ここにソースコードが生成されます..."></textarea>
+            <!-- CodeMirror will be mounted here -->
+            <div id="code-editor-container"></div>
         </div>
     </div>
 
@@ -217,6 +276,22 @@
     </div>
 </div>
 
+<!-- Code Search Modal -->
+<div id="search-modal" class="modal-overlay" style="background: transparent; pointer-events: none;" onclick="if(event.target===this)closeSearchModal()">
+    <div class="modal" style="pointer-events: auto; position: absolute; top: 60px; right: 15px; width: 300px; margin: 0;">
+        <div class="modal-header" style="padding: 10px 12px;">
+            <h3 style="font-size: 13px;">🔍 Find in Code</h3>
+            <button class="modal-close" onclick="closeSearchModal()" style="font-size: 16px;">✕</button>
+        </div>
+        <div class="modal-body" style="padding: 10px 12px; display: flex; gap: 6px; align-items: center; overflow: visible;">
+            <input type="text" id="code-search-input" class="modal-input" placeholder="Find..." oninput="performCodeSearch()" style="margin: 0; padding: 6px 8px; font-size: 12px; flex: 1;">
+            <span id="search-status" style="font-size: 11px; color: #aaa; min-width: 35px; text-align: center;">0/0</span>
+            <button class="search-nav-btn" style="padding: 6px 10px;" onclick="prevSearchMatch()">▲</button>
+            <button class="search-nav-btn" style="padding: 6px 10px;" onclick="nextSearchMatch()">▼</button>
+        </div>
+    </div>
+</div>
+
 <!-- GitHub Import Modal -->
 <div id="gh-import-modal" class="modal-overlay" onclick="if(event.target===this)closeGitHubImport()">
     <div class="modal">
@@ -231,7 +306,7 @@
                 <ul id="gh-repo-list" class="repo-list"></ul>
             </div>
             <div id="gh-step-file" style="display:none">
-                <button class="modal-btn" style="background:#333;margin-bottom:12px" onclick="backToRepoList()">← リポジトリ一覧に戻る</button>
+                <button class="modal-btn" style="background:var(--color-bg-elevated);margin-bottom:12px" onclick="backToRepoList()">← リポジトリ一覧に戻る</button>
                 <div id="gh-file-status" class="modal-status"></div>
                 <ul id="gh-file-list" class="file-list"></ul>
             </div>
@@ -247,40 +322,34 @@
             <button class="modal-close" onclick="closeGitHubDeploy()">✕</button>
         </div>
         <div class="modal-body" style="display:flex; flex-direction:column; gap:12px;">
-            <!-- Step 1: Token -->
             <div id="deploy-step-token">
-                <p style="font-size:13px; color:#ccc; margin-top:0;">GitHub Personal Access Token (repo scope) を設定してください。</p>
+                <p style="font-size:13px; color:var(--color-text-secondary); margin-top:0;">GitHub Personal Access Token (repo scope) を設定してください。</p>
                 <input type="password" id="deploy-token-input" class="modal-input" placeholder="ghp_...">
                 <button class="modal-btn" onclick="saveDeployToken()">保存 & 認証</button>
                 <div id="deploy-token-status" class="modal-status"></div>
             </div>
-
-            <!-- Step 2: Repositories -->
             <div id="deploy-step-repo" style="display:none">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                    <button class="modal-btn" style="background:#333; width:auto; margin:0; padding:6px 12px; font-size:11px;" onclick="showDeployStep('token')">← トークン設定</button>
-                    <button class="modal-btn" style="background:#333; width:auto; margin:0; padding:6px 12px; font-size:11px;" onclick="fetchDeployRepos()">🔄 更新</button>
+                    <button class="modal-btn" style="background:var(--color-bg-elevated); width:auto; margin:0; padding:6px 12px; font-size:11px;" onclick="showDeployStep('token')">← トークン設定</button>
+                    <button class="modal-btn" style="background:var(--color-bg-elevated); width:auto; margin:0; padding:6px 12px; font-size:11px;" onclick="fetchDeployRepos()">🔄 更新</button>
                 </div>
                 <button class="modal-btn" style="background:var(--success); margin-bottom:12px;" onclick="showDeployStep('new-repo')">＋ 新規リポジトリを作成</button>
                 <input id="deploy-repo-search" class="modal-input" placeholder="リポジトリを検索..." oninput="filterDeployRepos()">
                 <div id="deploy-repo-status" class="modal-status"></div>
                 <ul id="deploy-repo-list" class="repo-list"></ul>
             </div>
-
-            <!-- Step 2.5: New Repo -->
             <div id="deploy-step-new-repo" style="display:none; flex-direction:column; gap:12px;">
-                <button class="modal-btn" style="background:#333; width:auto; align-self:flex-start; margin:0; padding:6px 12px; font-size:11px;" onclick="showDeployStep('repo')">← リポジトリ選択に戻る</button>
-                
+                <button class="modal-btn" style="background:var(--color-bg-elevated); width:auto; align-self:flex-start; margin:0; padding:6px 12px; font-size:11px;" onclick="showDeployStep('repo')">← リポジトリ選択に戻る</button>
                 <div>
-                    <label style="display:block; font-size:11px; color:#888; margin-bottom:4px;">リポジトリ名 <span style="color:var(--danger)">*</span></label>
+                    <label style="display:block; font-size:11px; color:var(--color-text-secondary); margin-bottom:4px;">リポジトリ名 <span style="color:var(--danger)">*</span></label>
                     <input id="new-repo-name" class="modal-input" placeholder="my-awesome-project">
                 </div>
                 <div>
-                    <label style="display:block; font-size:11px; color:#888; margin-bottom:4px;">説明 (任意)</label>
+                    <label style="display:block; font-size:11px; color:var(--color-text-secondary); margin-bottom:4px;">説明 (任意)</label>
                     <input id="new-repo-desc" class="modal-input" placeholder="A great project built with AI">
                 </div>
                 <div>
-                    <label style="display:block; font-size:11px; color:#888; margin-bottom:4px;">公開設定</label>
+                    <label style="display:block; font-size:11px; color:var(--color-text-secondary); margin-bottom:4px;">公開設定</label>
                     <select id="new-repo-private" class="modal-input" style="appearance:auto; background-image:none; padding-right:12px;">
                         <option value="false">Public (公開)</option>
                         <option value="true">Private (非公開)</option>
@@ -289,36 +358,29 @@
                 <div id="new-repo-status" class="modal-status" style="text-align:left; color:#ccc;"></div>
                 <button class="modal-btn" id="new-repo-btn" onclick="createNewRepo()" style="background:var(--success);">✨ 作成してデプロイ準備</button>
             </div>
-
-            <!-- Step 3: Details & Execute -->
             <div id="deploy-step-details" style="display:none; flex-direction:column; gap:12px;">
-                <button class="modal-btn" style="background:#333; width:auto; align-self:flex-start; margin:0; padding:6px 12px; font-size:11px;" onclick="showDeployStep('repo')">← リポジトリ選択に戻る</button>
-                
+                <button class="modal-btn" style="background:var(--color-bg-elevated); width:auto; align-self:flex-start; margin:0; padding:6px 12px; font-size:11px;" onclick="showDeployStep('repo')">← リポジトリ選択に戻る</button>
                 <div style="font-size:13px; color:#fff;">デプロイ先: <strong id="deploy-target-repo-name" style="color:var(--primary);"></strong></div>
-                
                 <div style="display:flex; gap:10px;">
                     <div style="flex:1;">
-                        <label style="display:block; font-size:11px; color:#888; margin-bottom:4px;">ブランチ</label>
+                        <label style="display:block; font-size:11px; color:var(--color-text-secondary); margin-bottom:4px;">ブランチ</label>
                         <input id="deploy-branch" class="modal-input" value="main">
                     </div>
                     <div style="flex:1;">
-                        <label style="display:block; font-size:11px; color:#888; margin-bottom:4px;">ファイルパス</label>
+                        <label style="display:block; font-size:11px; color:var(--color-text-secondary); margin-bottom:4px;">ファイルパス</label>
                         <input id="deploy-filepath" class="modal-input" value="index.html">
                     </div>
                 </div>
-
                 <div>
-                    <label style="display:block; font-size:11px; color:#888; margin-bottom:4px;">README.md</label>
-                    <textarea id="deploy-readme-content" class="modal-input" rows="6" style="resize:vertical; font-family:monospace; font-size:12px;" placeholder="READMEの内容..."></textarea>
+                    <label style="display:block; font-size:11px; color:var(--color-text-secondary); margin-bottom:4px;">README.md</label>
+                    <textarea id="deploy-readme-content" class="modal-input" rows="6" style="resize:vertical; font-family:var(--font-mono); font-size:12px;" placeholder="READMEの内容..."></textarea>
                 </div>
-
                 <div style="margin-top:4px;">
-                    <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#fff; cursor:pointer; background:#2a2a2a; padding:10px 12px; border:1px solid #444; border-radius:8px;">
+                    <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#fff; cursor:pointer; background:var(--color-bg-elevated); padding:10px 12px; border:1px solid var(--color-border); border-radius:8px;">
                         <input type="checkbox" id="deploy-gh-pages" checked style="accent-color:var(--primary); width:16px; height:16px; margin:0;"> 
                         GitHub Pagesを有効にして公開する
                     </label>
                 </div>
-
                 <div id="deploy-execute-status" class="modal-status" style="text-align:left; color:#ccc;"></div>
                 <button class="modal-btn" id="deploy-exec-btn" onclick="executeDeploy()" style="background:var(--accent);">🚀 デプロイ実行</button>
             </div>
@@ -326,7 +388,6 @@
     </div>
 </div>
 
-<!-- Background generation notification -->
 <div id="bg-notify" class="bg-notify">
     <div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0"></div>
     <span>バックグラウンドで生成中...</span>
@@ -338,16 +399,35 @@
     let currentMimeType = null;
     let currentFileName = null;
     let conversationContext = "";
+    let chatHistory = []; // 構造化されたチャット履歴
     const pagesList = ['chat', 'editor', 'preview', 'settings'];
     let ghImportRepos = [];
     let swRegistration = null;
     const PROXY_WORKER_URL = 'https://green-credit-a6fb.ikymbiz.workers.dev';
 
+    /* --- CodeMirror 変数 --- */
+    let cmView = null;
+    let cmSearchModules = null;
+    let searchMatchesCount = 0;
+    let currentSearchIndex = -1;
+
+    /* --- トースト通知 --- */
+    function showToast(message) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
     /* --- IndexedDB ヘルパー --- */
     function openDB() {
         return new Promise((resolve, reject) => {
-            const req = indexedDB.open('WebStudioBG', 1);
-            req.onupgradeneeded = () => req.result.createObjectStore('tasks');
+            const req = indexedDB.open('WebStudioBG', 2); // DBバージョンアップ
+            req.onupgradeneeded = () => {
+                if(!req.result.objectStoreNames.contains('tasks')) req.result.createObjectStore('tasks');
+            };
             req.onsuccess = () => resolve(req.result);
             req.onerror = () => reject(req.error);
         });
@@ -385,23 +465,280 @@
         const chatModel = document.getElementById('chat-model');
         const codeModel = document.getElementById('code-model');
         if (!apiKey) {
-            chatModel.disabled = true;
-            codeModel.disabled = true;
+            chatModel.disabled = true; codeModel.disabled = true;
             chatModel.title = "APIキー未設定時はProxy Worker(固定モデル)が使用されます";
             codeModel.title = "APIキー未設定時はProxy Worker(固定モデル)が使用されます";
-            chatModel.style.opacity = "0.5";
-            codeModel.style.opacity = "0.5";
+            chatModel.style.opacity = "0.5"; codeModel.style.opacity = "0.5";
         } else {
-            chatModel.disabled = false;
-            codeModel.disabled = false;
-            chatModel.title = "";
-            codeModel.title = "";
-            chatModel.style.opacity = "1";
-            codeModel.style.opacity = "1";
+            chatModel.disabled = false; codeModel.disabled = false;
+            chatModel.title = ""; codeModel.title = "";
+            chatModel.style.opacity = "1"; codeModel.style.opacity = "1";
         }
     }
 
-    /* --- Service Worker 登録 (Blob URL方式) --- */
+    /* --- CodeMirror 統合 --- */
+    async function initCodeMirror(initialCode) {
+        try {
+            const [{ basicSetup }, { EditorView }, { EditorState }, { html }, { oneDark }, searchMod] = await Promise.all([
+                import("https://esm.sh/codemirror"),
+                import("https://esm.sh/@codemirror/view"),
+                import("https://esm.sh/@codemirror/state"),
+                import("https://esm.sh/@codemirror/lang-html"),
+                import("https://esm.sh/@codemirror/theme-one-dark"),
+                import("https://esm.sh/@codemirror/search")
+            ]);
+
+            cmSearchModules = searchMod;
+            const parent = document.getElementById('code-editor-container');
+            
+            const customTheme = EditorView.theme({
+                "&": { height: "100%", fontSize: "14px", fontFamily: "var(--font-mono)" },
+                ".cm-scroller": { overflow: "auto" },
+                // 検索ヒットキーワードを黄色でハイライトするスタイル
+                ".cm-searchMatch": { backgroundColor: "rgba(234, 179, 8, 0.4) !important" },
+                ".cm-searchMatch-selected": { backgroundColor: "rgba(234, 179, 8, 0.9) !important" }
+            });
+
+            const updateListener = EditorView.updateListener.of((update) => {
+                if (update.docChanged) {
+                    updatePreview();
+                    saveToDB('currentCode', window.getCode()); // Auto Save
+                }
+            });
+
+            const state = EditorState.create({
+                doc: initialCode || "",
+                extensions: [
+                    basicSetup,
+                    html(),
+                    oneDark,
+                    customTheme,
+                    searchMod.search({top: true}), // CM built-in search extension
+                    updateListener
+                ]
+            });
+
+            cmView = new EditorView({ state, parent });
+            updatePreview();
+        } catch (e) {
+            console.error("CodeMirror load failed:", e);
+        }
+    }
+
+    window.getCode = function() {
+        return cmView ? cmView.state.doc.toString() : "";
+    };
+
+    window.setCode = function(code) {
+        if(cmView) {
+            cmView.dispatch({ changes: { from: 0, to: cmView.state.doc.length, insert: code } });
+        }
+    };
+
+    /* --- 検索機能 (CodeMirror連携) --- */
+    function openSearchModal() {
+        const searchInput = document.getElementById('code-search-input');
+        searchInput.value = ''; // 検索キーワードを保存しない（クリアする）
+        document.getElementById('search-modal').classList.add('show');
+        searchInput.focus();
+        performCodeSearch(); // クリア状態を即時反映させる
+    }
+    
+    function closeSearchModal() {
+        document.getElementById('search-modal').classList.remove('show');
+    }
+
+    function performCodeSearch() {
+        if (!cmView || !cmSearchModules) return;
+        const q = document.getElementById('code-search-input').value;
+        
+        // CodeMirrorに検索クエリを発行 (シンタックスハイライトとは別にハイライトされる)
+        cmView.dispatch({
+            effects: cmSearchModules.setSearchQuery.of(new cmSearchModules.SearchQuery({ search: q }))
+        });
+
+        // マッチ数の簡易計算
+        const code = window.getCode().toLowerCase();
+        const query = q.toLowerCase();
+        
+        if (!query) {
+            document.getElementById('search-status').innerText = '0/0';
+            searchMatchesCount = 0; currentSearchIndex = -1;
+            return;
+        }
+
+        let count = 0;
+        let index = code.indexOf(query);
+        while(index !== -1) {
+            count++;
+            index = code.indexOf(query, index + query.length);
+        }
+        searchMatchesCount = count;
+        currentSearchIndex = count > 0 ? 1 : 0;
+        document.getElementById('search-status').innerText = count > 0 ? `${currentSearchIndex}/${count}` : '0/0';
+    }
+
+    function nextSearchMatch() {
+        if (!cmView || !cmSearchModules || searchMatchesCount === 0) return;
+        cmSearchModules.findNext(cmView);
+        currentSearchIndex = currentSearchIndex < searchMatchesCount ? currentSearchIndex + 1 : 1;
+        document.getElementById('search-status').innerText = `${currentSearchIndex}/${searchMatchesCount}`;
+        document.getElementById('code-search-input').focus(); // フォーカス維持
+    }
+
+    function prevSearchMatch() {
+        if (!cmView || !cmSearchModules || searchMatchesCount === 0) return;
+        cmSearchModules.findPrevious(cmView);
+        currentSearchIndex = currentSearchIndex > 1 ? currentSearchIndex - 1 : searchMatchesCount;
+        document.getElementById('search-status').innerText = `${currentSearchIndex}/${searchMatchesCount}`;
+        document.getElementById('code-search-input').focus(); // フォーカス維持
+    }
+
+    /* --- チャット履歴管理 --- */
+    async function loadChatHistory() {
+        const history = await getFromDB('chatHistory');
+        if (history && history.length > 0) {
+            chatHistory = history;
+            document.getElementById('chat-log').innerHTML = '';
+            chatHistory.forEach(msg => {
+                if(msg.html && msg.text.includes('spinner')) {
+                    // ストリーミング中断などの不完全な状態をクリア
+                    msg.text = '⚠️ 生成が中断されました。';
+                    msg.html = false;
+                }
+                renderMessageFromHistory(msg);
+            });
+            rebuildConversationContext();
+        } else {
+            const initMsg = {
+                id: Date.now().toString(),
+                role: 'ai system-msg',
+                text: 'Gemini Web Studio 2026 起動。\n要件を教えてください。プランが固まったら「⚡️コードを作成」ボタンを表示します。',
+                html: false
+            };
+            chatHistory.push(initMsg);
+            saveToDB('chatHistory', chatHistory);
+            renderMessageFromHistory(initMsg);
+            rebuildConversationContext();
+        }
+    }
+
+    function renderMessageFromHistory(msg) {
+        const log = document.getElementById('chat-log');
+        const msgElement = createMessageElement(msg);
+        log.appendChild(msgElement);
+        log.scrollTop = log.scrollHeight;
+    }
+
+    function createMessageElement(msg) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `msg ${msg.role}`;
+        msgDiv.dataset.id = msg.id;
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'msg-content';
+        if (msg.html) contentDiv.innerHTML = msg.text;
+        else contentDiv.textContent = msg.text;
+        msgDiv.appendChild(contentDiv);
+
+        // システムメッセージやストリーミング中(html)はアクションボタンを付けない
+        if (!msg.role.includes('system-msg') && !msg.html) {
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'msg-actions';
+            
+            const editBtn = document.createElement('button');
+            editBtn.className = 'msg-action-btn';
+            editBtn.innerHTML = '✏️';
+            editBtn.title = '編集';
+            editBtn.onclick = () => toggleEditMessage(msg.id, contentDiv, editBtn);
+            
+            const delBtn = document.createElement('button');
+            delBtn.className = 'msg-action-btn';
+            delBtn.innerHTML = '🗑️';
+            delBtn.title = '削除';
+            delBtn.onclick = () => deleteMessage(msg.id, msgDiv);
+            
+            // コピーボタンは除外要請により追加しない
+            actionsDiv.appendChild(editBtn);
+            actionsDiv.appendChild(delBtn);
+            msgDiv.appendChild(actionsDiv);
+        }
+        
+        // 最後にプラン確定時の「コードを作成」ボタンを復元
+        if (msg.role === 'ai' && !msg.html && msg.text.includes('素晴らしいプランです。⚡️コードを作成 ボタンから実装を開始しましょう')) {
+            const btnWrapper = document.createElement('div'); btnWrapper.className = 'generate-btn-wrapper';
+            const genBtn = document.createElement('button'); genBtn.className = 'generate-btn'; genBtn.innerHTML = '⚡️ コードを作成 (BUILD)';
+            genBtn.onclick = generateCode; btnWrapper.appendChild(genBtn); msgDiv.appendChild(btnWrapper);
+        }
+
+        return msgDiv;
+    }
+
+    function toggleEditMessage(id, contentDiv, btn) {
+        if (contentDiv.contentEditable === "true") {
+            contentDiv.contentEditable = "false";
+            contentDiv.style.border = "none";
+            contentDiv.style.padding = "0";
+            btn.innerHTML = '✏️';
+            
+            const msg = chatHistory.find(m => m.id === id);
+            if (msg) {
+                msg.text = contentDiv.textContent;
+                saveToDB('chatHistory', chatHistory);
+                rebuildConversationContext();
+                showToast('編集を保存しました');
+            }
+        } else {
+            contentDiv.contentEditable = "true";
+            contentDiv.style.border = "1px solid var(--primary)";
+            contentDiv.style.padding = "4px";
+            contentDiv.focus();
+            btn.innerHTML = '💾';
+        }
+    }
+
+    function deleteMessage(id, msgDiv) {
+        chatHistory = chatHistory.filter(m => m.id !== id);
+        msgDiv.remove();
+        saveToDB('chatHistory', chatHistory);
+        rebuildConversationContext();
+        showToast('削除しました');
+    }
+
+    function rebuildConversationContext() {
+        conversationContext = "";
+        chatHistory.forEach(msg => {
+            if (msg.role === 'user') {
+                conversationContext += `\nユーザー: ${msg.text}`;
+                if(msg.attachment) conversationContext += ` (添付ファイル: ${msg.attachment})`;
+            } else if (msg.role === 'ai') {
+                conversationContext += `\nアシスタント: ${msg.text}`;
+            }
+        });
+    }
+
+    function confirmReset() {
+        if (confirm("会話とコードをリセットしますか？")) {
+            chatHistory = [];
+            document.getElementById('chat-log').innerHTML = '';
+            window.setCode("");
+            document.getElementById('preview-frame').srcdoc = "";
+            removeAttachment();
+            
+            const initMsg = {
+                id: Date.now().toString(),
+                role: 'ai system-msg',
+                text: '会話をリセットしました。\n要件を教えてください。',
+                html: false
+            };
+            chatHistory.push(initMsg);
+            saveToDB('chatHistory', chatHistory);
+            renderMessageFromHistory(initMsg);
+            rebuildConversationContext();
+        }
+    }
+
+    /* --- Service Worker 登録 --- */
     const swCode = `
         self.addEventListener('message', async (e) => {
             if (e.data.type === 'generate') {
@@ -410,10 +747,8 @@
                     const data = await res.json();
                     if (data.error) throw new Error(data.error.message);
                     let result = data.candidates ? data.candidates[0].content.parts[0].text : (data.response || data.text || (typeof data === 'string' ? data : JSON.stringify(data)));
-                    result = result.replace(/^\`\`\`html\\s*/i, '').replace(/^\`\`\`\\s*/, '').replace(/\`\`\`$/g, '').trim();
-                    // IndexedDB に保存
-                    const dbReq = indexedDB.open('WebStudioBG', 1);
-                    dbReq.onupgradeneeded = () => dbReq.result.createObjectStore('tasks');
+                    result = result.replace(/^\\\`\\\`\\\`html\\s*/i, '').replace(/^\\\`\\\`\\\`\\s*/, '').replace(/\\\`\\\`\\\`$/g, '').trim();
+                    const dbReq = indexedDB.open('WebStudioBG', 2);
                     dbReq.onsuccess = () => {
                         const db = dbReq.result;
                         const tx = db.transaction('tasks', 'readwrite');
@@ -423,8 +758,7 @@
                         };
                     };
                 } catch (err) {
-                    const dbReq = indexedDB.open('WebStudioBG', 1);
-                    dbReq.onupgradeneeded = () => dbReq.result.createObjectStore('tasks');
+                    const dbReq = indexedDB.open('WebStudioBG', 2);
                     dbReq.onsuccess = () => {
                         const db = dbReq.result;
                         const tx = db.transaction('tasks', 'readwrite');
@@ -446,60 +780,50 @@
             navigator.serviceWorker.addEventListener('message', (e) => {
                 const notify = document.getElementById('bg-notify');
                 if (e.data.type === 'generateDone') {
-                    document.getElementById('code-editor').value = e.data.code;
+                    window.setCode(e.data.code);
                     updatePreview();
                     notify.classList.remove('show');
-                    const log = document.getElementById('chat-log');
-                    const aiMsg = document.createElement('div'); aiMsg.className = 'msg ai';
-                    aiMsg.innerHTML = '✨ バックグラウンド構築完了。PREVIEWを確認してください。';
-                    log.appendChild(aiMsg); log.scrollTop = log.scrollHeight;
+                    
+                    const sysMsgObj = { id: Date.now().toString(), role: 'ai system-msg', text: '✨ バックグラウンド構築完了。PREVIEWを確認してください。', html: false };
+                    chatHistory.push(sysMsgObj); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(sysMsgObj);
                     deleteFromDB('bgResult');
                 } else if (e.data.type === 'generateError') {
                     notify.classList.remove('show');
-                    const log = document.getElementById('chat-log');
-                    const aiMsg = document.createElement('div'); aiMsg.className = 'msg ai';
-                    aiMsg.innerHTML = '<span style="color:var(--danger)">BG エラー: ' + e.data.error + '</span>';
-                    log.appendChild(aiMsg);
+                    const sysMsgObj = { id: Date.now().toString(), role: 'ai system-msg', text: '<span style="color:var(--danger)">BG エラー: ' + e.data.error + '</span>', html: true };
+                    chatHistory.push(sysMsgObj); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(sysMsgObj);
                     deleteFromDB('bgResult');
                 }
             });
         } catch (e) { console.log('SW registration skipped:', e); }
     }
 
-    /* --- GitHub Import 関数群 --- */
+    /* --- GitHub & デプロイ等の既存ロジック --- */
     async function openGitHubImport() {
         const token = await getFromDB('gh_token');
         if (!token) return alert('GitHubトークンが未設定です。\nDeployの「🚀 GitHub Deploy」または設定からトークンを登録してください。');
-        const modal = document.getElementById('gh-import-modal');
-        modal.classList.add('show');
+        document.getElementById('gh-import-modal').classList.add('show');
         document.getElementById('gh-step-repo').style.display = '';
         document.getElementById('gh-step-file').style.display = 'none';
-        document.getElementById('gh-repo-search').value = '';
         fetchImportRepos(token);
     }
     function closeGitHubImport() { document.getElementById('gh-import-modal').classList.remove('show'); }
 
     async function fetchImportRepos(token) {
-        const status = document.getElementById('gh-modal-status');
-        status.textContent = '読み込み中...';
+        const status = document.getElementById('gh-modal-status'); status.textContent = '読み込み中...';
         try {
-            const res = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100', {
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
-            if (!res.ok) throw new Error('認証エラー (' + res.status + ')');
+            const res = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100', { headers: { 'Authorization': 'Bearer ' + token } });
+            if (!res.ok) throw new Error('認証エラー');
             ghImportRepos = await res.json();
             status.textContent = ghImportRepos.length + ' 件のリポジトリ';
             renderImportRepos(ghImportRepos);
         } catch (e) { status.textContent = 'エラー: ' + e.message; }
     }
     function renderImportRepos(repos) {
-        const list = document.getElementById('gh-repo-list');
-        list.innerHTML = '';
+        const list = document.getElementById('gh-repo-list'); list.innerHTML = '';
         repos.forEach(r => {
             const li = document.createElement('li');
             li.innerHTML = '<span>' + (r.private ? '🔒 ' : '🌐 ') + r.name + '</span><span class="repo-meta-sm">' + new Date(r.updated_at).toLocaleDateString() + '</span>';
-            li.onclick = () => selectImportRepo(r);
-            list.appendChild(li);
+            li.onclick = () => selectImportRepo(r); list.appendChild(li);
         });
     }
     function filterImportRepos() {
@@ -507,338 +831,108 @@
         renderImportRepos(ghImportRepos.filter(r => r.name.toLowerCase().includes(q)));
     }
     async function selectImportRepo(repo) {
-        document.getElementById('gh-step-repo').style.display = 'none';
-        document.getElementById('gh-step-file').style.display = '';
-        const status = document.getElementById('gh-file-status');
-        status.textContent = repo.full_name + ' のファイルを取得中...';
+        document.getElementById('gh-step-repo').style.display = 'none'; document.getElementById('gh-step-file').style.display = '';
+        const status = document.getElementById('gh-file-status'); status.textContent = repo.full_name + ' のファイルを取得中...';
         const token = await getFromDB('gh_token');
         try {
-            const res = await fetch('https://api.github.com/repos/' + repo.full_name + '/git/trees/main?recursive=1', {
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
-            if (!res.ok) {
-                const res2 = await fetch('https://api.github.com/repos/' + repo.full_name + '/git/trees/master?recursive=1', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                if (!res2.ok) throw new Error('ブランチが見つかりません');
-                return renderFileTree(await res2.json(), repo.full_name);
-            }
+            let res = await fetch('https://api.github.com/repos/' + repo.full_name + '/git/trees/main?recursive=1', { headers: { 'Authorization': 'Bearer ' + token } });
+            if (!res.ok) res = await fetch('https://api.github.com/repos/' + repo.full_name + '/git/trees/master?recursive=1', { headers: { 'Authorization': 'Bearer ' + token } });
             renderFileTree(await res.json(), repo.full_name);
         } catch (e) { status.textContent = 'エラー: ' + e.message; }
     }
     function renderFileTree(tree, fullName) {
-        const list = document.getElementById('gh-file-list');
-        const status = document.getElementById('gh-file-status');
-        list.innerHTML = '';
+        const list = document.getElementById('gh-file-list'); list.innerHTML = '';
         const files = tree.tree.filter(f => f.type === 'blob');
-        status.textContent = files.length + ' ファイル';
+        document.getElementById('gh-file-status').textContent = files.length + ' ファイル';
         files.forEach(f => {
             const li = document.createElement('li');
-            const ext = f.path.split('.').pop().toLowerCase();
-            const icon = ['html','htm'].includes(ext) ? '🌐' : ['js'].includes(ext) ? '📜' : ['css'].includes(ext) ? '🎨' : ['md'].includes(ext) ? '📝' : '📄';
-            li.innerHTML = '<span>' + icon + ' ' + f.path + '</span><span class="repo-meta-sm">' + (f.size > 1024 ? (f.size/1024).toFixed(1)+'KB' : f.size+'B') + '</span>';
-            li.onclick = () => loadFileFromRepo(fullName, f.path);
-            list.appendChild(li);
+            li.innerHTML = '<span>📄 ' + f.path + '</span><span class="repo-meta-sm">' + f.size + 'B</span>';
+            li.onclick = () => loadFileFromRepo(fullName, f.path); list.appendChild(li);
         });
     }
     async function loadFileFromRepo(fullName, path) {
-        const token = await getFromDB('gh_token');
-        const status = document.getElementById('gh-file-status');
-        status.textContent = path + ' を読み込み中...';
+        const token = await getFromDB('gh_token'); document.getElementById('gh-file-status').textContent = '読み込み中...';
         try {
-            const res = await fetch('https://api.github.com/repos/' + fullName + '/contents/' + path, {
-                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3.raw' }
-            });
-            if (!res.ok) throw new Error('ファイル取得エラー');
-            const text = await res.text();
-            document.getElementById('code-editor').value = text;
-            updatePreview();
-            closeGitHubImport();
-            showPage('editor', document.getElementById('tab-editor'));
-            alert('「' + path + '」をインポートしました');
-        } catch (e) { status.textContent = 'エラー: ' + e.message; }
+            const res = await fetch('https://api.github.com/repos/' + fullName + '/contents/' + path, { headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3.raw' } });
+            window.setCode(await res.text()); updatePreview(); closeGitHubImport(); showPage('editor', document.getElementById('tab-editor'));
+            showToast('インポートしました');
+        } catch (e) { document.getElementById('gh-file-status').textContent = 'エラー'; }
     }
-    function backToRepoList() {
-        document.getElementById('gh-step-repo').style.display = '';
-        document.getElementById('gh-step-file').style.display = 'none';
-    }
+    function backToRepoList() { document.getElementById('gh-step-repo').style.display = ''; document.getElementById('gh-step-file').style.display = 'none'; }
 
-    /* --- GitHub Deploy 関数群 --- */
-    let deployRepos = [];
-    let selectedDeployRepo = null;
-
+    let deployRepos = []; let selectedDeployRepo = null;
     async function openGitHubDeploy() {
         document.getElementById('gh-deploy-modal').classList.add('show');
         const token = await getFromDB('gh_token');
-        if (token) {
-            showDeployStep('repo');
-            fetchDeployRepos();
-        } else {
-            showDeployStep('token');
-        }
+        if (token) { showDeployStep('repo'); fetchDeployRepos(); } else { showDeployStep('token'); }
     }
-
-    function closeGitHubDeploy() {
-        document.getElementById('gh-deploy-modal').classList.remove('show');
-    }
-
+    function closeGitHubDeploy() { document.getElementById('gh-deploy-modal').classList.remove('show'); }
     function showDeployStep(step) {
-        document.getElementById('deploy-step-token').style.display = step === 'token' ? 'block' : 'none';
-        document.getElementById('deploy-step-repo').style.display = step === 'repo' ? 'block' : 'none';
-        document.getElementById('deploy-step-new-repo').style.display = step === 'new-repo' ? 'flex' : 'none';
-        document.getElementById('deploy-step-details').style.display = step === 'details' ? 'flex' : 'none';
+        ['token','repo','new-repo','details'].forEach(s => document.getElementById('deploy-step-'+s).style.display = (s===step ? (s==='repo'||s==='token'?'block':'flex') : 'none'));
     }
-
     async function saveDeployToken() {
         const input = document.getElementById('deploy-token-input').value.trim();
-        const status = document.getElementById('deploy-token-status');
-        if (!input) return status.textContent = 'トークンを入力してください';
-        
-        status.textContent = '認証中...';
+        if (!input) return; document.getElementById('deploy-token-status').textContent = '認証中...';
         try {
-            const res = await fetch('https://api.github.com/user', {
-                headers: { 'Authorization': 'Bearer ' + input }
-            });
-            if (!res.ok) throw new Error('認証失敗');
-            
-            await saveToDB('gh_token', input);
-            document.getElementById('setting-gh-token').value = input; // 設定タブと同期
-            status.textContent = '認証成功！';
-            setTimeout(() => {
-                showDeployStep('repo');
-                fetchDeployRepos();
-            }, 500);
-        } catch (e) {
-            status.textContent = 'エラー: ' + e.message;
-        }
+            await fetch('https://api.github.com/user', { headers: { 'Authorization': 'Bearer ' + input } }).then(r=>r.json());
+            await saveToDB('gh_token', input); document.getElementById('setting-gh-token').value = input;
+            document.getElementById('deploy-token-status').textContent = '成功！'; showDeployStep('repo'); fetchDeployRepos();
+        } catch (e) { document.getElementById('deploy-token-status').textContent = 'エラー'; }
     }
-
     async function fetchDeployRepos() {
         const token = await getFromDB('gh_token');
-        const status = document.getElementById('deploy-repo-status');
-        status.textContent = '読み込み中...';
-        try {
-            const res = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100', {
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
-            if (!res.ok) throw new Error('認証エラー (' + res.status + ')');
-            deployRepos = await res.json();
-            status.textContent = deployRepos.length + ' 件のリポジトリ';
-            renderDeployRepos(deployRepos);
-        } catch (e) { status.textContent = 'エラー: ' + e.message; }
+        const res = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100', { headers: { 'Authorization': 'Bearer ' + token } });
+        deployRepos = await res.json(); renderDeployRepos(deployRepos);
     }
-
     function renderDeployRepos(repos) {
-        const list = document.getElementById('deploy-repo-list');
-        list.innerHTML = '';
+        const list = document.getElementById('deploy-repo-list'); list.innerHTML = '';
         repos.forEach(r => {
-            const li = document.createElement('li');
-            li.innerHTML = '<span>' + (r.private ? '🔒 ' : '🌐 ') + r.name + '</span><span class="repo-meta-sm">' + new Date(r.updated_at).toLocaleDateString() + '</span>';
-            li.onclick = () => selectDeployRepo(r);
-            list.appendChild(li);
+            const li = document.createElement('li'); li.innerHTML = `<span>${r.name}</span>`;
+            li.onclick = () => selectDeployRepo(r); list.appendChild(li);
         });
     }
-
     function filterDeployRepos() {
-        const q = document.getElementById('deploy-repo-search').value.toLowerCase();
-        renderDeployRepos(deployRepos.filter(r => r.name.toLowerCase().includes(q)));
+        const q = document.getElementById('deploy-repo-search').value.toLowerCase(); renderDeployRepos(deployRepos.filter(r => r.name.toLowerCase().includes(q)));
     }
-
     async function selectDeployRepo(repo) {
-        selectedDeployRepo = repo;
-        document.getElementById('deploy-target-repo-name').textContent = repo.full_name;
-        
+        selectedDeployRepo = repo; document.getElementById('deploy-target-repo-name').textContent = repo.full_name;
         const pendingDeploy = await getFromDB('pending_deploy');
-        if (pendingDeploy && pendingDeploy.readme) {
-            document.getElementById('deploy-readme-content').value = pendingDeploy.readme;
-        } else {
-            document.getElementById('deploy-readme-content').value = '';
-        }
-
-        document.getElementById('deploy-execute-status').innerHTML = '';
+        document.getElementById('deploy-readme-content').value = pendingDeploy && pendingDeploy.readme ? pendingDeploy.readme : '';
         showDeployStep('details');
     }
-
-    function encodeBase64Unicode(str) {
-        return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
-            function toSolidBytes(match, p1) {
-                return String.fromCharCode('0x' + p1);
-            }));
-    }
-
     async function createNewRepo() {
-        const name = document.getElementById('new-repo-name').value.trim();
-        const desc = document.getElementById('new-repo-desc').value.trim();
-        const isPrivate = document.getElementById('new-repo-private').value === 'true';
-        const status = document.getElementById('new-repo-status');
-        const btn = document.getElementById('new-repo-btn');
-
-        if (!name) return status.innerHTML = '<span style="color:var(--danger)">リポジトリ名を入力してください</span>';
-
-        btn.disabled = true;
-        status.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 6px 0 0;"></div>リポジトリを作成中...';
-
-        try {
-            const token = await getFromDB('gh_token');
-            const res = await fetch('https://api.github.com/user/repos', {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer ' + token,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    name: name,
-                    description: desc,
-                    private: isPrivate,
-                    auto_init: true // 初期化してmainブランチとREADMEを作成
-                })
-            });
-
-            if (!res.ok) {
-                const err = await res.json();
-                throw new Error(err.message || '作成失敗');
-            }
-
-            const newRepo = await res.json();
-            status.innerHTML = '<span style="color:var(--success)">✅ 作成成功！</span>';
-            
-            setTimeout(() => {
-                btn.disabled = false;
-                document.getElementById('new-repo-name').value = '';
-                document.getElementById('new-repo-desc').value = '';
-                status.innerHTML = '';
-                selectDeployRepo(newRepo);
-            }, 1000);
-
-        } catch (e) {
-            status.innerHTML = '<span style="color:var(--danger)">❌ エラー: ' + e.message + '</span>';
-            btn.disabled = false;
-        }
+        const name = document.getElementById('new-repo-name').value.trim(); const token = await getFromDB('gh_token');
+        if (!name) return;
+        const res = await fetch('https://api.github.com/user/repos', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name, auto_init: true }) });
+        selectDeployRepo(await res.json());
     }
-
+    function encodeBase64Unicode(str) { return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1))); }
     async function executeDeploy() {
-        if (!selectedDeployRepo) return;
-        const btn = document.getElementById('deploy-exec-btn');
-        const status = document.getElementById('deploy-execute-status');
-        const branch = document.getElementById('deploy-branch').value.trim() || 'main';
-        const filepath = document.getElementById('deploy-filepath').value.trim() || 'index.html';
-        const readmeContent = document.getElementById('deploy-readme-content').value;
-        const enablePagesCheckbox = document.getElementById('deploy-gh-pages').checked;
+        const btn = document.getElementById('deploy-exec-btn'); const status = document.getElementById('deploy-execute-status');
+        btn.disabled = true; status.innerHTML = 'デプロイ中...';
+        const branch = document.getElementById('deploy-branch').value || 'main'; const filepath = document.getElementById('deploy-filepath').value || 'index.html';
+        const token = await getFromDB('gh_token'); const repoFullName = selectedDeployRepo.full_name;
+        const pendingDeploy = await getFromDB('pending_deploy'); const codeContent = pendingDeploy ? pendingDeploy.code : window.getCode();
         
-        const pendingDeploy = await getFromDB('pending_deploy');
-        const codeContent = pendingDeploy ? pendingDeploy.code : document.getElementById('code-editor').value;
-
-        if (!codeContent) {
-            return status.innerHTML = '<span style="color:var(--danger)">エラー: デプロイするコードがありません。</span>';
-        }
-
-        btn.disabled = true;
-        status.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 6px 0 0;"></div>デプロイ準備中...';
-
-        const token = await getFromDB('gh_token');
-        const repoFullName = selectedDeployRepo.full_name;
-
-        const pushFile = async (path, content, message) => {
-            const url = `https://api.github.com/repos/${repoFullName}/contents/${path}`;
-            let sha = null;
-            try {
-                const getRes = await fetch(url + '?ref=' + branch, { headers: { 'Authorization': 'Bearer ' + token } });
-                if (getRes.ok) {
-                    const data = await getRes.json();
-                    sha = data.sha;
-                }
-            } catch (e) {}
-
-            const body = {
-                message: message,
-                content: encodeBase64Unicode(content),
-                branch: branch
-            };
-            if (sha) body.sha = sha;
-
-            const putRes = await fetch(url, {
-                method: 'PUT',
-                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-
-            if (!putRes.ok) {
-                const err = await putRes.json();
-                throw new Error(err.message || 'Push failed');
-            }
+        const pushFile = async (path, content, msg) => {
+            let sha = null; const url = `https://api.github.com/repos/${repoFullName}/contents/${path}`;
+            try { const getRes = await fetch(url + '?ref=' + branch, { headers: { 'Authorization': 'Bearer ' + token } }); if(getRes.ok) sha = (await getRes.json()).sha; } catch(e){}
+            const body = { message: msg, content: encodeBase64Unicode(content), branch: branch }; if (sha) body.sha = sha;
+            await fetch(url, { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         };
-
         try {
-            status.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 6px 0 0;"></div>コードをコミット中...';
-            await pushFile(filepath, codeContent, `Deploy ${filepath} via AI Web Studio Pro`);
-
-            if (readmeContent) {
-                status.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 6px 0 0;"></div>READMEをコミット中...';
-                await pushFile('README.md', readmeContent, 'Update README.md via AI Web Studio Pro');
+            await pushFile(filepath, codeContent, 'Deploy via App');
+            if (document.getElementById('deploy-readme-content').value) await pushFile('README.md', document.getElementById('deploy-readme-content').value, 'Update README');
+            if (document.getElementById('deploy-gh-pages').checked) {
+                try { await fetch(`https://api.github.com/repos/${repoFullName}/pages`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' }, body: JSON.stringify({ source: { branch: branch, path: '/' } }) }); } catch(e){}
             }
-
-            if (enablePagesCheckbox) {
-                status.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 6px 0 0;"></div>GitHub Pages設定中...';
-                
-                try {
-                    const pagesUrl = `https://api.github.com/repos/${repoFullName}/pages`;
-                    const pagesRes = await fetch(pagesUrl, {
-                        method: 'POST',
-                        headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ source: { branch: branch, path: '/' } })
-                    });
-                    if (!pagesRes.ok) {
-                        const errData = await pagesRes.json();
-                        // 既に設定されている場合(409)などは無視して待機へ進む
-                        if (pagesRes.status !== 409) console.warn("Pages API config:", errData);
-                    }
-                } catch(e) { console.warn("Pages Setup Error:", e); }
-
-                status.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 6px 0 0;"></div>GitHub Pages構築中...(最大2分)';
-                
-                let pagesBuilt = false;
-                for(let i=0; i<40; i++) {
-                    await new Promise(r => setTimeout(r, 3000));
-                    try {
-                        const bRes = await fetch(`https://api.github.com/repos/${repoFullName}/pages/builds/latest`, {
-                            headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' }
-                        });
-                        if (bRes.ok) {
-                            const bData = await bRes.json();
-                            if (bData.status === 'built') { pagesBuilt = true; break; }
-                            if (bData.status === 'errored') throw new Error('Build errored');
-                        }
-                    } catch(e) {
-                        if (e.message === 'Build errored') throw e;
-                    }
-                }
-
-                if (pagesBuilt) {
-                    let siteUrl = `https://${repoFullName.split('/')[0]}.github.io/${repoFullName.split('/')[1]}/`;
-                    try {
-                        const pRes = await fetch(`https://api.github.com/repos/${repoFullName}/pages`, {
-                            headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' }
-                        });
-                        if(pRes.ok) { const pData = await pRes.json(); siteUrl = pData.html_url; }
-                    } catch(e) {}
-                    status.innerHTML = `<span style="color:var(--success)">✅ デプロイ＆公開完了！</span><br><a href="${siteUrl}" target="_blank" style="color:var(--primary); font-size:14px; font-weight:bold; display:inline-block; margin-top:8px; padding:6px 12px; background:#1e3a8a; border-radius:6px; text-decoration:none;">🚀 公開サイトを開く</a><br><a href="https://github.com/${repoFullName}" target="_blank" style="color:#aaa; font-size:11px; display:inline-block; margin-top:8px; text-decoration:underline;">リポジトリを開く</a>`;
-                } else {
-                    status.innerHTML = `<span style="color:#eab308">⚠️ デプロイ完了。Pagesの構築確認がタイムアウトしました。数分後に確認してください。</span><br><a href="https://github.com/${repoFullName}" target="_blank" style="color:var(--primary)">リポジトリを開く</a>`;
-                }
-
-            } else {
-                status.innerHTML = `<span style="color:var(--success)">✅ デプロイ成功！</span> <a href="https://github.com/${repoFullName}" target="_blank" style="color:var(--primary)">リポジトリを開く</a>`;
-            }
-
+            status.innerHTML = `<span style="color:var(--success)">✅ 成功！</span>`;
             await deleteFromDB('pending_deploy');
-        } catch (e) {
-            status.innerHTML = '<span style="color:var(--danger)">❌ エラー: ' + e.message + '</span>';
-        }
-
+        } catch (e) { status.innerHTML = `<span style="color:var(--danger)">❌ エラー</span>`; }
         btn.disabled = false;
     }
 
-
+    /* --- メイン初期化 --- */
     window.onload = async () => {
         try {
             const settings = await getFromDB('settings');
@@ -849,33 +943,30 @@
                 if (settings.codeModel) document.getElementById('code-model').value = settings.codeModel;
             }
             toggleModelSelects();
-
             const ghToken = await getFromDB('gh_token');
-            if (ghToken) {
-                document.getElementById('setting-gh-token').value = ghToken;
-                document.getElementById('deploy-token-input').value = ghToken;
-            }
+            if (ghToken) { document.getElementById('setting-gh-token').value = ghToken; document.getElementById('deploy-token-input').value = ghToken; }
         } catch(e) {}
 
-        // Service Worker 登録
         await registerSW();
+        
+        // CodeMirror初期化
+        const savedCode = await getFromDB('currentCode');
+        await initCodeMirror(savedCode);
 
-        // バックグラウンド生成結果の復帰チェック
+        // チャット履歴ロード
+        await loadChatHistory();
+
+        // BG復帰チェック
         try {
             const bgResult = await getFromDB('bgResult');
             if (bgResult && bgResult.done) {
                 if (bgResult.code) {
-                    document.getElementById('code-editor').value = bgResult.code;
-                    updatePreview();
-                    const log = document.getElementById('chat-log');
-                    const aiMsg = document.createElement('div'); aiMsg.className = 'msg ai';
-                    aiMsg.innerHTML = '✨ バックグラウンド構築完了（復帰）。PREVIEWを確認してください。';
-                    log.appendChild(aiMsg);
+                    window.setCode(bgResult.code); updatePreview();
+                    const sysMsgObj = { id: Date.now().toString(), role: 'ai system-msg', text: '✨ バックグラウンド構築完了（復帰）。PREVIEWを確認してください。', html: false };
+                    chatHistory.push(sysMsgObj); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(sysMsgObj);
                 } else if (bgResult.error) {
-                    const log = document.getElementById('chat-log');
-                    const aiMsg = document.createElement('div'); aiMsg.className = 'msg ai';
-                    aiMsg.innerHTML = '<span style="color:var(--danger)">前回のBG生成エラー: ' + bgResult.error + '</span>';
-                    log.appendChild(aiMsg);
+                    const sysMsgObj = { id: Date.now().toString(), role: 'ai system-msg', text: '<span style="color:var(--danger)">前回のBG生成エラー: ' + bgResult.error + '</span>', html: true };
+                    chatHistory.push(sysMsgObj); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(sysMsgObj);
                 }
                 await deleteFromDB('bgResult');
             }
@@ -890,338 +981,190 @@
         if(id === 'preview') updatePreview();
     }
 
-    function autoGrow(element) {
-        element.style.height = "5px";
-        element.style.height = (element.scrollHeight) + "px";
-    }
+    function autoGrow(element) { element.style.height = "5px"; element.style.height = (element.scrollHeight) + "px"; }
 
-    /* --- アタッチメント（添付）ロジック --- */
+    /* --- アタッチメント --- */
     function toggleAttachmentMenu() {
-        if (currentFileName) {
-            removeAttachment();
-            return;
-        }
+        if (currentFileName) { removeAttachment(); return; }
         document.getElementById('attach-menu').classList.toggle('show');
     }
-
-    function triggerFile(type) {
-        document.getElementById('file-' + type).click();
-        const menu = document.getElementById('attach-menu');
-        if (menu) menu.classList.remove('show');
-    }
-
+    function triggerFile(type) { document.getElementById('file-' + type).click(); document.getElementById('attach-menu').classList.remove('show'); }
     function handleAttachment(input) {
-        const file = input.files[0];
-        if (!file) return;
-        currentMimeType = file.type;
-        currentFileName = file.name;
+        const file = input.files[0]; if (!file) return;
+        currentMimeType = file.type; currentFileName = file.name;
         const reader = new FileReader();
         reader.onloadend = () => {
             currentImageBase64 = reader.result.split(',')[1];
-            const preview = document.getElementById('file-preview');
-            const label = document.querySelector('.file-label');
-            const fileNameDisplay = document.getElementById('file-name-display');
-            label.innerHTML = '✕';
-            label.style.background = '#ef4444';
-            if (currentMimeType.startsWith('image/')) {
-                if (preview) { preview.src = reader.result; preview.style.display = 'block'; }
-                if (fileNameDisplay) fileNameDisplay.style.display = 'none';
-            } else {
-                if (preview) preview.style.display = 'none';
-                if (fileNameDisplay) { fileNameDisplay.innerText = `📄 ${currentFileName}`; fileNameDisplay.style.display = 'inline-block'; }
-            }
-        };
-        reader.readAsDataURL(file);
-        input.value = '';
+            document.querySelector('.file-label').innerHTML = '✕'; document.querySelector('.file-label').style.background = 'var(--danger)';
+            if (currentMimeType.startsWith('image/')) { document.getElementById('file-preview').src = reader.result; document.getElementById('file-preview').style.display = 'block'; document.getElementById('file-name-display').style.display = 'none'; } 
+            else { document.getElementById('file-preview').style.display = 'none'; document.getElementById('file-name-display').innerText = `📄 ${currentFileName}`; document.getElementById('file-name-display').style.display = 'inline-block'; }
+        }; reader.readAsDataURL(file); input.value = '';
     }
-
     function removeAttachment() {
         currentImageBase64 = null; currentMimeType = null; currentFileName = null;
-        const preview = document.getElementById('file-preview');
-        const label = document.querySelector('.file-label');
-        const fileNameDisplay = document.getElementById('file-name-display');
-        if (preview) { preview.src = ''; preview.style.display = 'none'; }
-        if (fileNameDisplay) { fileNameDisplay.innerText = ''; fileNameDisplay.style.display = 'none'; }
-        label.innerHTML = '＋'; label.style.background = '#333';
+        document.getElementById('file-preview').style.display = 'none'; document.getElementById('file-name-display').style.display = 'none';
+        document.querySelector('.file-label').innerHTML = '＋'; document.querySelector('.file-label').style.background = 'var(--color-bg-elevated)';
         document.getElementById('attach-menu').classList.remove('show');
     }
 
-    function triggerCodeUpload() {
-        document.getElementById('code-upload-input').click();
-    }
-
+    function triggerCodeUpload() { document.getElementById('code-upload-input').click(); }
     function handleCodeUpload(input) {
-        const file = input.files[0];
-        if (!file) return;
+        const file = input.files[0]; if (!file) return;
         const reader = new FileReader();
-        reader.onload = (e) => {
-            document.getElementById('code-editor').value = e.target.result;
-            updatePreview();
-            alert(`「${file.name}」を読み込みました`);
-        };
-        reader.readAsText(file);
-        input.value = ''; // 連続選択を可能にする
+        reader.onload = (e) => { window.setCode(e.target.result); updatePreview(); showToast(`「${file.name}」を読み込みました`); };
+        reader.readAsText(file); input.value = '';
     }
 
     document.addEventListener('click', (e) => {
-        const menu = document.getElementById('attach-menu');
-        const label = document.querySelector('.file-label');
-        if (menu && menu.classList.contains('show') && !menu.contains(e.target) && !label.contains(e.target)) {
-            menu.classList.remove('show');
-        }
+        const menu = document.getElementById('attach-menu'); const label = document.querySelector('.file-label');
+        if (menu && menu.classList.contains('show') && !menu.contains(e.target) && !label.contains(e.target)) menu.classList.remove('show');
     });
 
     async function saveSettings() {
-        const settings = {
-            apiKey: document.getElementById('api-key').value,
-            userProfile: document.getElementById('user-profile').value,
-            chatModel: document.getElementById('chat-model').value,
-            codeModel: document.getElementById('code-model').value
-        };
+        const settings = { apiKey: document.getElementById('api-key').value, userProfile: document.getElementById('user-profile').value, chatModel: document.getElementById('chat-model').value, codeModel: document.getElementById('code-model').value };
         const ghToken = document.getElementById('setting-gh-token').value.trim();
-
-        try {
-            await saveToDB('settings', settings);
-            
-            if (ghToken) {
-                await saveToDB('gh_token', ghToken);
-                document.getElementById('deploy-token-input').value = ghToken;
-            } else {
-                await deleteFromDB('gh_token');
-                document.getElementById('deploy-token-input').value = '';
-            }
-
-            const btn = document.getElementById('save-btn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '✓ 保存しました';
-            btn.style.background = 'var(--success)';
-            btn.style.color = '#fff';
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.style.background = '#fff';
-                btn.style.color = '#000';
-            }, 2000);
-        } catch(e) {
-            alert('設定の保存に失敗しました: ' + e.message);
-        }
+        await saveToDB('settings', settings);
+        if (ghToken) { await saveToDB('gh_token', ghToken); document.getElementById('deploy-token-input').value = ghToken; } else { await deleteFromDB('gh_token'); document.getElementById('deploy-token-input').value = ''; }
+        const btn = document.getElementById('save-btn'); const originalText = btn.innerHTML;
+        btn.innerHTML = '✓ 保存しました'; btn.style.background = 'var(--success)'; btn.style.color = '#fff';
+        setTimeout(() => { btn.innerHTML = originalText; btn.style.background = '#fff'; btn.style.color = '#000'; }, 2000);
     }
 
-    function confirmReset() {
-        if (confirm("会話とコードをリセットしますか？")) {
-            conversationContext = "";
-            document.getElementById('chat-log').innerHTML = '<div class="msg ai">会話をリセットしました。</div>';
-            document.getElementById('code-editor').value = "";
-            document.getElementById('preview-frame').srcdoc = "";
-            removeAttachment();
-        }
-    }
-
-    function updatePreview() {
-        const code = document.getElementById('code-editor').value;
-        document.getElementById('preview-frame').srcdoc = code;
-    }
+    function updatePreview() { document.getElementById('preview-frame').srcdoc = window.getCode(); }
 
     async function askGemini() {
-        const key = document.getElementById('api-key').value;
-        const prof = document.getElementById('user-profile').value;
-        const model = document.getElementById('chat-model').value;
-        const input = document.getElementById('user-prompt');
-        const promptText = input.value.trim();
+        const key = document.getElementById('api-key').value; const prof = document.getElementById('user-profile').value; const model = document.getElementById('chat-model').value;
+        const input = document.getElementById('user-prompt'); const promptText = input.value.trim();
+        if(!promptText && !currentFileName) return showToast('入力またはファイルが必要です');
         
-        if(!promptText && !currentFileName) return alert('入力またはファイルが必要です');
-        
-        const log = document.getElementById('chat-log');
         document.querySelectorAll('.generate-btn-wrapper').forEach(el => el.remove());
         
-        const userMsg = document.createElement('div');
-        userMsg.className = 'msg user';
-        userMsg.textContent = promptText; 
-        if(currentFileName) userMsg.textContent += `\n[添付: ${currentFileName}]`;
-        log.appendChild(userMsg);
+        // ユーザーメッセージ保存
+        const userMsgObj = { id: Date.now().toString(), role: 'user', text: promptText, html: false };
+        if(currentFileName) userMsgObj.attachment = currentFileName;
+        chatHistory.push(userMsgObj); saveToDB('chatHistory', chatHistory);
+        renderMessageFromHistory(userMsgObj);
         
-        const aiMsg = document.createElement('div');
-        aiMsg.className = 'msg ai';
-        aiMsg.innerHTML = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>考案中...</span></div>';
-        log.appendChild(aiMsg);
+        // AIメッセージ領域作成
+        const aiMsgId = (Date.now() + 1).toString();
+        const aiMsgObj = { id: aiMsgId, role: 'ai', text: '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>考案中...</span></div>', html: true };
+        chatHistory.push(aiMsgObj); saveToDB('chatHistory', chatHistory);
+        const log = document.getElementById('chat-log');
+        const aiMsgElement = createMessageElement(aiMsgObj);
+        log.appendChild(aiMsgElement); log.scrollTop = log.scrollHeight;
+        const contentDiv = aiMsgElement.querySelector('.msg-content');
         
-        input.value = ''; input.style.height = "44px"; log.scrollTop = log.scrollHeight;
-        conversationContext += `\nユーザー: ${promptText}`;
-        if(currentFileName) conversationContext += ` (添付ファイル: ${currentFileName})`;
+        input.value = ''; input.style.height = "44px"; rebuildConversationContext();
 
-        const currentCode = document.getElementById('code-editor').value;
-        const codeContext = currentCode 
-            ? `\n\n【現在のコード】\n\`\`\`html\n${currentCode}\n\`\`\`\n※上記コードを踏まえて、内容を大きく変更せずに修正案や設計の提案を行ってください。` 
-            : "";
-
-        const system = `あなたはプロのWeb開発ディレクターです。ユーザーのアイディアを具体化し、実装（BUILD）に向けた設計図を作成します。
-プロファイル: ${prof}
-ガイドライン: 1. アプリ名、ターゲット、機能をヒアリング。2. 簡潔に箇条書きで返答。3. コードは書かず、仕様合意に徹する。4. 仕様が固まったら「素晴らしいプランです。⚡️コードを作成 ボタンから実装を開始しましょう」と促す。${codeContext}`;
+        const currentCode = window.getCode();
+        const codeContext = currentCode ? `\n\n【現在のコード】\n\`\`\`html\n${currentCode}\n\`\`\`\n※上記コードを踏まえて、内容を大きく変更せずに修正案や設計の提案を行ってください。` : "";
+        const system = `あなたはプロのWeb開発ディレクターです。ユーザーのアイディアを具体化し、実装（BUILD）に向けた設計図を作成します。\nプロファイル: ${prof}\nガイドライン: 1. アプリ名、ターゲット、機能をヒアリング。2. 簡潔に箇条書きで返答。3. コードは書かず、仕様合意に徹する。4. 仕様が固まったら「素晴らしいプランです。⚡️コードを作成 ボタンから実装を開始しましょう」と促す。${codeContext}`;
         
         let aiText = "";
         try { 
             if (key) {
                 const userContent = { role: "user", parts: [{ text: system + "\n\n会話履歴:\n" + conversationContext }] };
-                if (currentImageBase64 && currentMimeType) {
-                    userContent.parts.push({ inline_data: { mime_type: currentMimeType, data: currentImageBase64 } });
-                    removeAttachment();
-                }
+                if (currentImageBase64 && currentMimeType) { userContent.parts.push({ inline_data: { mime_type: currentMimeType, data: currentImageBase64 } }); removeAttachment(); }
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${key}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [userContent] }) });
-                if (!res.ok) throw new Error(`API Error: ${res.status} (Model: ${model})`);
-                const reader = res.body.getReader(); const decoder = new TextDecoder("utf-8"); let buffer = ""; aiMsg.innerHTML = "";
+                if (!res.ok) throw new Error(`API Error: ${res.status}`);
+                const reader = res.body.getReader(); const decoder = new TextDecoder("utf-8"); let buffer = ""; contentDiv.innerHTML = "";
                 while (true) {
                     const { value, done } = await reader.read(); if (done) break;
                     buffer += decoder.decode(value, { stream: true }); const lines = buffer.split('\n'); buffer = lines.pop();
-                    for (const line of lines) { if (line.startsWith('data: ')) { try { const data = JSON.parse(line.slice(6)); const textChunk = data.candidates?.[0]?.content?.parts?.[0]?.text; if (textChunk) { aiText += textChunk; aiMsg.innerText = aiText; log.scrollTop = log.scrollHeight; } } catch (e) {} } }
+                    for (const line of lines) { if (line.startsWith('data: ')) { try { const data = JSON.parse(line.slice(6)); const textChunk = data.candidates?.[0]?.content?.parts?.[0]?.text; if (textChunk) { aiText += textChunk; contentDiv.innerText = aiText; log.scrollTop = log.scrollHeight; } } catch (e) {} } }
                 }
             } else {
                 let combinedPrompt = system + "\n\n会話履歴:\n" + conversationContext;
-                if (currentImageBase64 && currentMimeType) {
-                    combinedPrompt += "\n[ユーザーから画像が添付されています]";
-                    removeAttachment();
-                }
-                const res = await fetch(PROXY_WORKER_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: combinedPrompt })
-                });
-                const data = await res.json();
-                aiText = data.candidates ? data.candidates[0].content.parts[0].text : (data.response || data.text || (typeof data === 'string' ? data : JSON.stringify(data)));
-                aiMsg.innerText = aiText;
+                if (currentImageBase64 && currentMimeType) { combinedPrompt += "\n[ユーザーから画像が添付されています]"; removeAttachment(); }
+                const res = await fetch(PROXY_WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: combinedPrompt }) });
+                const data = await res.json(); aiText = data.candidates ? data.candidates[0].content.parts[0].text : (data.response || data.text || JSON.stringify(data)); contentDiv.innerText = aiText;
             }
 
-            conversationContext += `\nアシスタント: ${aiText}`;
-            const btnWrapper = document.createElement('div'); btnWrapper.className = 'generate-btn-wrapper';
-            const genBtn = document.createElement('button'); genBtn.className = 'generate-btn'; genBtn.innerHTML = '⚡️ コードを作成 (BUILD)';
-            genBtn.onclick = generateCode; btnWrapper.appendChild(genBtn); aiMsg.appendChild(btnWrapper); log.scrollTop = log.scrollHeight;
-        } catch (e) { aiMsg.textContent = 'エラー: ' + e.message; }
+            // ストリーミング完了後の保存と再描画
+            const aiMsgToUpdate = chatHistory.find(m => m.id === aiMsgId);
+            if(aiMsgToUpdate) {
+                aiMsgToUpdate.text = aiText; aiMsgToUpdate.html = false;
+                saveToDB('chatHistory', chatHistory); rebuildConversationContext();
+                aiMsgElement.replaceWith(createMessageElement(aiMsgToUpdate));
+                log.scrollTop = log.scrollHeight;
+            }
+        } catch (e) { contentDiv.textContent = 'エラー: ' + e.message; }
     }
 
     async function generateCode() {
-        const key = document.getElementById('api-key').value;
-        const prof = document.getElementById('user-profile').value;
-        const model = document.getElementById('code-model').value;
-        const currentCode = document.getElementById('code-editor').value;
-        const log = document.getElementById('chat-log');
+        const key = document.getElementById('api-key').value; const prof = document.getElementById('user-profile').value; const model = document.getElementById('code-model').value;
+        const currentCode = window.getCode();
         document.querySelectorAll('.generate-btn-wrapper').forEach(el => el.remove());
-        const aiMsg = document.createElement('div'); aiMsg.className = 'msg ai'; aiMsg.innerHTML = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>構築中...（タブを閉じてもOK）</span></div>';
-        log.appendChild(aiMsg); log.scrollTop = log.scrollHeight;
+        
+        const sysMsgObj = { id: Date.now().toString(), role: 'ai system-msg', text: '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>構築中...（タブを閉じてもOK）</span></div>', html: true };
+        chatHistory.push(sysMsgObj); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(sysMsgObj);
 
-        const codeRule = currentCode
-            ? `【重要】以下の既存コードが存在します。構造・変数名・スタイル・レイアウトを最大限維持し、会話で合意した差分のみを変更・追加してください。全面書き換えは厳禁です。\n既存コード:\n${currentCode}`
-            : '既存コードはありません。新規に完全なコードを作成してください。';
-        const system = `Expert Full-stack Web Developerとして、完全なHTML/CSS/JSコードを1つのファイルで出力してください。
-プロファイル: ${prof}
-ルール: Markdownのコードブロック不要。<!DOCTYPE html>から開始。外部ライブラリはCDN使用。
-${codeRule}
-会話履歴: ${conversationContext}`;
+        const codeRule = currentCode ? `【重要】以下の既存コードが存在します。構造・変数名・スタイル・レイアウトを最大限維持し、会話で合意した差分のみを変更・追加してください。全面書き換えは厳禁です。\n既存コード:\n${currentCode}` : '既存コードはありません。新規に完全なコードを作成してください。';
+        const system = `Expert Full-stack Web Developerとして、完全なHTML/CSS/JSコードを1つのファイルで出力してください。\nプロファイル: ${prof}\nルール: Markdownのコードブロック不要。<!DOCTYPE html>から開始。外部ライブラリはCDN使用。\n${codeRule}\n会話履歴: ${conversationContext}`;
 
         const googleUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-        const googleBody = JSON.stringify({ contents: [{ parts: [{ text: system }] }] });
-        const proxyBody = JSON.stringify({ prompt: system });
-
         const targetUrl = key ? googleUrl : PROXY_WORKER_URL;
-        const targetBody = key ? googleBody : proxyBody;
+        const targetBody = JSON.stringify(key ? { contents: [{ parts: [{ text: system }] }] } : { prompt: system });
 
         if (swRegistration && swRegistration.active) {
             document.getElementById('bg-notify').classList.add('show');
             await saveToDB('bgResult', { done: false, ts: Date.now() });
             swRegistration.active.postMessage({ type: 'generate', url: targetUrl, body: targetBody });
-            aiMsg.innerHTML = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>バックグラウンドで構築中... タブを閉じても処理は継続します。</span></div>';
+            sysMsgObj.text = '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>バックグラウンドで構築中... タブを閉じても処理は継続します。</span></div>';
+            document.querySelector(`[data-id="${sysMsgObj.id}"] .msg-content`).innerHTML = sysMsgObj.text;
+            saveToDB('chatHistory', chatHistory);
         } else {
             try {
                 const res = await fetch(targetUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: targetBody });
-                const data = await res.json(); 
-                if(data.error) throw new Error(data.error.message);
-                let result = data.candidates ? data.candidates[0].content.parts[0].text : (data.response || data.text || (typeof data === 'string' ? data : JSON.stringify(data))); 
+                const data = await res.json();  if(data.error) throw new Error(data.error.message);
+                let result = data.candidates ? data.candidates[0].content.parts[0].text : (data.response || data.text || JSON.stringify(data)); 
                 result = result.replace(/^```html\s*/i, '').replace(/^```\s*/, '').replace(/```$/g, '').trim();
-                document.getElementById('code-editor').value = result; aiMsg.innerHTML = '✨ 構築完了。PREVIEWを確認してください。'; showPage('preview', document.getElementById('tab-preview')); updatePreview();
-            } catch (e) { aiMsg.innerHTML = '<span style="color:var(--danger)">エラー: ' + e.message + '</span>'; }
+                window.setCode(result); updatePreview(); showPage('preview', document.getElementById('tab-preview'));
+                sysMsgObj.text = '✨ 構築完了。PREVIEWを確認してください。'; sysMsgObj.html = false;
+                document.querySelector(`[data-id="${sysMsgObj.id}"] .msg-content`).textContent = sysMsgObj.text;
+                saveToDB('chatHistory', chatHistory);
+            } catch (e) {
+                sysMsgObj.text = '<span style="color:var(--danger)">エラー: ' + e.message + '</span>';
+                document.querySelector(`[data-id="${sysMsgObj.id}"] .msg-content`).innerHTML = sysMsgObj.text;
+                saveToDB('chatHistory', chatHistory);
+            }
         }
     }
 
     async function openDeployer() {
-        const code = document.getElementById('code-editor').value;
-        if (!code) return alert("デプロイするコードがありません。");
-        const key = document.getElementById('api-key').value;
-        const model = document.getElementById('code-model').value;
-        
-        let pendingDeploy = { code: code, readme: "" };
-        await saveToDB('pending_deploy', pendingDeploy);
+        const code = window.getCode(); if (!code) return alert("デプロイするコードがありません。");
+        const key = document.getElementById('api-key').value; const model = document.getElementById('code-model').value;
+        await saveToDB('pending_deploy', { code: code, readme: "" });
+        const deployBtn = document.querySelector('.deploy-btn'); const originalText = deployBtn.innerHTML;
+        deployBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 6px 0 0;"></div>README...'; deployBtn.disabled = true;
 
-        const deployBtn = document.querySelector('.deploy-btn');
-        const originalText = deployBtn.innerHTML;
-        deployBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 6px 0 0;"></div>README作成中...';
-        deployBtn.disabled = true;
-
-        const readmePrompt = `以下のHTMLコードを分析し、高品質なREADME.mdを日本語で作成してください。
-以下のセクションを含めてください:
-- プロジェクト名（コードから推測）
-- 概要・説明（何のアプリか、主な特徴）
-- 主な機能一覧
-- 使用技術・ライブラリ
-- セットアップ・使い方
-
-Markdownのコードブロックで囲まないでください。直接Markdown記法で出力してください。
-
-コード:
-${code}`;
-
+        const readmePrompt = `以下のHTMLコードを分析し、高品質なREADME.mdを日本語で作成してください。\nコード:\n${code}`;
         try {
             let readme = "";
             if (key) {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: readmePrompt }] }] })
-                });
-                const data = await res.json();
-                if (!data.error && data.candidates?.[0]) {
-                    readme = data.candidates[0].content.parts[0].text;
-                }
+                const data = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: readmePrompt }] }] }) }).then(r=>r.json());
+                if (data.candidates?.[0]) readme = data.candidates[0].content.parts[0].text;
             } else {
-                const res = await fetch(PROXY_WORKER_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: readmePrompt })
-                });
-                const data = await res.json();
-                readme = data.candidates ? data.candidates[0].content.parts[0].text : (data.response || data.text || (typeof data === 'string' ? data : JSON.stringify(data)));
+                const data = await fetch(PROXY_WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: readmePrompt }) }).then(r=>r.json());
+                readme = data.candidates ? data.candidates[0].content.parts[0].text : (data.response || data.text);
             }
-
-            if (readme) {
-                readme = readme.replace(/^```markdown\s*/i, '').replace(/^```\s*/, '').replace(/```$/g, '').trim();
-                pendingDeploy.readme = readme;
-                await saveToDB('pending_deploy', pendingDeploy);
-            }
-        } catch (e) { console.log('README生成スキップ:', e); }
-
-        deployBtn.innerHTML = originalText;
-        deployBtn.disabled = false;
-        
-        openGitHubDeploy();
+            if (readme) { readme = readme.replace(/^```markdown\s*/i, '').replace(/^```\s*/, '').replace(/```$/g, '').trim(); await saveToDB('pending_deploy', { code: code, readme: readme }); }
+        } catch (e) {}
+        deployBtn.innerHTML = originalText; deployBtn.disabled = false; openGitHubDeploy();
     }
 
     function sendDebugRequest() {
-        const memoInput = document.getElementById('debug-memo');
-        const memoText = memoInput.value.trim();
-        if (!memoText) return;
+        const memoText = document.getElementById('debug-memo').value.trim(); if (!memoText) return;
         showPage('chat', document.getElementById('tab-chat'));
         const chatInput = document.getElementById('user-prompt');
-        chatInput.value = `【修正依頼】\n${memoText}`;
-        autoGrow(chatInput); memoInput.value = ''; askGemini();
-    }
-
-    function copyCode() {
-        const codeEditor = document.getElementById('code-editor');
-        navigator.clipboard.writeText(codeEditor.value).then(() => alert("Copied!"));
+        chatInput.value = `あなたはプロのWeb開発ディレクターです。次の修整依頼に対して、バグの報告かどうか判断してください。バグの場合は要因を確認してください。要因が判明したら改善策を検討してください。要因が判明しない場合は、要因切分けのためのログや反応を取得するためのコードを検討してください。最後に、前回のコード生成から現在までで修整する要件を整理してください。【修正依頼】\n${memoText}`;
+        autoGrow(chatInput); document.getElementById('debug-memo').value = ''; askGemini();
     }
 
     function downloadCode() {
-        const code = document.getElementById('code-editor').value;
-        if (!code) return alert("コードがありません。");
-        const blob = new Blob([code], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = 'index.html';
-        document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+        const code = window.getCode(); if (!code) return showToast("コードがありません。");
+        const blob = new Blob([code], { type: 'text/html' }); const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'index.html'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
     }
 
     let touchStartX = 0;
