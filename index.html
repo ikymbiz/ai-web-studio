@@ -1193,18 +1193,6 @@
         const blob = new Blob([code], { type: 'text/html' }); const url = URL.createObjectURL(blob);
         const a = document.createElement('a'); a.href = url; a.download = 'index.html'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
     }
-
-    let touchStartX = 0;
-    document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
-    document.addEventListener('touchend', e => {
-        const dx = e.changedTouches[0].screenX - touchStartX;
-        const activePage = document.querySelector('.page.active');
-        const currentIndex = pagesList.indexOf(activePage.id.replace('p-', ''));
-        if (Math.abs(dx) > 120) {
-            if (dx < 0 && currentIndex < pagesList.length - 1) showPage(pagesList[currentIndex + 1], document.querySelectorAll('.tab-btn')[currentIndex + 1]);
-            else if (dx > 0 && currentIndex > 0) showPage(pagesList[currentIndex - 1], document.querySelectorAll('.tab-btn')[currentIndex - 1]);
-        }
-    }, {passive: true});
 </script>
 </body>
 </html>
