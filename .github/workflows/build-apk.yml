@@ -1,0 +1,152 @@
+name: Mobile App Builder
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_name:
+        description: 'アプリの表示名'
+        default: 'My App'
+        required: true
+      app_id:
+        description: 'パッケージ名 (com.example.app)'
+        default: 'com.example.app'
+        required: true
+      source_type:
+        description: '取得元 (local / github)'
+        default: 'local'
+        required: true
+      source_path:
+        description: 'アセットのパス'
+        default: '/'
+        required: false
+      selected_files:
+        description: '対象ファイル (カンマ区切り)'
+        default: ''
+        required: false
+      app_icon_base64:
+        description: 'アプリアイコン (Base64 PNG)'
+        default: ''
+        required: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+
+      - uses: actions/setup-java@v4
+        with: { distribution: 'temurin', java-version: '17' }
+
+      - name: Create package.json for Capacitor dependencies
+        run: |
+          echo '{
+            "name": "web-to-native-app",
+            "version": "1.0.0",
+            "description": "Auto-generated project",
+            "dependencies": {
+              "@capacitor/core": "^5.0.0",
+              "@capacitor/android": "^5.0.0"
+            },
+            "devDependencies": {
+              "@capacitor/cli": "^5.0.0"
+            }
+          }' > package.json
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Extract Web Assets (Local)
+        if: github.event.inputs.source_type == 'local'
+        run: |
+          rm -rf www
+          mkdir www
+          unzip -o www.zip -d www
+          ls -l www
+
+      - name: Checkout Source Repo (GitHub)
+        if: github.event.inputs.source_type == 'github'
+        uses: actions/checkout@v4
+        with:
+          path: source_repo_temp
+
+      - name: Copy Web Assets (GitHub)
+        if: github.event.inputs.source_type == 'github'
+        run: |
+          rm -rf www
+          mkdir www
+          SOURCE_PATH="${{ github.event.inputs.source_path }}"
+          SOURCE_PATH="${SOURCE_PATH#/}"
+          SOURCE_PATH="${SOURCE_PATH%/}"
+          SELECTED="${{ github.event.inputs.selected_files }}"
+          
+          if [ -n "$SELECTED" ]; then
+            IFS=',' read -ra ADDR <<< "$SELECTED"
+            for i in "${ADDR[@]}"; do
+              if [ -z "$SOURCE_PATH" ]; then
+                DEST="$i"
+              else
+                DEST="${i#$SOURCE_PATH/}"
+              fi
+              mkdir -p "www/$(dirname "$DEST")" || true
+              cp -R "source_repo_temp/$i" "www/$DEST" || true
+            done
+          else
+            if [ -z "$SOURCE_PATH" ]; then
+              cp -R source_repo_temp/* www/ || true
+              cp -R source_repo_temp/.[!.]* www/ || true
+            else
+              cp -R source_repo_temp/$SOURCE_PATH/* www/ || true
+              cp -R source_repo_temp/$SOURCE_PATH/.[!.]* www/ || true
+            fi
+          fi
+          ls -l www
+
+      - name: Configure Capacitor
+        run: |
+          echo '{
+            "appId": "${{ github.event.inputs.app_id }}",
+            "appName": "${{ github.event.inputs.app_name }}",
+            "webDir": "www"
+          }' > capacitor.config.json
+
+      - name: Android Platform Setup
+        run: |
+          npx cap add android || true
+          npx cap sync android
+
+      - name: Set App Icon and PWA Manifest
+        if: github.event.inputs.app_icon_base64 != ''
+        run: |
+          mkdir -p temp_icon
+          echo "${{ github.event.inputs.app_icon_base64 }}" | base64 -d > temp_icon/icon.png
+          RES_DIR="android/app/src/main/res"
+          if [ -d "$RES_DIR" ]; then
+            for dpi in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+              mkdir -p "$RES_DIR/mipmap-$dpi"
+              cp temp_icon/icon.png "$RES_DIR/mipmap-$dpi/ic_launcher.png" || true
+              cp temp_icon/icon.png "$RES_DIR/mipmap-$dpi/ic_launcher_round.png" || true
+            done
+          fi
+          mkdir -p www/assets/icons
+          cp temp_icon/icon.png www/assets/icons/icon.png || true
+          echo '{
+            "name": "${{ github.event.inputs.app_name }}",
+            "short_name": "${{ github.event.inputs.app_name }}",
+            "display": "standalone",
+            "icons": [{ "src": "assets/icons/icon.png", "sizes": "512x512", "type": "image/png" }]
+          }' > www/manifest.json
+
+      - name: Build APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.inputs.app_name }}-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
