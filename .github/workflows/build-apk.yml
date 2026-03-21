@@ -47,14 +47,21 @@ jobs:
 
       - name: Configure Capacitor
         run: |
-          printf '{"appId":"%s","appName":"%s","webDir":"www"}' "${{ github.event.inputs.app_id }}" "${{ github.event.inputs.app_name }}" > capacitor.config.json
-          echo "--- capacitor.config.json ---"
-          cat capacitor.config.json
+          node -e "
+            const cfg = {
+              appId: process.argv[1],
+              appName: process.argv[2],
+              webDir: 'www'
+            };
+            require('fs').writeFileSync('capacitor.config.json', JSON.stringify(cfg, null, 2));
+            console.log('--- capacitor.config.json ---');
+            console.log(JSON.stringify(cfg, null, 2));
+          " "${{ github.event.inputs.app_id }}" "${{ github.event.inputs.app_name }}"
 
       - name: Install Capacitor
         run: |
           npm init -y
-          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest
+          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
           echo "--- Installed packages ---"
           npx cap --version
           ls node_modules/@capacitor/
