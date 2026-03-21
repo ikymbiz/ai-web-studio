@@ -1,1572 +1,1970 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>⚡ Native App Packager</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <title>AI Web Studio Pro 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --bg-main: #121212; 
-            --bg-surface: #1e1e1e; 
-            --bg-elevated: #2c2c2c;
-            --text-main: #e0e0e0; 
-            --text-muted: #9e9e9e; 
-            --primary: #007acc; 
-            --primary-hover: #0098ff;
-            --border: #333333; 
-            --success: #4ec9b0; 
-            --error: #f44747; 
-            --warning: #dcdcaa; 
-        }
-        
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            margin: 0; 
-            padding: 0; 
-            background: var(--bg-main); 
-            color: var(--text-main); 
-            display: flex; 
-            flex-direction: column;
-            height: 100vh; 
-            overflow: hidden; 
-            -webkit-tap-highlight-color: transparent;
+        /* ============================================
+           DESIGN SYSTEM - Obsidian Terminal
+           GenAI Chat App v2.0
+           ============================================ */
+        :root {
+            /* Backgrounds */
+            --color-bg-deep:       #0D0F14;
+            --color-bg-surface:    #161920;
+            --color-bg-elevated:   #1E2433;
+
+            /* Borders */
+            --color-border:        #2A2D36;
+            --color-border-focus:  #4A4F5E;
+
+            /* Text */
+            --color-text-primary:  #E8E4F0;
+            --color-text-secondary:#6B7280;
+            --color-text-muted:    #3D4251;
+
+            /* Typography */
+            --font-display: 'Syne',        sans-serif;
+            --font-body:    'DM Sans',     sans-serif;
+            --font-mono:    'JetBrains Mono', monospace;
+
+            /* Legacy Mappings */
+            --bg: var(--color-bg-deep);
+            --sidebar: var(--color-bg-surface);
+            --primary: #3b82f6;
+            --text: var(--color-text-primary);
+            --user-msg: var(--color-bg-elevated);
+            --ai-msg: var(--color-bg-deep);
+            --danger: #ef4444;
+            --success: #10b981;
+            --accent: #8b5cf6;
         }
 
-        /* Header */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 20px;
-            background: var(--bg-surface);
-            border-bottom: 1px solid var(--border);
-            z-index: 10;
-        }
-        header h1 {
-            font-size: 1.2rem;
-            margin: 0;
-            font-weight: 600;
-        }
-        .icon-btn {
-            background: none;
-            border: none;
-            color: var(--text-main);
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 50%;
-            transition: background 0.2s;
-        }
-        .icon-btn:hover {
-            background: rgba(255,255,255,0.1);
-        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: var(--font-body); margin: 0; height: 100dvh; display: flex; flex-direction: column; background: var(--bg); color: var(--text); overflow: hidden; }
 
-        /* Container */
-        .app-container {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            position: relative;
-            max-width: 800px;
-            margin: 0 auto;
-            width: 100%;
-        }
+        /* ナビゲーション */
+        .tabs { display: flex; background: var(--sidebar); border-bottom: 1px solid var(--color-border); flex-shrink: 0; }
+        .tab-btn { flex: 1; padding: 15px 0; border: none; background: none; font-size: 13px; font-weight: 600; color: var(--color-text-secondary); cursor: pointer; transition: 0.2s; font-family: var(--font-body); }
+        .tab-btn.active { color: #fff; border-bottom: 2px solid #fff; }
 
-        /* Sections */
-        .section {
-            padding: 20px;
-            border-bottom: 1px solid var(--border);
-        }
-        .section-title {
-            font-size: 1rem;
-            margin-top: 0;
-            margin-bottom: 15px;
-            color: var(--text-muted);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
+        /* メインコンテンツ */
+        .content { flex: 1; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+        .page { display: none; height: 100%; flex-direction: column; overflow: hidden; }
+        .page.active { display: flex; }
 
-        /* Forms */
-        .form-group { margin-bottom: 16px; }
-        label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; }
-        input[type="text"], input[type="password"], select { 
-            width: 100%; 
-            padding: 12px; 
-            background: var(--bg-elevated); 
-            border: 1px solid var(--border); 
-            color: var(--text-main); 
-            border-radius: 8px; 
-            box-sizing: border-box; 
-            font-size: 1rem; 
-            transition: border-color 0.2s;
-        }
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-        input[readonly] { background: #222; color: #777; cursor: not-allowed; }
-        select { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239e9e9e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; background-size: 1em; }
-        
-        /* Buttons */
-        .btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            transition: background 0.2s, transform 0.1s;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn:hover { background: var(--primary-hover); }
-        .btn:active { transform: scale(0.98); }
-        .btn:disabled { background: #555; color: #888; cursor: not-allowed; transform: none; }
-        
-        .btn-secondary {
-            background: var(--bg-elevated);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-        }
-        .btn-secondary:hover { background: #3a3a3a; }
-        .btn-small { padding: 6px 12px; font-size: 0.85rem; width: auto; display: inline-flex; }
+        /* チャットヘッダー */
+        .chat-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: var(--sidebar); border-bottom: 1px solid var(--color-border); }
+        .header-title { font-size: 12px; font-weight: bold; color: var(--color-text-secondary); font-family: var(--font-display); letter-spacing: 0.05em; }
+        .reset-btn { background: var(--color-bg-elevated); color: var(--color-text-primary); border: 1px solid var(--color-border); padding: 4px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+        .reset-btn:hover { background: var(--danger); border-color: var(--danger); }
 
-        /* File Drop Zone */
-        .file-drop-zone { 
-            border: 2px dashed var(--border); 
-            border-radius: 12px; 
-            padding: 40px 20px; 
-            text-align: center; 
-            cursor: pointer; 
-            transition: all 0.3s; 
-            background: var(--bg-surface);
-        }
-        .file-drop-zone:hover, .file-drop-zone.dragover { 
-            border-color: var(--primary); 
-            background: rgba(0, 122, 204, 0.05); 
-        }
-        .file-drop-zone h3 { margin: 0 0 10px 0; font-size: 1.1rem; }
-        .file-drop-zone p { font-size: 0.9rem; color: var(--text-muted); margin: 0 0 20px 0; line-height: 1.4; }
-        #fileInput { display: none; }
-        
-        .file-list-area { margin-top: 10px; max-height: 200px; overflow-y: auto; font-size: 0.85rem; background: var(--bg-elevated); padding: 10px; border-radius: 8px; display: none; border: 1px solid var(--border); }
-        .file-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 4px; border-bottom: 1px solid var(--border); gap: 10px; }
-        .file-item:last-child { border-bottom: none; }
-        .file-item-left { display: flex; align-items: center; gap: 10px; flex-grow: 1; min-width: 0; }
-        .file-item-left input[type="checkbox"] { flex-shrink: 0; cursor: pointer; width: 16px; height: 16px; accent-color: var(--primary); }
-        .file-item-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; }
-        .file-size { color: var(--text-muted); font-family: monospace; flex-shrink: 0; }
-        
-        .file-controls { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+        /* チャットエリア */
+        #chat-log { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; background: var(--bg); }
+        .msg { position: relative; max-width: 95%; padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.6; word-wrap: break-word; white-space: pre-wrap; }
+        .user { align-self: flex-end; background: var(--user-msg); color: #fff; }
+        .ai { align-self: flex-start; background: var(--ai-msg); border: 1px solid var(--color-border); width: 100%; }
 
-        /* Console */
-        .console-container {
-            display: flex;
-            flex-direction: column;
-            height: 250px;
-            background: #0d0d0d;
-            border-top: 1px solid var(--border);
-            flex-shrink: 0;
-        }
-        .status-bar {
-            padding: 10px 20px;
-            background: var(--bg-surface);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-        .status-indicator { display: flex; align-items: center; gap: 8px; }
-        .status-icon { width: 10px; height: 10px; border-radius: 50%; background: #555; }
-        .status-idle .status-icon { background: #aaaaaa; }
-        .status-working .status-icon { background: var(--primary); animation: pulse 1.5s infinite; }
-        .status-success .status-icon { background: var(--success); }
-        .status-error .status-icon { background: var(--error); }
+        /* チャットアクション＆コンテンツ */
+        .msg-content { outline: none; white-space: pre-wrap; word-wrap: break-word; transition: 0.2s; border-radius: 4px; }
+        .msg-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; opacity: 0.5; transition: opacity 0.2s; }
+        .msg:hover .msg-actions { opacity: 1; }
+        .msg-action-btn { background: transparent; border: none; color: #aaa; cursor: pointer; font-size: 14px; padding: 4px; border-radius: 4px; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+        .msg-action-btn:hover { background: var(--color-border-focus); color: #fff; }
 
-        #logConsole { 
-            flex-grow: 1; 
-            padding: 15px; 
-            font-family: 'Consolas', 'Courier New', monospace; 
-            font-size: 0.8rem; 
-            overflow-y: auto; 
-            color: #ccc; 
-            line-height: 1.5;
-        }
-        .log-item { margin-bottom: 4px; word-break: break-all; }
-        .log-err { color: var(--error); }
-        .log-suc { color: var(--success); }
-        .log-war { color: var(--warning); }
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255, 255, 255, 0.2); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* Download Area */
-        #downloadArea { padding: 15px; text-align: center; background: var(--bg-surface); display: none; }
-        #downloadLink { color: var(--success); text-decoration: none; font-weight: bold; border: 1px solid var(--success); padding: 10px 20px; border-radius: 8px; display: inline-block; transition: 0.2s; cursor: pointer; }
-        #downloadLink:hover { background: rgba(78, 201, 176, 0.1); }
+        /* 入力エリア */
+        .input-container { padding: 15px; background: var(--bg); border-top: 1px solid var(--color-border); display: flex; flex-direction: column; gap: 10px; position: relative; }
+        .input-row { display: flex; gap: 10px; align-items: flex-end; }
+        #user-prompt { flex: 1; min-height: 44px; max-height: 150px; background: var(--color-bg-elevated); border: 1px solid var(--color-border-focus); border-radius: 22px; padding: 10px 20px; color: #fff; font-size: 16px; outline: none; resize: none; font-family: var(--font-body); }
 
-        /* Settings Overlay */
-        #settingsOverlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-main);
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        #settingsOverlay.active { transform: translateY(0); }
-        .settings-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--border);
-            background: var(--bg-surface);
-        }
-        .settings-content {
-            flex-grow: 1;
-            padding: 20px;
-            overflow-y: auto;
-            max-width: 800px;
-            margin: 0 auto;
-            width: 100%;
-            box-sizing: border-box;
-        }
+        /* 添付ボタンとメニュー */
+        .file-label { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: var(--color-bg-elevated); border-radius: 50%; cursor: pointer; font-size: 20px; flex-shrink: 0; transition: background 0.2s, color 0.2s; border: 1px solid var(--color-border-focus); }
+        .file-label:active { background: var(--color-border); }
 
-        /* Toast */
-        #toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            background: var(--bg-elevated);
-            color: var(--text-main);
-            padding: 12px 24px;
-            border-radius: 30px;
-            font-size: 0.9rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            border: 1px solid var(--border);
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-            z-index: 1000;
-            white-space: nowrap;
-        }
-        #toast.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateX(-50%) translateY(0);
-        }
+        .attachment-menu { display: none; position: absolute; bottom: 80px; left: 15px; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); z-index: 1000; width: 160px; }
+        .attachment-menu.show { display: block; animation: menuFade 0.2s ease; }
+        @keyframes menuFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0, 122, 204, 0.7); } 70% { box-shadow: 0 0 0 8px rgba(0, 122, 204, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 122, 204, 0); } }
+        .menu-item { padding: 12px 16px; font-size: 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.2s; color: var(--color-text-primary); }
+        .menu-item:hover { background: var(--color-bg-elevated); }
+        .menu-item:first-child { border-radius: 12px 12px 0 0; }
+        .menu-item:last-child { border-radius: 0 0 12px 12px; }
+
+        #file-preview { display: none; width: 60px; height: 60px; border-radius: 8px; object-fit: cover; border: 1px solid var(--primary); }
+        #file-name-display { display: none; font-size: 12px; color: #ccc; background: var(--color-bg-elevated); padding: 4px 8px; border-radius: 4px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .send-btn { background: var(--primary); color: white; border: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+
+        /* ボタン類 */
+        .generate-btn-wrapper { margin-top: 15px; display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+        .generate-btn { background: var(--success); color: white; border: none; height: 38px; padding: 0 18px; border-radius: 19px; font-weight: bold; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); font-family: var(--font-body); }
+
+        /* エディタ */
+        .editor-wrapper { flex: 1; position: relative; display: flex; flex-direction: column; overflow: hidden; }
+        #code-editor-container { flex: 1; background: var(--color-bg-deep); overflow: hidden; position: relative; padding-top: 40px;}
+        .cm-editor { height: 100%; outline: none !important; }
+        .editor-actions { position: absolute; top: 10px; right: 15px; display: flex; gap: 8px; z-index: 10; align-items: center; }
+        .action-btn { color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; opacity: 0.9; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; height: 26px; font-family: var(--font-body); }
+        .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .upload-btn { background: #4b5563; }
+        .download-btn { background: var(--primary); }
+        .deploy-btn { background: var(--accent); }
+        .import-btn { background: #1f6feb; }
+        .search-btn { background: #374151; }
+        .action-btn:hover:not(:disabled) { opacity: 1; transform: translateY(-1px); }
+
+        /* 検索ナビボタン */
+        .search-nav-btn { background: #444; border: none; color: #fff; border-radius: 4px; cursor: pointer; padding: 2px 6px; font-size: 10px; transition: 0.2s; }
+        .search-nav-btn:hover { background: #666; }
+
+        /* トースト通知 */
+        .toast-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 9999; pointer-events: none; }
+        .toast { background: rgba(0, 0, 0, 0.85); color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); animation: toastFadeIn 0.3s, toastFadeOut 0.3s 2.7s forwards; }
+        @keyframes toastFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes toastFadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-20px); } }
+
+        /* Modal Base */
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; align-items:center; justify-content:center; }
+        .modal-overlay.show { display:flex; }
+        .modal { background:var(--color-bg-surface); border:1px solid var(--color-border); border-radius:12px; width:90%; max-width:500px; max-height:80vh; display:flex; flex-direction:column; overflow:hidden; }
+        .modal-header { display:flex; justify-content:space-between; align-items:center; padding:16px; border-bottom:1px solid var(--color-border); }
+        .modal-header h3 { margin:0; font-size:15px; color:#fff; font-family: var(--font-display); }
+        .modal-close { background:none; border:none; color:var(--color-text-secondary); font-size:20px; cursor:pointer; }
+        .modal-body { padding:16px; overflow-y:auto; flex:1; }
+        .modal-input { width:100%; background:var(--color-bg-elevated); border:1px solid var(--color-border-focus); border-radius:8px; padding:10px 12px; color:#fff; font-size:14px; outline:none; margin-bottom:12px; box-sizing:border-box; font-family: var(--font-body); }
+        .modal-input:focus { border-color:var(--primary); }
+        .repo-list, .file-list { list-style:none; padding:0; margin:0; }
+        .repo-list li, .file-list li { padding:10px 12px; border-bottom:1px solid var(--color-border); cursor:pointer; font-size:13px; color:var(--color-text-primary); transition:background 0.15s; display:flex; justify-content:space-between; align-items:center; }
+        .repo-list li:hover, .file-list li:hover { background:var(--color-bg-elevated); }
+        .repo-list li .repo-meta-sm { font-size:11px; color:var(--color-text-secondary); }
+        .modal-status { font-size:12px; color:var(--color-text-secondary); padding:8px 0; text-align:center; }
+        .modal-btn { background:var(--primary); color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:bold; width:100%; margin-top:8px; display:inline-flex; align-items:center; justify-content:center; font-family: var(--font-body); }
+        .modal-btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+        /* SW Background notification */
+        .bg-notify { display:none; position:fixed; top:10px; right:10px; background:#1e40af; color:#fff; padding:10px 16px; border-radius:8px; font-size:12px; z-index:3000; box-shadow:0 4px 12px rgba(0,0,0,0.4); animation:fadeIn 0.3s; }
+        .bg-notify.show { display:flex; align-items:center; gap:8px; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+
+        /* プレビュー */
+        #preview-frame { flex: 1; border: none; background: #fff; width: 100%; height: 100%; }
+        .debug-panel { background: var(--bg); border-top: 1px solid var(--color-border); padding: 12px 15px; display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; }
+        #debug-memo { flex: 1; min-height: 40px; max-height: 100px; background: var(--color-bg-elevated); border: 1px solid var(--color-border-focus); border-radius: 20px; padding: 10px 15px; color: #fff; font-size: 14px; outline: none; resize: none; font-family: var(--font-body); }
+        .debug-btn { background: #eab308; color: #000; border: none; height: 40px; padding: 0 16px; border-radius: 20px; font-weight: bold; cursor: pointer; flex-shrink: 0; font-size: 13px; font-family: var(--font-body); }
+
+        /* 設定 */
+        .settings { padding: 25px; overflow-y: auto; }
+        .field-row { display: flex; gap: 15px; margin-bottom: 20px; }
+        .field { flex: 1; margin-bottom: 20px; }
+        label { display: block; font-size: 11px; color: var(--color-text-secondary); margin-bottom: 8px; font-weight: bold; letter-spacing: 0.05em; font-family: var(--font-display); }
+        input[type="password"], .api-key-input, textarea.setting-input, select.setting-input { width: 100%; background: var(--color-bg-elevated); border: 1px solid var(--color-border-focus); border-radius: 8px; padding: 12px; color: #fff; font-size: 14px; outline: none; transition: border 0.2s; font-family: var(--font-body); }
+        input:focus, textarea:focus, select:focus { border-color: var(--primary); }
+        select.setting-input { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C2.185 5.355 2.402 5 2.805 5h9.39c.403 0 .62.355.354.658l-4.796 5.482a.5.5 0 0 1-.748 0z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+        .save-btn { background: #fff; color: #000; border: none; padding: 15px; border-radius: 8px; font-weight: bold; width: 100%; margin-top: 10px; cursor: pointer; transition: 0.2s; font-family: var(--font-body); }
+        .save-btn:active { transform: scale(0.98); }
+
+        /* テンプレート - 横スクロール */
+        .template-section { margin-bottom: 24px; }
+        .template-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .template-grid { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; }
+        .template-grid::-webkit-scrollbar { height: 4px; }
+        .template-grid::-webkit-scrollbar-track { background: transparent; }
+        .template-grid::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
+        .template-card { min-width: 150px; max-width: 150px; flex-shrink: 0; background: var(--color-bg-elevated); border: 1px solid var(--color-border); border-radius: 12px; padding: 16px 12px; cursor: pointer; transition: all 0.25s; text-align: center; scroll-snap-align: start; }
+        .template-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+        .template-card:active { transform: translateY(0); }
+        .template-icon { font-size: 28px; margin-bottom: 8px; display: block; }
+        .template-name { font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+        .template-desc { font-size: 10px; color: var(--color-text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .template-loading { text-align: center; padding: 30px; color: var(--color-text-secondary); font-size: 13px; white-space: nowrap; }
+        .template-color-bar { height: 3px; border-radius: 2px; margin-top: 10px; }
+
+        /* テーママネージャー - 横スクロール */
+        .theme-section { margin-top: 28px; margin-bottom: 24px; }
+        .theme-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; margin-top: 12px; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; }
+        .theme-grid::-webkit-scrollbar { height: 4px; }
+        .theme-grid::-webkit-scrollbar-track { background: transparent; }
+        .theme-grid::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
+        .theme-card { position: relative; min-width: 140px; max-width: 140px; flex-shrink: 0; padding: 12px; background: var(--color-bg-elevated); border: 2px solid var(--color-border); border-radius: 10px; cursor: pointer; transition: all 0.2s; scroll-snap-align: start; text-align: center; }
+        .theme-card:hover { border-color: var(--color-border-focus); }
+        .theme-card.active { border-color: var(--primary); box-shadow: 0 0 12px rgba(59,130,246,0.2); }
+        .theme-preview-dots { display: flex; gap: 4px; justify-content: center; margin-bottom: 8px; }
+        .theme-preview-dot { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); }
+        .theme-card-name { font-size: 11px; font-weight: 700; color: var(--color-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .theme-card-desc { font-size: 9px; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+        .theme-card-actions { position: absolute; top: 4px; right: 4px; display: none; gap: 2px; }
+        .theme-card:hover .theme-card-actions { display: flex; }
+        .theme-action-btn { background: var(--color-bg-surface); border: 1px solid var(--color-border); color: var(--color-text-secondary); width: 20px; height: 20px; border-radius: 4px; cursor: pointer; font-size: 9px; display: flex; align-items: center; justify-content: center; transition: 0.15s; }
+        .theme-action-btn:hover { background: var(--color-border-focus); color: #fff; }
+        .theme-new-card { min-width: 140px; max-width: 140px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 12px; background: transparent; border: 2px dashed var(--color-border); border-radius: 10px; cursor: pointer; color: var(--color-text-secondary); font-size: 11px; font-weight: 600; transition: all 0.2s; font-family: var(--font-body); scroll-snap-align: start; }
+        .theme-new-card:hover { border-color: var(--primary); color: var(--primary); }
+        .theme-badge { display: inline-block; font-size: 8px; padding: 1px 4px; border-radius: 3px; background: var(--accent); color: #fff; vertical-align: middle; }
+
+        /* テーマエディタモーダル */
+        .theme-editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .theme-color-field { display: flex; flex-direction: column; gap: 4px; }
+        .theme-color-field label { font-size: 10px; color: var(--color-text-secondary); margin: 0; font-family: var(--font-body); letter-spacing: 0; }
+        .theme-color-row { display: flex; gap: 6px; align-items: center; }
+        .theme-color-input { width: 36px; height: 30px; border: none; border-radius: 6px; cursor: pointer; padding: 0; background: none; }
+        .theme-color-hex { flex: 1; background: var(--color-bg-elevated); border: 1px solid var(--color-border); border-radius: 6px; padding: 4px 8px; color: var(--color-text-primary); font-size: 12px; font-family: var(--font-mono); outline: none; }
+        .theme-preview-bar { display: flex; border-radius: 8px; overflow: hidden; height: 32px; margin-top: 8px; border: 1px solid var(--color-border); }
+        .theme-preview-bar div { flex: 1; }
+
+        /* プロバイダー / プロンプト設定 */
+        .provider-row { display: flex; gap: 15px; margin-bottom: 20px; }
+        .provider-row .field { flex: 1; }
+        .field-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .field-header label { margin-bottom: 0; }
+        .reset-default-btn { background: none; border: 1px solid var(--color-border); color: var(--color-text-secondary); font-size: 10px; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-family: var(--font-body); transition: 0.2s; white-space: nowrap; }
+        .reset-default-btn:hover { color: var(--primary); border-color: var(--primary); }
+        .api-key-field { transition: opacity 0.2s; }
+        details.prompt-details { margin-bottom: 20px; }
+        details.prompt-details summary { cursor: pointer; font-size: 11px; font-weight: bold; color: var(--color-text-secondary); letter-spacing: 0.05em; font-family: var(--font-display); padding: 8px 0; }
+        details.prompt-details textarea { width: 100%; background: var(--color-bg-elevated); border: 1px solid var(--color-border-focus); border-radius: 8px; padding: 10px; color: #fff; font-size: 12px; outline: none; font-family: var(--font-mono); resize: vertical; margin-bottom: 10px; }
+        .prompt-hint { font-size: 10px; color: var(--color-text-muted); margin: -6px 0 10px; }
+
+        /* テンプレート追加カード＆アクション */
+        .template-new-card { min-width: 150px; max-width: 150px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 16px 12px; background: transparent; border: 2px dashed var(--color-border); border-radius: 12px; cursor: pointer; color: var(--color-text-secondary); font-size: 11px; font-weight: 600; transition: all 0.2s; font-family: var(--font-body); scroll-snap-align: start; }
+        .template-new-card:hover { border-color: var(--primary); color: var(--primary); }
+        .template-card-actions { position: absolute; top: 4px; right: 4px; display: none; gap: 2px; }
+        .template-card:hover .template-card-actions { display: flex; }
+        .template-card { position: relative; }
     </style>
 </head>
-<body class="status-idle">
+<body>
+<div class="toast-container" id="toast-container"></div>
 
-    <!-- Header -->
-    <header>
-        <h1>⚡ Native Packager</h1>
-        <button class="icon-btn" id="openSettingsBtn" aria-label="Settings">⚙️</button>
-    </header>
+<div class="tabs">
+    <button class="tab-btn active" id="tab-chat" onclick="showPage('chat', this)">CHAT</button>
+    <button class="tab-btn" id="tab-editor" onclick="showPage('editor', this)">CODE</button>
+    <button class="tab-btn" id="tab-preview" onclick="showPage('preview', this)">PREVIEW</button>
+    <button class="tab-btn" id="tab-settings" onclick="showPage('settings', this)">SET</button>
+</div>
 
-    <!-- Main Content -->
-    <div class="app-container">
-        
-        <div class="section">
-            <h2 class="section-title">📱 App Configuration</h2>
-            <div class="form-group">
-                <label>アプリの表示名</label>
-                <input type="text" id="appName" placeholder="My App" value="My Packaged App">
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 6px 0 0 0;">アセット選択時に、index.htmlやREADMEから自動取得されます。</p>
+<div class="content">
+    <div id="p-chat" class="page active">
+        <div class="chat-header">
+            <span class="header-title">CONVERSATION (PLAN)</span>
+            <button class="reset-btn" onclick="confirmReset()">＋ New Project</button>
+        </div>
+
+        <div id="chat-log">
+            <!-- Messages will be rendered here dynamically -->
+        </div>
+
+        <div class="input-container">
+            <div id="attach-menu" class="attachment-menu">
+                <div class="menu-item" onclick="triggerFile('camera')">📸 カメラ</div>
+                <div class="menu-item" onclick="triggerFile('gallery')">🖼️ ギャラリー</div>
+                <div class="menu-item" onclick="triggerFile('files')">📁 ファイル</div>
             </div>
-            <div class="form-group">
-                <label>パッケージID (例: com.example.app)</label>
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" id="appId" placeholder="com.myapp.a1b2c3d4" value="com.example.pkgapp" style="flex-grow: 1;">
-                    <button type="button" class="btn btn-secondary btn-small" id="generateAppIdBtn">自動生成</button>
-                </div>
+
+            <div style="display:flex; align-items:center; gap:10px; padding-bottom:5px;">
+                <img id="file-preview">
+                <span id="file-name-display"></span>
             </div>
-            <div class="form-group">
-                <label>アプリアイコン (PNG推奨, 512x512)</label>
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <img id="appIconPreview" src="" alt="Icon" style="width: 48px; height: 48px; border-radius: 10px; object-fit: cover; border: 1px solid var(--border); background: #fff;">
-                    <input type="file" id="appIconInput" accept="image/png, image/jpeg" style="display: none;">
-                    <button type="button" class="btn btn-secondary btn-small" id="selectIconBtn">画像を選択</button>
-                    <button type="button" class="btn btn-secondary btn-small" id="clearIconBtn" style="display: none; border-color: var(--error); color: var(--error);">リセット</button>
-                </div>
+
+            <div class="input-row">
+                <div class="file-label" onclick="toggleAttachmentMenu()" title="ファイルを添付">＋</div>
+
+                <input type="file" id="file-camera" accept="image/*" capture="environment" style="display:none" onchange="handleAttachment(this)">
+                <input type="file" id="file-gallery" accept="image/*" style="display:none" onchange="handleAttachment(this)">
+                <input type="file" id="file-files" accept="*/*" style="display:none" onchange="handleAttachment(this)">
+
+                <textarea id="user-prompt" placeholder="例：ダークモードのTodoアプリを作りたい..." rows="1" oninput="autoGrow(this)"></textarea>
+                <button class="send-btn" id="send-btn" onclick="askAI()">↑</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="p-editor" class="page">
+         <div class="editor-wrapper">
+            <div class="editor-actions">
+                <button class="action-btn import-btn" onclick="openGitHubImport()">📥 Import</button>
+                <button class="action-btn upload-btn" onclick="triggerCodeUpload()">Upload</button> 
+                <button class="action-btn search-btn" onclick="openSearchModal()">🔍 Search</button>
+                <button class="action-btn download-btn" onclick="downloadCode()">Download</button>
+                <button class="action-btn deploy-btn" onclick="openDeployer()">🚀 GitHub Deploy</button>
+            </div>
+
+            <input type="file" id="code-upload-input" style="display:none" accept=".html,.css,.js,.txt" onchange="handleCodeUpload(this)">
+            <!-- CodeMirror will be mounted here -->
+            <div id="code-editor-container"></div>
+        </div>
+    </div>
+
+    <div id="p-preview" class="page">
+        <iframe id="preview-frame"></iframe>
+        <div class="debug-panel">
+            <textarea id="debug-memo" placeholder="修正したい点を入力..." rows="1" oninput="autoGrow(this)"></textarea>
+            <button class="debug-btn" onclick="sendDebugRequest()">修正を依頼</button>
+        </div>
+    </div>
+
+    <div id="p-settings" class="page settings">
+        <div class="provider-row">
+            <div class="field" style="flex:0 0 auto; min-width:140px;">
+                <label>AI PROVIDER</label>
+                <select id="ai-provider" class="setting-input" onchange="onProviderChange()">
+                    <option value="gemini">Google Gemini</option>
+                    <option value="openai">OpenAI (GPT)</option>
+                    <option value="claude">Anthropic (Claude)</option>
+                    <option value="xai">xAI (Grok)</option>
+                    <option value="groq">Groq</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>CHAT MODEL (PLAN)</label>
+                <select id="chat-model" class="setting-input"></select>
+            </div>
+            <div class="field">
+                <label>CODE MODEL (BUILD)</label>
+                <select id="code-model" class="setting-input"></select>
+            </div>
+        </div>
+        <div id="api-keys-section">
+            <div class="field api-key-field" data-provider="gemini">
+                <label>API KEY — GEMINI</label>
+                <input type="password" id="api-key-gemini" class="api-key-input" placeholder="Gemini APIキー（未設定時はプロキシ使用）" oninput="toggleModelSelects()">
+            </div>
+            <div class="field api-key-field" data-provider="openai" style="display:none;">
+                <label>API KEY — OPENAI</label>
+                <input type="password" id="api-key-openai" class="api-key-input" placeholder="sk-... (OpenAI APIキー)" oninput="toggleModelSelects()">
+            </div>
+            <div class="field api-key-field" data-provider="claude" style="display:none;">
+                <label>API KEY — CLAUDE</label>
+                <input type="password" id="api-key-claude" class="api-key-input" placeholder="sk-ant-... (Anthropic APIキー)" oninput="toggleModelSelects()">
+            </div>
+            <div class="field api-key-field" data-provider="xai" style="display:none;">
+                <label>API KEY — GROK (xAI)</label>
+                <input type="password" id="api-key-xai" class="api-key-input" placeholder="xai-... (xAI APIキー)" oninput="toggleModelSelects()">
+            </div>
+            <div class="field api-key-field" data-provider="groq" style="display:none;">
+                <label>API KEY — GROQ</label>
+                <input type="password" id="api-key-groq" class="api-key-input" placeholder="gsk_... (Groq APIキー)" oninput="toggleModelSelects()">
+            </div>
+        </div>
+        <div class="field">
+            <label>GITHUB TOKEN</label>
+            <input type="password" id="setting-gh-token" placeholder="ghp_... (GitHub Deploy用)">
+        </div>
+        <div class="field">
+            <div class="field-header"><label>SYSTEM PROMPT</label><button class="reset-default-btn" onclick="resetFieldDefault('system-prompt')" title="デフォルトに戻す">↺ 初期値</button></div>
+            <textarea id="system-prompt" class="setting-input" rows="3"></textarea>
+        </div>
+        <div class="field">
+            <div class="field-header"><label>DEVELOPER PROFILE</label><button class="reset-default-btn" onclick="resetFieldDefault('user-profile')" title="デフォルトに戻す">↺ 初期値</button></div>
+            <textarea id="user-profile" class="setting-input" rows="4"></textarea>
+        </div>
+        <div class="field">
+            <div class="field-header"><label>CODE PRINCIPLES</label><button class="reset-default-btn" onclick="resetFieldDefault('code-principles')" title="デフォルトに戻す">↺ 初期値</button></div>
+            <textarea id="code-principles" class="setting-input" rows="3"></textarea>
+        </div>
+        <details class="prompt-details">
+            <summary>PROMPT TEMPLATES（詳細設定）</summary>
+            <div class="field-header"><label style="font-size:10px;">PLANプロンプト（チャット用）</label><button class="reset-default-btn" onclick="resetFieldDefault('prompt-plan')" title="デフォルトに戻す">↺ 初期値</button></div>
+            <textarea id="prompt-plan" rows="5"></textarea>
+            <div class="prompt-hint">変数: {prof}, {codeContext}, {systemPrompt}</div>
+            <div class="field-header"><label style="font-size:10px;">要件おまかせ プロンプト</label><button class="reset-default-btn" onclick="resetFieldDefault('prompt-suggest')" title="デフォルトに戻す">↺ 初期値</button></div>
+            <textarea id="prompt-suggest" rows="3"></textarea>
+            <div class="field-header"><label style="font-size:10px;">修正依頼 プロンプト</label><button class="reset-default-btn" onclick="resetFieldDefault('prompt-debug')" title="デフォルトに戻す">↺ 初期値</button></div>
+            <textarea id="prompt-debug" rows="5"></textarea>
+            <div class="prompt-hint">変数: {memoText}</div>
+        </details>
+        <button class="save-btn" id="save-btn" onclick="saveSettings()">設定を保存</button>
+
+        <div class="theme-section">
+            <label>CODE THEME（コードに反映）</label>
+            <div id="theme-grid" class="theme-grid">
+                <div style="padding:12px;font-size:12px;color:var(--color-text-secondary);white-space:nowrap;">読み込み中...</div>
             </div>
         </div>
 
-        <div class="section" style="flex-grow: 1;">
-            <h2 class="section-title">📁 Web Assets (www)</h2>
-            
-            <div class="form-group" style="display: flex; gap: 20px; margin-bottom: 20px;">
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-main);">
-                    <input type="radio" name="sourceType" value="local" checked>
-                    ローカルからアップロード
-                </label>
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-main);">
-                    <input type="radio" name="sourceType" value="github">
-                    GitHubから選択
-                </label>
+        <div class="template-section" style="margin-top: 28px;">
+            <div class="template-section-header">
+                <label style="margin-bottom:0;">TEMPLATES</label>
             </div>
-
-            <!-- ローカルファイルアップロード UI -->
-            <div id="localSourceUI">
-                <div class="file-drop-zone" id="dropZone">
-                    <h3>HTML/CSS/JS をアップロード</h3>
-                    <p>フォルダ内の全ファイルをまとめて選択、<br>またはドラッグ＆ドロップしてください。</p>
-                    <input type="file" id="fileInput" multiple webkitdirectory directory>
-                    <button class="btn btn-secondary btn-small" type="button" id="selectFileBtn" style="margin-bottom: 8px;">フォルダを選択</button>
-                    <button class="btn btn-secondary btn-small" type="button" id="selectFileOnlyBtn">ファイルを選択</button>
-                </div>
-                
-                <div class="file-controls" id="localFileControls" style="display: none;">
-                    <button type="button" class="btn btn-secondary btn-small" id="localSelectAllBtn">☑ 全選択</button>
-                    <button type="button" class="btn btn-secondary btn-small" id="localDeselectAllBtn">☐ 全解除</button>
-                </div>
-                <div id="fileList" class="file-list-area"></div>
+            <div id="template-grid" class="template-grid">
+                <div class="template-loading">テンプレートを読み込み中...</div>
             </div>
+        </div>
+    </div>
+</div>
 
-            <!-- GitHubリポジトリ選択 UI -->
-            <div id="githubSourceUI" style="display: none; background: var(--bg-surface); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
-                <div class="form-group">
-                    <label style="display: flex; justify-content: space-between; align-items: center;">
-                        対象リポジトリ (取得・デプロイ先)
-                        <button class="btn btn-secondary btn-small" id="fetchSourceReposBtn" style="padding: 4px 8px; font-size: 0.75rem;">🔄 再取得</button>
-                    </label>
-                    <select id="sourceRepoSelect">
-                        <option value="">設定(⚙️)からトークンを保存してください...</option>
+<!-- Code Search Modal -->
+<div id="search-modal" class="modal-overlay" style="background: transparent; pointer-events: none;" onclick="if(event.target===this)closeSearchModal()">
+    <div class="modal" style="pointer-events: auto; position: absolute; top: 60px; right: 15px; width: 300px; margin: 0;">
+        <div class="modal-header" style="padding: 10px 12px;">
+            <h3 style="font-size: 13px;">🔍 Find in Code</h3>
+            <button class="modal-close" onclick="closeSearchModal()" style="font-size: 16px;">✕</button>
+        </div>
+        <div class="modal-body" style="padding: 10px 12px; display: flex; gap: 6px; align-items: center; overflow: visible;">
+            <input type="text" id="code-search-input" class="modal-input" placeholder="Find..." oninput="performCodeSearch()" style="margin: 0; padding: 6px 8px; font-size: 12px; flex: 1;">
+            <span id="search-status" style="font-size: 11px; color: #aaa; min-width: 35px; text-align: center;">0/0</span>
+            <button class="search-nav-btn" style="padding: 6px 10px;" onclick="prevSearchMatch()">▲</button>
+            <button class="search-nav-btn" style="padding: 6px 10px;" onclick="nextSearchMatch()">▼</button>
+        </div>
+    </div>
+</div>
+
+<!-- GitHub Import Modal -->
+<div id="gh-import-modal" class="modal-overlay" onclick="if(event.target===this)closeGitHubImport()">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>📥 GitHub Import</h3>
+            <button class="modal-close" onclick="closeGitHubImport()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div id="gh-step-repo">
+                <input id="gh-repo-search" class="modal-input" placeholder="リポジトリを検索..." oninput="filterImportRepos()">
+                <div id="gh-modal-status" class="modal-status"></div>
+                <ul id="gh-repo-list" class="repo-list"></ul>
+            </div>
+            <div id="gh-step-file" style="display:none">
+                <button class="modal-btn" style="background:var(--color-bg-elevated);margin-bottom:12px" onclick="backToRepoList()">← リポジトリ一覧に戻る</button>
+                <div id="gh-file-status" class="modal-status"></div>
+                <ul id="gh-file-list" class="file-list"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- GitHub Deploy Modal -->
+<div id="gh-deploy-modal" class="modal-overlay" onclick="if(event.target===this)closeGitHubDeploy()">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>🚀 GitHub Deploy</h3>
+            <button class="modal-close" onclick="closeGitHubDeploy()">✕</button>
+        </div>
+        <div class="modal-body" style="display:flex; flex-direction:column; gap:12px;">
+            <div id="deploy-step-token">
+                <p style="font-size:13px; color:var(--color-text-secondary); margin-top:0;">GitHub Personal Access Token (repo scope) を設定してください。</p>
+                <input type="password" id="deploy-token-input" class="modal-input" placeholder="ghp_...">
+                <button class="modal-btn" onclick="saveDeployToken()">保存 & 認証</button>
+                <div id="deploy-token-status" class="modal-status"></div>
+            </div>
+            <div id="deploy-step-repo" style="display:none">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <button class="modal-btn" style="background:var(--color-bg-elevated); width:auto; margin:0; padding:6px 12px; font-size:11px;" onclick="showDeployStep('token')">← トークン設定</button>
+                    <button class="modal-btn" style="background:var(--color-bg-elevated); width:auto; margin:0; padding:6px 12px; font-size:11px;" onclick="fetchDeployRepos()">🔄 更新</button>
+                </div>
+                <button class="modal-btn" style="background:var(--success); margin-bottom:12px;" onclick="showDeployStep('new-repo')">＋ 新規リポジトリを作成</button>
+                <input id="deploy-repo-search" class="modal-input" placeholder="リポジトリを検索..." oninput="filterDeployRepos()">
+                <div id="deploy-repo-status" class="modal-status"></div>
+                <ul id="deploy-repo-list" class="repo-list"></ul>
+            </div>
+            <div id="deploy-step-new-repo" style="display:none; flex-direction:column; gap:12px;">
+                <button class="modal-btn" style="background:var(--color-bg-elevated); width:auto; align-self:flex-start; margin:0; padding:6px 12px; font-size:11px;" onclick="showDeployStep('repo')">← リポジトリ選択に戻る</button>
+                <div>
+                    <label style="display:block; font-size:11px; color:var(--color-text-secondary); margin-bottom:4px;">リポジトリ名 <span style="color:var(--danger)">*</span></label>
+                    <input id="new-repo-name" class="modal-input" placeholder="my-awesome-project">
+                </div>
+                <div>
+                    <label style="display:block; font-size:11px; color:var(--color-text-secondary); margin-bottom:4px;">説明 (任意)</label>
+                    <input id="new-repo-desc" class="modal-input" placeholder="A great project built with AI">
+                </div>
+                <div>
+                    <label style="display:block; font-size:11px; color:var(--color-text-secondary); margin-bottom:4px;">公開設定</label>
+                    <select id="new-repo-private" class="modal-input" style="appearance:auto; background-image:none; padding-right:12px;">
+                        <option value="false">Public (公開)</option>
+                        <option value="true">Private (非公開)</option>
                     </select>
                 </div>
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label>Webアセットのパス (例: / または /dist)</label>
-                    <input type="text" id="sourceRepoPath" placeholder="/" value="/">
-                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 6px 0 0 0;">指定したパス以下のファイル群を一覧取得して選択できます。</p>
-                </div>
-                
-                <div style="margin-top: 15px; text-align: right;">
-                    <button type="button" class="btn btn-secondary btn-small" id="fetchGhFilesBtn">📂 ファイル一覧を取得</button>
-                </div>
-                
-                <div class="file-controls" id="ghFileControls" style="display: none;">
-                    <button type="button" class="btn btn-secondary btn-small" id="ghSelectAllBtn">☑ 全選択</button>
-                    <button type="button" class="btn btn-secondary btn-small" id="ghDeselectAllBtn">☐ 全解除</button>
-                </div>
-                <div id="ghFileList" class="file-list-area"></div>
+                <div id="new-repo-status" class="modal-status" style="text-align:left; color:#ccc;"></div>
+                <button class="modal-btn" id="new-repo-btn" onclick="createNewRepo()" style="background:var(--success);">✨ 作成してデプロイ準備</button>
             </div>
-            
-            <div style="margin-top: 25px;">
-                <button class="btn" id="deployBtn">🚀 パッケージ & デプロイ</button>
-            </div>
-        </div>
-
-        <!-- Console Section -->
-        <div class="console-container">
-            <div class="status-bar">
-                <span>Deployment Logs</span>
-                <div class="status-indicator">
-                    <span class="status-icon"></span>
-                    <span id="statusText">Idle</span>
+            <div id="deploy-step-details" style="display:none; flex-direction:column; gap:12px;">
+                <button class="modal-btn" style="background:var(--color-bg-elevated); width:auto; align-self:flex-start; margin:0; padding:6px 12px; font-size:11px;" onclick="showDeployStep('repo')">← リポジトリ選択に戻る</button>
+                <div style="font-size:13px; color:#fff;">デプロイ先: <strong id="deploy-target-repo-name" style="color:var(--primary);"></strong></div>
+                <div style="display:flex; gap:10px;">
+                    <div style="flex:1;">
+                        <label style="display:block; font-size:11px; color:var(--color-text-secondary); margin-bottom:4px;">ブランチ</label>
+                        <input id="deploy-branch" class="modal-input" value="main">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="display:block; font-size:11px; color:var(--color-text-secondary); margin-bottom:4px;">ファイルパス</label>
+                        <input id="deploy-filepath" class="modal-input" value="index.html">
+                    </div>
                 </div>
-            </div>
-            <div id="logConsole">
-                <div class="log-item">Ready. システムが起動しました。</div>
-                <div class="log-item log-war">⚠️ index.html が選択ファイルに含まれることを確認してください。</div>
-            </div>
-            <div id="downloadArea">
-                <a id="downloadLink">📥 APKをダウンロード</a>
+                <div>
+                    <label style="display:block; font-size:11px; color:var(--color-text-secondary); margin-bottom:4px;">README.md</label>
+                    <textarea id="deploy-readme-content" class="modal-input" rows="6" style="resize:vertical; font-family:var(--font-mono); font-size:12px;" placeholder="READMEの内容..."></textarea>
+                </div>
+                <div style="margin-top:4px;">
+                    <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#fff; cursor:pointer; background:var(--color-bg-elevated); padding:10px 12px; border:1px solid var(--color-border); border-radius:8px;">
+                        <input type="checkbox" id="deploy-gh-pages" checked style="accent-color:var(--primary); width:16px; height:16px; margin:0;"> 
+                        GitHub Pagesを有効にして公開する
+                    </label>
+                </div>
+                <div id="deploy-execute-status" class="modal-status" style="text-align:left; color:#ccc;"></div>
+                <button class="modal-btn" id="deploy-exec-btn" onclick="executeDeploy()" style="background:var(--accent);">🚀 デプロイ実行</button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Settings Overlay -->
-    <div id="settingsOverlay">
-        <div class="settings-header">
-            <h2 style="margin:0; font-size: 1.2rem;">設定</h2>
-            <button class="icon-btn" id="closeSettingsBtn">✕</button>
+<div id="bg-notify" class="bg-notify">
+    <div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0"></div>
+    <span>バックグラウンドで生成中...</span>
+</div>
+
+<!-- Theme Editor Modal -->
+<div id="theme-editor-modal" class="modal-overlay" onclick="if(event.target===this)closeThemeEditor()">
+    <div class="modal" style="max-width:440px;">
+        <div class="modal-header">
+            <h3 id="theme-editor-title">🎨 テーマを作成</h3>
+            <button class="modal-close" onclick="closeThemeEditor()">✕</button>
         </div>
-        <div class="settings-content">
-            <div class="section" style="border:none; padding: 0;">
-                <h2 class="section-title">🛠️ GitHub Connection</h2>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
-                    GitHub APIを利用するためのトークンを設定します。
-                </p>
-
-                <div class="form-group">
-                    <label>GitHub PAT (Fine-grained または Classic)</label>
-                    <input type="password" id="ghToken" placeholder="github_pat_... または ghp_...">
-                    <button class="btn btn-secondary" id="saveTokenBtn" style="margin-top: 10px;">💾 トークンを保存して接続</button>
+        <div class="modal-body" style="display:flex; flex-direction:column; gap:12px;">
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1;">
+                    <label style="font-size:10px; color:var(--color-text-secondary); margin-bottom:4px; display:block;">テーマ名</label>
+                    <input id="te-name" class="modal-input" placeholder="My Theme" style="margin:0;">
                 </div>
-
-                <div class="form-group" style="margin-top: 20px;">
-                    <label>GitHub ユーザー名</label>
-                    <input type="text" id="ghOwner" placeholder="トークン保存時に自動取得されます" readonly>
+                <div style="flex:1;">
+                    <label style="font-size:10px; color:var(--color-text-secondary); margin-bottom:4px; display:block;">アイコン</label>
+                    <input id="te-icon" class="modal-input" placeholder="🎨" maxlength="4" style="margin:0;">
                 </div>
-                
-                <div class="form-group" style="margin-top: 40px;">
-                    <button class="btn btn-secondary" id="clearSettingsBtn" style="color: var(--error); border-color: rgba(244, 71, 71, 0.3);">🗑️ 設定を初期化</button>
-                </div>
+            </div>
+            <div>
+                <label style="font-size:10px; color:var(--color-text-secondary); margin-bottom:4px; display:block;">説明</label>
+                <input id="te-desc" class="modal-input" placeholder="カスタムテーマの説明" style="margin:0;">
+            </div>
+            <div>
+                <label style="font-size:11px; color:var(--color-text-primary); margin-bottom:8px; display:block; font-weight:700;">カラー設定</label>
+                <div class="theme-editor-grid" id="te-colors"></div>
+                <div class="theme-preview-bar" id="te-preview-bar"></div>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:4px;">
+                <button class="modal-btn" id="te-save-btn" onclick="saveThemeFromEditor()" style="flex:1;">💾 保存</button>
+                <button class="modal-btn" onclick="injectThemeToCode()" style="flex:1; background:var(--success); margin-top:0;">⚡ コードに反映</button>
+                <button class="modal-btn" onclick="exportThemeCSS()" style="flex:0; background:var(--color-bg-elevated); width:auto; padding:10px 16px; margin-top:0;" title="CSSをエクスポート">📥</button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Toast Notification -->
-    <div id="toast">Message</div>
+<!-- Template Editor Modal -->
+<div id="tpl-editor-modal" class="modal-overlay" onclick="if(event.target===this)closeTemplateEditor()">
+    <div class="modal" style="max-width:500px;">
+        <div class="modal-header">
+            <h3 id="tpl-editor-title">📄 テンプレートを追加</h3>
+            <button class="modal-close" onclick="closeTemplateEditor()">✕</button>
+        </div>
+        <div class="modal-body" style="display:flex; flex-direction:column; gap:12px;">
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1;">
+                    <label style="font-size:10px; color:var(--color-text-secondary); margin-bottom:4px; display:block;">テンプレート名</label>
+                    <input id="tple-name" class="modal-input" placeholder="My Template" style="margin:0;">
+                </div>
+                <div style="width:70px;">
+                    <label style="font-size:10px; color:var(--color-text-secondary); margin-bottom:4px; display:block;">アイコン</label>
+                    <input id="tple-icon" class="modal-input" placeholder="📄" maxlength="4" style="margin:0;">
+                </div>
+            </div>
+            <div>
+                <label style="font-size:10px; color:var(--color-text-secondary); margin-bottom:4px; display:block;">説明</label>
+                <input id="tple-desc" class="modal-input" placeholder="テンプレートの説明" style="margin:0;">
+            </div>
+            <div>
+                <label style="font-size:10px; color:var(--color-text-secondary); margin-bottom:4px; display:block;">HTMLコード</label>
+                <textarea id="tple-code" class="modal-input" rows="10" style="margin:0; font-family:var(--font-mono); font-size:12px; resize:vertical;" placeholder="<!DOCTYPE html>..."></textarea>
+            </div>
+            <div style="display:flex; gap:8px;">
+                <button class="modal-btn" onclick="triggerTplFileUpload()" style="flex:0; background:var(--color-bg-elevated); width:auto; padding:10px 16px; margin-top:0;">📁 ファイル読込</button>
+                <input type="file" id="tpl-file-input" accept=".html" style="display:none" onchange="handleTplFileUpload(this)">
+                <button class="modal-btn" onclick="saveCustomTemplate()" style="flex:1;">💾 保存</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
-    // --- ユーティリティ & UI ---
-    const $ = id => document.getElementById(id);
-    
-    const log = (msg, type = '') => {
-        const consoleEl = $('logConsole');
-        const item = document.createElement('div');
-        item.className = `log-item ${type}`;
-        item.innerHTML = `[${new Date().toLocaleTimeString('ja-JP', {hour12:false})}] ${msg}`;
-        consoleEl.appendChild(item);
-        consoleEl.scrollTop = consoleEl.scrollHeight;
-    };
-    
-    const setStatus = (cls, text) => {
-        document.body.className = cls;
-        $('statusText').innerText = text;
-    };
-    
-    const formatBytes = (bytes) => {
-        if (bytes === 0) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-    };
+    /* --- 状態管理変数 --- */
+    let currentImageBase64 = null;
+    let currentMimeType = null;
+    let currentFileName = null;
+    let conversationContext = "";
+    let chatHistory = []; // 構造化されたチャット履歴
+    const pagesList = ['chat', 'editor', 'preview', 'settings'];
+    let ghImportRepos = [];
+    let swRegistration = null;
+    const PROXY_WORKER_URL = 'https://green-credit-a6fb.ikymbiz.workers.dev';
 
-    const showToast = (msg) => {
-        const toast = $('toast');
-        toast.innerText = msg;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3000);
-    };
-
-    // --- Wake Lock API (スリープ防止) ---
-    let wakeLock = null;
-    const requestWakeLock = async () => {
-        try {
-            if ('wakeLock' in navigator) {
-                wakeLock = await navigator.wakeLock.request('screen');
-            }
-        } catch (err) {}
-    };
-    const releaseWakeLock = async () => {
-        if (wakeLock !== null) {
-            await wakeLock.release();
-            wakeLock = null;
+    /* --- プロバイダー設定 --- */
+    const PROVIDER_MODELS = {
+        gemini: {
+            chat: [['gemini-2.5-flash','2.5 Flash (Balanced)'],['gemini-3-flash-preview','3 Flash (Fast)'],['gemini-2.5-pro','2.5 Pro (Reasoning)'],['deep-research-pro-preview-12-2025','Deep Research']],
+            code: [['gemini-2.5-flash','2.5 Flash (Balanced)'],['gemini-3.1-pro-preview','3.1 Pro (Vibe Coding)'],['gemini-2.5-pro','2.5 Pro (Reasoning)'],['gemini-3-flash-preview','3 Flash (Fast)']]
+        },
+        openai: {
+            chat: [['gpt-4o','GPT-4o'],['gpt-4o-mini','GPT-4o mini'],['o3-mini','o3-mini']],
+            code: [['gpt-4o','GPT-4o'],['gpt-4.1','GPT-4.1'],['o3-mini','o3-mini']]
+        },
+        claude: {
+            chat: [['claude-sonnet-4-20250514','Claude Sonnet 4'],['claude-haiku-3-5-20241022','Claude Haiku 3.5']],
+            code: [['claude-sonnet-4-20250514','Claude Sonnet 4'],['claude-opus-4-20250918','Claude Opus 4']]
+        },
+        xai: {
+            chat: [['grok-3','Grok 3'],['grok-3-mini','Grok 3 Mini']],
+            code: [['grok-3','Grok 3'],['grok-3-mini','Grok 3 Mini']]
+        },
+        groq: {
+            chat: [['llama-3.3-70b-versatile','Llama 3.3 70B'],['mixtral-8x7b-32768','Mixtral 8x7B']],
+            code: [['llama-3.3-70b-versatile','Llama 3.3 70B']]
         }
     };
 
-    // --- PWA Setup ---
-    const setupPWA = () => {
-        const manifest = {
-            name: "Native App Packager",
-            short_name: "Packager",
-            display: "standalone",
-            background_color: "#121212",
-            theme_color: "#1e1e1e",
-            icons: [{ src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E⚡%3C/text%3E%3C/svg%3E", sizes: "192x192", type: "image/svg+xml" }]
-        };
-        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-        const manifestUrl = URL.createObjectURL(manifestBlob);
-        document.head.insertAdjacentHTML('beforeend', `<link rel="manifest" href="${manifestUrl}">`);
+    const DEFAULT_PROMPT_PLAN = `あなたはプロのWeb開発ディレクターです。ユーザーのアイディアを具体化し、実装（BUILD）に向けた設計図を作成します。\n{systemPrompt}\nプロファイル: {prof}\nガイドライン: 1. アプリ名、ターゲット、機能をヒアリング。2. 簡潔に箇条書きで返答。3. コードは書かず、仕様合意に徹する。4. 仕様が固まったら「素晴らしいプランです。⚡️コードを作成 ボタンから実装を開始しましょう」と促す。5. ユーザーの要望がまだ曖昧な場合や、次のステップを提案したい場合は、会話の最後に「次に進むための要件を提案しましょうか？✨ 要件をおまかせ ボタンから次のステップを提案できます。」と応答する。{codeContext}`;
+    const DEFAULT_PROMPT_SUGGEST = `現在の会話履歴とコードを元に、次に開発すべき最適な要件やアイデアを具体的に提案してください。もし要件が不足していれば、自律的に補完して完全なプランを提示してください。`;
+    const DEFAULT_PROMPT_DEBUG = `あなたはプロのWeb開発ディレクターです。次の修整依頼に対して、バグの報告かどうか判断してください。バグの場合は要因を確認してください。要因が判明したら改善策を検討してください。要因が判明しない場合は、要因切分けのためのログや反応を取得するためのコードを検討してください。最後に、前回のコード生成から現在までで修整する要件を整理してください。【修正依頼】\n{memoText}`;
+    const DEFAULT_SYSTEM_PROMPT = `日本語で応答してください。セキュリティとパフォーマンスを重視し、レスポンシブデザインを必須とします。`;
+    const DEFAULT_USER_PROFILE = `モダンなUI/UXを重視。Tailwind CSSやCDNライブラリの活用OK。日本語コメントでコードを記述。ダークモード対応を推奨。`;
+    const DEFAULT_CODE_PRINCIPLES = `セマンティックHTML。アクセシビリティ（ARIA）対応。モバイルファースト設計。パフォーマンス最適化（lazy load等）。`;
+
+    const FIELD_DEFAULTS = {
+        'system-prompt': DEFAULT_SYSTEM_PROMPT,
+        'user-profile': DEFAULT_USER_PROFILE,
+        'code-principles': DEFAULT_CODE_PRINCIPLES,
+        'prompt-plan': DEFAULT_PROMPT_PLAN,
+        'prompt-suggest': DEFAULT_PROMPT_SUGGEST,
+        'prompt-debug': DEFAULT_PROMPT_DEBUG
     };
-    setupPWA();
 
-    // --- IndexedDB ラッパー ---
-    const DB_NAME = 'PackagerConfigDB';
-    const STORE_NAME = 'settings';
-    
-    const dbPromise = new Promise((resolve, reject) => {
-        const req = indexedDB.open(DB_NAME, 1);
-        req.onupgradeneeded = e => {
-            if (!e.target.result.objectStoreNames.contains(STORE_NAME)) {
-                e.target.result.createObjectStore(STORE_NAME);
-            }
-        };
-        req.onsuccess = e => resolve(e.target.result);
-        req.onerror = e => reject(e.target.error);
-    });
+    function resetFieldDefault(fieldId) {
+        const def = FIELD_DEFAULTS[fieldId];
+        if (def !== undefined) {
+            document.getElementById(fieldId).value = def;
+            showToast('デフォルト値に戻しました');
+        }
+    }
 
-    const dbSave = async (key, value) => {
-        const db = await dbPromise;
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readwrite');
-            tx.objectStore(STORE_NAME).put(value, key);
-            tx.oncomplete = () => resolve();
-            tx.onerror = () => reject(tx.error);
+    function getCurrentApiKey() {
+        const provider = document.getElementById('ai-provider').value;
+        const el = document.getElementById('api-key-' + provider);
+        return el ? el.value.trim() : '';
+    }
+
+    function onProviderChange() {
+        const provider = document.getElementById('ai-provider').value;
+        updateModelOptions('chat-model', PROVIDER_MODELS[provider].chat);
+        updateModelOptions('code-model', PROVIDER_MODELS[provider].code);
+        // Show/hide API key fields
+        document.querySelectorAll('.api-key-field').forEach(el => {
+            el.style.display = el.dataset.provider === provider ? '' : 'none';
         });
-    };
+        toggleModelSelects();
+    }
+    function updateModelOptions(selectId, models) {
+        const sel = document.getElementById(selectId);
+        sel.innerHTML = models.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+    }
 
-    const dbGet = async (key) => {
-        const db = await dbPromise;
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readonly');
-            const req = tx.objectStore(STORE_NAME).get(key);
-            req.onsuccess = () => resolve(req.result);
-            req.onerror = () => reject(tx.error);
-        });
-    };
-
-    const dbClear = async () => {
-        const db = await dbPromise;
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readwrite');
-            tx.objectStore(STORE_NAME).clear();
-            tx.oncomplete = () => resolve();
-            tx.onerror = () => reject(tx.error);
-        });
-    };
-
-    // --- デフォルトアイコン動的生成 (アプリ名連動) ---
-    let currentIconBase64 = '';
-    let isCustomIcon = false;
-
-    const generateDynamicIcon = async (appName = '') => {
-        let text = '⚡';
-        const name = appName.trim();
-        if (name) {
-            const words = name.split(/\s+/);
-            if (words.length >= 2) {
-                text = (words[0].substring(0, 1) + words[1].substring(0, 1)).toUpperCase();
-            } else {
-                text = name.substring(0, 2).toUpperCase(); // 1単語なら最初の2文字
-            }
+    /* --- LLM統一呼び出し --- */
+    async function callLLM({ prompt, stream = false, model, images = [] }) {
+        const provider = document.getElementById('ai-provider').value;
+        const key = getCurrentApiKey();
+        if (!key) {
+            const res = await fetch(PROXY_WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
+            const data = await res.json();
+            return { text: data.candidates ? data.candidates[0].content.parts[0].text : (data.response || data.text || JSON.stringify(data)) };
         }
-
-        // 文字列からハッシュ値を生成し、テーマカラーを決定
-        let hash = 0;
-        for (let i = 0; i < (name || 'default').length; i++) {
-            hash = (name || 'default').charCodeAt(i) + ((hash << 5) - hash);
+        switch(provider) {
+            case 'gemini': return callGemini(key, model, prompt, stream, images);
+            case 'openai': return callOpenAI(key, model, prompt, stream, images);
+            case 'claude': return callClaude(key, model, prompt, stream, images);
+            case 'xai':    return callXAI(key, model, prompt, stream, images);
+            case 'groq':   return callGroq(key, model, prompt, stream, images);
+            default:       return callGemini(key, model, prompt, stream, images);
         }
-        const h = Math.abs(hash) % 360;
-        const s = 65;
-        const l = 45;
-        const bgColor = `hsl(${h}, ${s}%, ${l}%)`;
+    }
 
-        // 【修正点】単色ベタ塗りに変更し、512x512でもPNG圧縮が強力に効くようにしてデータ量を激減させる
-        const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'>
-            <rect width='512' height='512' fill='${bgColor}'/>
-            <text x='256' y='340' font-size='240' font-family='-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' font-weight='bold' fill='#ffffff' text-anchor='middle'>${text}</text>
-        </svg>`;
-
-        return new Promise((resolve) => {
-            const img = new Image();
-            const svgBlob = new Blob([svg], {type: 'image/svg+xml;charset=utf-8'});
-            const url = URL.createObjectURL(svgBlob);
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = 512; canvas.height = 512;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, 512, 512);
-                URL.revokeObjectURL(url);
-                // 単色なので数KB単位の極小PNGになり、Actionsの制限に引っかからなくなる
-                resolve(canvas.toDataURL('image/png'));
-            };
-            img.src = url;
-        });
-    };
-
-    const setDefaultIcon = async (appName = '', isClear = false) => {
-        const iconBase64 = await generateDynamicIcon(appName);
-        currentIconBase64 = iconBase64;
-        $('appIconPreview').src = currentIconBase64;
-        $('clearIconBtn').style.display = 'none';
-        $('appIconInput').value = '';
-        isCustomIcon = false;
-        await dbSave('app_icon', currentIconBase64);
-        await dbSave('app_icon_is_custom', false);
-        if (isClear) showToast('🔄 アイコンを初期化しました');
-    };
-
-    // --- アイコン設定 UI ---
-    $('selectIconBtn').onclick = () => $('appIconInput').click();
-    $('appIconInput').onchange = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = async (ev) => {
-            currentIconBase64 = ev.target.result;
-            $('appIconPreview').src = currentIconBase64;
-            $('clearIconBtn').style.display = 'inline-flex';
-            isCustomIcon = true;
-            await dbSave('app_icon', currentIconBase64);
-            await dbSave('app_icon_is_custom', true);
-            showToast('✅ アプリアイコンを保存しました');
-        };
-        reader.readAsDataURL(file);
-    };
-
-    $('clearIconBtn').onclick = () => setDefaultIcon($('appName').value, true);
-
-    // --- パッケージID自動生成 (ハッシュ付きでわかりにくく) ---
-    $('generateAppIdBtn').onclick = async () => {
-        const name = $('appName').value.trim() || 'myapp';
-        const base = name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
-        const hash = Math.random().toString(36).substring(2, 10);
-        const newId = `com.example.${base || 'app'}.${hash}`;
-        $('appId').value = newId;
-        await dbSave('app_id', newId);
-        showToast(`🎲 パッケージIDを自動生成しました`);
-    };
-
-    // --- アプリ表示名自動取得ロジック ---
-    const trySetAppName = async (name) => {
-        if (!name) return;
-        const currentName = $('appName').value;
-        if (currentName !== name) {
-            $('appName').value = name;
-            await dbSave('app_name', name);
-            showToast(`📝 アプリ表示名を「${name}」に自動設定しました`);
-            
-            // ユーザーが手動でアイコンを設定していなければ、名前に基づき再生成
-            if (!isCustomIcon) {
-                await setDefaultIcon(name);
-            }
-        }
-    };
-
-    const extractAppNameFromLocal = async (files) => {
-        const fileArr = Array.from(files);
-        const indexHtml = fileArr.find(f => f.name.toLowerCase() === 'index.html' && (f.webkitRelativePath.split('/').length <= 2));
-        if (indexHtml) {
-            const text = await indexHtml.text();
-            const match = text.match(/<title>([^<]*)<\/title>/i);
-            if (match && match[1].trim()) return match[1].trim();
-        }
-        const readme = fileArr.find(f => (f.name.toLowerCase() === 'readme.md' || f.name.toLowerCase() === 'readme.txt') && (f.webkitRelativePath.split('/').length <= 2));
-        if (readme) {
-            const text = await readme.text();
-            const lines = text.split('\n');
-            const firstLine = lines.find(l => l.trim().length > 0 && !l.trim().startsWith('<!--'));
-            if (firstLine) return firstLine.replace(/^#+\s*/, '').trim();
-        }
-        return null;
-    };
-
-    // --- UI State & Settings Management ---
-    const loadSettings = async () => {
-        const appName = await dbGet('app_name');
-        const appId = await dbGet('app_id');
-        const appIcon = await dbGet('app_icon');
-        const customFlag = await dbGet('app_icon_is_custom');
-        const token = await dbGet('gh_token');
-        const owner = await dbGet('gh_owner');
-        const sourceType = await dbGet('source_type') || 'local';
-        const sourceRepoPath = await dbGet('source_repo_path');
-        
-        isCustomIcon = customFlag === true;
-
-        if (appName) $('appName').value = appName;
-        if (appId) $('appId').value = appId;
-        
-        if (appIcon) {
-            currentIconBase64 = appIcon;
-            $('appIconPreview').src = appIcon;
-            if (isCustomIcon) $('clearIconBtn').style.display = 'inline-flex';
+    async function callGemini(key, model, prompt, stream, images) {
+        const parts = [{ text: prompt }];
+        images.forEach(img => parts.push({ inline_data: { mime_type: img.mime, data: img.base64 } }));
+        if (stream) {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${key}`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ role: 'user', parts }] })
+            });
+            if (!res.ok) throw new Error(`API Error: ${res.status}`);
+            return { reader: res.body.getReader(), parseChunk: (line) => { try { const d = JSON.parse(line.slice(6)); return d.candidates?.[0]?.content?.parts?.[0]?.text || ''; } catch(e) { return ''; } }, prefix: 'data: ' };
         } else {
-            await setDefaultIcon($('appName').value);
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts }] })
+            });
+            const data = await res.json(); if (data.error) throw new Error(data.error.message);
+            return { text: data.candidates[0].content.parts[0].text };
         }
+    }
 
-        if (sourceRepoPath) $('sourceRepoPath').value = sourceRepoPath;
+    function buildOpenAIBody(model, prompt, stream, images) {
+        const content = [{ type: 'text', text: prompt }];
+        images.forEach(img => content.push({ type: 'image_url', image_url: { url: `data:${img.mime};base64,${img.base64}` } }));
+        return { model, stream, messages: [{ role: 'user', content: images.length ? content : prompt }] };
+    }
 
-        const radio = document.querySelector(`input[name="sourceType"][value="${sourceType}"]`);
-        if (radio) {
-            radio.checked = true;
-            radio.dispatchEvent(new Event('change'));
+    async function callOpenAI(key, model, prompt, stream, images) {
+        const body = buildOpenAIBody(model, prompt, stream, images);
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key }, body: JSON.stringify(body)
+        });
+        if (!res.ok) throw new Error(`API Error: ${res.status}`);
+        if (stream) {
+            return { reader: res.body.getReader(), parseChunk: (line) => { try { const d = JSON.parse(line.slice(6)); return d.choices?.[0]?.delta?.content || ''; } catch(e) { return ''; } }, prefix: 'data: ' };
         }
+        const data = await res.json(); if (data.error) throw new Error(data.error.message);
+        return { text: data.choices[0].message.content };
+    }
 
-        if (token) {
-            $('ghToken').value = token;
-            if (owner) {
-                $('ghOwner').value = owner;
-                fetchRepositories(); 
-            }
+    async function callClaude(key, model, prompt, stream, images) {
+        const content = [];
+        images.forEach(img => content.push({ type: 'image', source: { type: 'base64', media_type: img.mime, data: img.base64 } }));
+        content.push({ type: 'text', text: prompt });
+        const body = { model, max_tokens: 8192, stream, messages: [{ role: 'user', content }] };
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify(body)
+        });
+        if (!res.ok) throw new Error(`API Error: ${res.status}`);
+        if (stream) {
+            return { reader: res.body.getReader(), parseChunk: (line) => { try { const d = JSON.parse(line.slice(6)); if (d.type === 'content_block_delta') return d.delta?.text || ''; return ''; } catch(e) { return ''; } }, prefix: 'data: ' };
+        }
+        const data = await res.json(); if (data.error) throw new Error(data.error.message);
+        return { text: data.content[0].text };
+    }
+
+    async function callXAI(key, model, prompt, stream, images) {
+        const body = buildOpenAIBody(model, prompt, stream, images);
+        const res = await fetch('https://api.x.ai/v1/chat/completions', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key }, body: JSON.stringify(body)
+        });
+        if (!res.ok) throw new Error(`API Error: ${res.status}`);
+        if (stream) {
+            return { reader: res.body.getReader(), parseChunk: (line) => { try { const d = JSON.parse(line.slice(6)); return d.choices?.[0]?.delta?.content || ''; } catch(e) { return ''; } }, prefix: 'data: ' };
+        }
+        const data = await res.json(); return { text: data.choices[0].message.content };
+    }
+
+    async function callGroq(key, model, prompt, stream, images) {
+        const body = buildOpenAIBody(model, prompt, stream, images);
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key }, body: JSON.stringify(body)
+        });
+        if (!res.ok) throw new Error(`API Error: ${res.status}`);
+        if (stream) {
+            return { reader: res.body.getReader(), parseChunk: (line) => { try { const d = JSON.parse(line.slice(6)); return d.choices?.[0]?.delta?.content || ''; } catch(e) { return ''; } }, prefix: 'data: ' };
+        }
+        const data = await res.json(); return { text: data.choices[0].message.content };
+    }
+
+    /* --- チャットリフレッシュ --- */
+    function resetChatForNewCode(source) {
+        chatHistory = [];
+        document.getElementById('chat-log').innerHTML = '';
+        const msg = { id: Date.now().toString(), role: 'ai system-msg', text: source + ' からコードを読み込みました。\n修正したい点があれば教えてください。', html: false };
+        chatHistory.push(msg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(msg); rebuildConversationContext();
+    }
+
+    /* --- CodeMirror 変数 --- */
+    let cmView = null;
+    let cmSearchModules = null;
+    let searchMatchesCount = 0;
+    let currentSearchIndex = -1;
+
+    /* --- トースト通知 --- */
+    function showToast(message) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    /* --- IndexedDB ヘルパー --- */
+    function openDB() {
+        return new Promise((resolve, reject) => {
+            const req = indexedDB.open('WebStudioBG', 2); // DBバージョンアップ
+            req.onupgradeneeded = () => {
+                if(!req.result.objectStoreNames.contains('tasks')) req.result.createObjectStore('tasks');
+            };
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
+    async function saveToDB(key, value) {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('tasks', 'readwrite');
+            tx.objectStore('tasks').put(value, key);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+    async function getFromDB(key) {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('tasks', 'readonly');
+            const req = tx.objectStore('tasks').get(key);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
+    async function deleteFromDB(key) {
+        const db = await openDB();
+        return new Promise((resolve) => {
+            const tx = db.transaction('tasks', 'readwrite');
+            tx.objectStore('tasks').delete(key);
+            tx.oncomplete = () => resolve();
+        });
+    }
+
+    /* --- API Key UI 連動 --- */
+    function toggleModelSelects() {
+        const apiKey = getCurrentApiKey();
+        const chatModel = document.getElementById('chat-model');
+        const codeModel = document.getElementById('code-model');
+        chatModel.disabled = false; codeModel.disabled = false;
+        if (!apiKey) {
+            chatModel.title = "APIキー未設定時はProxy Worker(固定モデル)が使用されます";
+            codeModel.title = "APIキー未設定時はProxy Worker(固定モデル)が使用されます";
+            chatModel.style.opacity = "0.6"; codeModel.style.opacity = "0.6";
+        } else {
+            chatModel.title = ""; codeModel.title = "";
+            chatModel.style.opacity = "1"; codeModel.style.opacity = "1";
+        }
+    }
+
+    /* --- CodeMirror 統合 --- */
+    async function initCodeMirror(initialCode) {
+        try {
+            const [{ basicSetup }, { EditorView }, { EditorState }, { html }, { oneDark }, searchMod] = await Promise.all([
+                import("https://esm.sh/codemirror"),
+                import("https://esm.sh/@codemirror/view"),
+                import("https://esm.sh/@codemirror/state"),
+                import("https://esm.sh/@codemirror/lang-html"),
+                import("https://esm.sh/@codemirror/theme-one-dark"),
+                import("https://esm.sh/@codemirror/search")
+            ]);
+
+            cmSearchModules = searchMod;
+            const parent = document.getElementById('code-editor-container');
+            
+            const customTheme = EditorView.theme({
+                "&": { height: "100%", fontSize: "14px", fontFamily: "var(--font-mono)" },
+                ".cm-scroller": { overflow: "auto" },
+                // 検索ヒットキーワードを黄色でハイライトするスタイル
+                ".cm-searchMatch": { backgroundColor: "rgba(234, 179, 8, 0.4) !important" },
+                ".cm-searchMatch-selected": { backgroundColor: "rgba(234, 179, 8, 0.9) !important" }
+            });
+
+            const updateListener = EditorView.updateListener.of((update) => {
+                if (update.docChanged) {
+                    updatePreview();
+                    saveToDB('currentCode', window.getCode()); // Auto Save
+                }
+            });
+
+            const state = EditorState.create({
+                doc: initialCode || "",
+                extensions: [
+                    basicSetup,
+                    html(),
+                    oneDark,
+                    customTheme,
+                    searchMod.search({top: true}), // CM built-in search extension
+                    updateListener
+                ]
+            });
+
+            cmView = new EditorView({ state, parent });
+            updatePreview();
+        } catch (e) {
+            console.error("CodeMirror load failed:", e);
+        }
+    }
+
+    window.getCode = function() {
+        return cmView ? cmView.state.doc.toString() : "";
+    };
+
+    window.setCode = function(code) {
+        if(cmView) {
+            cmView.dispatch({ changes: { from: 0, to: cmView.state.doc.length, insert: code } });
         }
     };
 
-    $('appName').addEventListener('change', async (e) => {
-        const val = e.target.value.trim();
-        await dbSave('app_name', val);
-        if (!isCustomIcon) {
-            await setDefaultIcon(val);
-        }
-    });
+    /* --- 検索機能 (CodeMirror連携) --- */
+    function openSearchModal() {
+        const searchInput = document.getElementById('code-search-input');
+        searchInput.value = ''; // 検索キーワードを保存しない（クリアする）
+        document.getElementById('search-modal').classList.add('show');
+        searchInput.focus();
+        performCodeSearch(); // クリア状態を即時反映させる
+    }
+    
+    function closeSearchModal() {
+        document.getElementById('search-modal').classList.remove('show');
+    }
 
-    $('appId').addEventListener('change', async (e) => {
-        const val = e.target.value.trim();
-        if(val && !/^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+[0-9a-z_]$/i.test(val)){
-            showToast('⚠️ パッケージIDの形式が不正です (例: com.example.app)');
+    function performCodeSearch() {
+        if (!cmView || !cmSearchModules) return;
+        const q = document.getElementById('code-search-input').value;
+        
+        // CodeMirrorに検索クエリを発行 (シンタックスハイライトとは別にハイライトされる)
+        cmView.dispatch({
+            effects: cmSearchModules.setSearchQuery.of(new cmSearchModules.SearchQuery({ search: q }))
+        });
+
+        // マッチ数の簡易計算
+        const code = window.getCode().toLowerCase();
+        const query = q.toLowerCase();
+        
+        if (!query) {
+            document.getElementById('search-status').innerText = '0/0';
+            searchMatchesCount = 0; currentSearchIndex = -1;
             return;
         }
-        await dbSave('app_id', val);
-    });
 
-    $('sourceRepoSelect').addEventListener('change', async (e) => {
-        const repo = e.target.value;
-        await dbSave('source_repo_name', repo);
-        await dbSave('gh_repo', repo); 
-        clearGhFileList();
-        if(repo) showToast(`✅ 対象リポジトリを設定しました`);
-    });
-    
-    $('sourceRepoPath').addEventListener('input', async (e) => {
-        await dbSave('source_repo_path', e.target.value);
-        clearGhFileList();
-    });
-
-    document.querySelectorAll('input[name="sourceType"]').forEach(radio => {
-        radio.addEventListener('change', async (e) => {
-            const val = e.target.value;
-            if (val === 'local') {
-                $('localSourceUI').style.display = 'block';
-                $('githubSourceUI').style.display = 'none';
-            } else {
-                $('localSourceUI').style.display = 'none';
-                $('githubSourceUI').style.display = 'block';
-            }
-            await dbSave('source_type', val);
-        });
-    });
-
-    $('openSettingsBtn').onclick = () => $('settingsOverlay').classList.add('active');
-    $('closeSettingsBtn').onclick = () => $('settingsOverlay').classList.remove('active');
-
-    // --- GitHub API & 連携 ---
-    async function ghApi(path, method = 'GET', body = null) {
-        const token = await dbGet('gh_token');
-        const owner = await dbGet('gh_owner');
-        const repo = await dbGet('source_repo_name'); 
-        
-        let url = `https://api.github.com${path}`;
-        if (!path.startsWith('/user') && !path.startsWith('/repos/')) {
-            if (!owner || !repo) throw new Error('GitHubリポジトリが選択されていません。');
-            url = `https://api.github.com/repos/${owner}/${repo}${path}`;
+        let count = 0;
+        let index = code.indexOf(query);
+        while(index !== -1) {
+            count++;
+            index = code.indexOf(query, index + query.length);
         }
-
-        const headers = {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/vnd.github+json',
-            'X-GitHub-Api-Version': '2022-11-28',
-            'Content-Type': 'application/json'
-        };
-
-        const res = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : null });
-        
-        if (!res.ok) {
-            let errorDetails = `HTTP Status: ${res.status}`;
-            try {
-                const errData = await res.json();
-                errorDetails += ` - API Message: ${errData.message || JSON.stringify(errData)}`;
-            } catch (e) {
-                errorDetails += ` - Response Text: ${await res.text()}`;
-            }
-            throw new Error(errorDetails);
-        }
-        return res.status === 204 ? null : res.json();
+        searchMatchesCount = count;
+        currentSearchIndex = count > 0 ? 1 : 0;
+        document.getElementById('search-status').innerText = count > 0 ? `${currentSearchIndex}/${count}` : '0/0';
     }
 
-    $('saveTokenBtn').onclick = async () => {
-        const token = $('ghToken').value.trim();
-        if (!token) return showToast('⚠️ トークンを入力してください');
-        
-        const btn = $('saveTokenBtn');
-        btn.disabled = true; btn.innerText = '⏳ 検証中...';
-        
-        try {
-            await dbSave('gh_token', token);
-            const res = await fetch('https://api.github.com/user', { headers: { 'Authorization': `Bearer ${token}` }});
-            if (!res.ok) throw new Error('無効なトークンか権限不足です');
-            const userData = await res.json();
-            $('ghOwner').value = userData.login;
-            await dbSave('gh_owner', userData.login);
-            showToast(`✅ 認証成功: ${userData.login}`);
-            await fetchRepositories(); 
-        } catch(e) {
-            showToast(`❌ エラー: ${e.message}`);
-            log(`❌ 認証エラー: ${e.message}`, 'log-err');
-            await dbSave('gh_token', ''); 
-        } finally {
-            btn.disabled = false; btn.innerText = '💾 トークンを保存して接続';
-        }
-    };
-
-    async function fetchRepositories() {
-        const token = await dbGet('gh_token');
-        const owner = await dbGet('gh_owner');
-        if (!token || !owner) return;
-
-        const sourceRepoSelect = $('sourceRepoSelect');
-        const savedSourceRepo = await dbGet('source_repo_name');
-
-        try {
-            sourceRepoSelect.innerHTML = '<option value="">⏳ リポジトリを取得中...</option>';
-            const repos = await ghApi('/user/repos?per_page=100&sort=updated');
-            sourceRepoSelect.innerHTML = '<option value="">リポジトリを選択してください...</option>';
-            
-            repos.forEach(repo => {
-                const opt2 = document.createElement('option');
-                opt2.value = repo.name; opt2.text = repo.name;
-                if (repo.name === savedSourceRepo) opt2.selected = true;
-                sourceRepoSelect.appendChild(opt2);
-            });
-        } catch (e) {
-            sourceRepoSelect.innerHTML = '<option value="">❌ 取得エラー</option>';
-            log(`❌ リポジトリ取得失敗: ${e.message}`, 'log-err');
-        }
+    function nextSearchMatch() {
+        if (!cmView || !cmSearchModules || searchMatchesCount === 0) return;
+        cmSearchModules.findNext(cmView);
+        currentSearchIndex = currentSearchIndex < searchMatchesCount ? currentSearchIndex + 1 : 1;
+        document.getElementById('search-status').innerText = `${currentSearchIndex}/${searchMatchesCount}`;
+        document.getElementById('code-search-input').focus(); // フォーカス維持
     }
 
-    $('fetchSourceReposBtn').onclick = fetchRepositories;
+    function prevSearchMatch() {
+        if (!cmView || !cmSearchModules || searchMatchesCount === 0) return;
+        cmSearchModules.findPrevious(cmView);
+        currentSearchIndex = currentSearchIndex > 1 ? currentSearchIndex - 1 : searchMatchesCount;
+        document.getElementById('search-status').innerText = `${currentSearchIndex}/${searchMatchesCount}`;
+        document.getElementById('code-search-input').focus(); // フォーカス維持
+    }
 
-    $('clearSettingsBtn').onclick = async () => {
-        if(confirm('すべての設定と保存データを初期化します。よろしいですか？')) {
-            await dbClear();
-            $('ghToken').value = ''; $('ghOwner').value = '';
-            $('appName').value = 'My Packaged App';
-            $('appId').value = 'com.example.pkgapp';
-            $('sourceRepoSelect').innerHTML = '<option value="">設定(⚙️)からトークンを保存してください...</option>';
-            await setDefaultIcon($('appName').value);
-            showToast('🗑️ 設定を初期化しました');
-        }
-    };
-
-    // --- ファイル選択 (ローカル) ---
-    const fileInput = $('fileInput');
-    const dropZone = $('dropZone');
-    const fileListArea = $('fileList');
-    const localFileControls = $('localFileControls');
-    let selectedFiles = [];
-
-    const handleFiles = async (files) => {
-        selectedFiles = Array.from(files);
-        fileListArea.innerHTML = '';
-        if (selectedFiles.length > 0) {
-            fileListArea.style.display = 'block';
-            localFileControls.style.display = 'flex';
-            let hasIndexHtml = false;
-            
-            selectedFiles.forEach((file, index) => {
-                const item = document.createElement('div');
-                item.className = 'file-item';
-                const pathName = file.webkitRelativePath || file.name;
-                item.innerHTML = `
-                    <div class="file-item-left">
-                        <input type="checkbox" class="local-file-cb" data-index="${index}" checked>
-                        <span class="file-item-name" title="${pathName}">${pathName}</span>
-                    </div>
-                    <span class="file-size">${formatBytes(file.size)}</span>
-                `;
-                fileListArea.appendChild(item);
-                if (file.name.toLowerCase() === 'index.html') hasIndexHtml = true;
+    /* --- チャット履歴管理 --- */
+    async function loadChatHistory() {
+        const history = await getFromDB('chatHistory');
+        if (history && history.length > 0) {
+            chatHistory = history;
+            document.getElementById('chat-log').innerHTML = '';
+            chatHistory.forEach(msg => {
+                if(msg.html && msg.text.includes('spinner')) {
+                    // ストリーミング中断などの不完全な状態をクリア
+                    msg.text = '⚠️ 生成が中断されました。';
+                    msg.html = false;
+                }
+                renderMessageFromHistory(msg);
             });
-            showToast(`📁 ${selectedFiles.length}個のファイルを選択しました`);
-            if (!hasIndexHtml) log('⚠️ 警告: index.html が含まれていません。アプリが正常に起動しない可能性があります。', 'log-war');
-            
-            const name = await extractAppNameFromLocal(files);
-            trySetAppName(name);
+            rebuildConversationContext();
         } else {
-            fileListArea.style.display = 'none';
-            localFileControls.style.display = 'none';
-        }
-    };
-
-    $('selectFileBtn').onclick = () => { fileInput.setAttribute('webkitdirectory', ''); fileInput.setAttribute('directory', ''); fileInput.click(); };
-    $('selectFileOnlyBtn').onclick = () => { fileInput.removeAttribute('webkitdirectory'); fileInput.removeAttribute('directory'); fileInput.click(); };
-    fileInput.onchange = (e) => handleFiles(e.target.files);
-    
-    dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
-    dropZone.ondragleave = () => dropZone.classList.remove('dragover');
-    dropZone.ondrop = (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); };
-
-    $('localSelectAllBtn').onclick = () => document.querySelectorAll('.local-file-cb').forEach(cb => cb.checked = true);
-    $('localDeselectAllBtn').onclick = () => document.querySelectorAll('.local-file-cb').forEach(cb => cb.checked = false);
-
-    // --- ファイル選択 (GitHub) ---
-    let ghSelectedFilesData = [];
-    const clearGhFileList = () => {
-        $('ghFileList').style.display = 'none';
-        $('ghFileControls').style.display = 'none';
-        ghSelectedFilesData = [];
-    };
-
-    $('fetchGhFilesBtn').onclick = async () => {
-        const repo = $('sourceRepoSelect').value;
-        const owner = await dbGet('gh_owner');
-        let path = $('sourceRepoPath').value.trim();
-        if (path.startsWith('/')) path = path.substring(1);
-        
-        if (!repo || !owner) return showToast('⚠️ 対象のリポジトリを選択してください');
-
-        const btn = $('fetchGhFilesBtn');
-        btn.disabled = true; btn.innerText = '⏳ 取得中...';
-        
-        try {
-            const contents = await ghApi(`/repos/${owner}/${repo}/contents/${path}`, 'GET');
-            const items = Array.isArray(contents) ? contents : [contents];
-            ghSelectedFilesData = items;
-            
-            const listArea = $('ghFileList');
-            listArea.innerHTML = '';
-            
-            if (items.length > 0) {
-                listArea.style.display = 'block';
-                $('ghFileControls').style.display = 'flex';
-                
-                items.forEach((item) => {
-                    const el = document.createElement('div');
-                    el.className = 'file-item';
-                    const icon = item.type === 'dir' ? '📁' : '📄';
-                    const sizeStr = item.type === 'dir' ? '-' : formatBytes(item.size);
-                    
-                    el.innerHTML = `
-                        <div class="file-item-left">
-                            <input type="checkbox" class="gh-file-cb" data-path="${item.path}" checked>
-                            <span class="file-item-name" title="${item.path}">${icon} ${item.name}</span>
-                        </div>
-                        <span class="file-size">${sizeStr}</span>
-                    `;
-                    listArea.appendChild(el);
-                });
-                showToast(`✅ ${items.length}件のアイテムを取得しました`);
-
-                // アプリ表示名の自動取得
-                (async () => {
-                    let extractedName = null;
-                    let indexHtml = items.find(i => i.name.toLowerCase() === 'index.html');
-                    if (indexHtml) {
-                        try {
-                            const res = await ghApi(`/repos/${owner}/${repo}/contents/${indexHtml.path}`);
-                            const text = decodeURIComponent(escape(atob(res.content)));
-                            const match = text.match(/<title>([^<]*)<\/title>/i);
-                            if (match && match[1].trim()) extractedName = match[1].trim();
-                        } catch(e){}
-                    }
-                    if(!extractedName) {
-                        let readme = items.find(i => i.name.toLowerCase() === 'readme.md' || i.name.toLowerCase() === 'readme.txt');
-                        if (readme) {
-                            try {
-                                const res = await ghApi(`/repos/${owner}/${repo}/contents/${readme.path}`);
-                                const text = decodeURIComponent(escape(atob(res.content)));
-                                const lines = text.split('\n');
-                                const firstLine = lines.find(l => l.trim().length > 0 && !l.trim().startsWith('<!--'));
-                                if (firstLine) extractedName = firstLine.replace(/^#+\s*/, '').trim();
-                            } catch(e){}
-                        }
-                    }
-                    if(extractedName) trySetAppName(extractedName);
-                })();
-            } else {
-                clearGhFileList();
-                showToast('⚠️ 指定されたパスにファイルが見つかりません');
-            }
-        } catch (e) {
-            log(`❌ ファイル一覧取得エラー: ${e.message}`, 'log-err');
-            showToast('❌ 取得失敗');
-            clearGhFileList();
-        } finally {
-            btn.disabled = false; btn.innerText = '📂 ファイル一覧を取得';
-        }
-    };
-
-    $('ghSelectAllBtn').onclick = () => document.querySelectorAll('.gh-file-cb').forEach(cb => cb.checked = true);
-    $('ghDeselectAllBtn').onclick = () => document.querySelectorAll('.gh-file-cb').forEach(cb => cb.checked = false);
-
-    // --- GitHub Actions Workflow YAML Definition ---
-    const buildApkYamlContent = `name: Mobile App Builder
-
-on:
-  workflow_dispatch:
-    inputs:
-      app_name:
-        description: 'アプリの表示名'
-        default: 'My App'
-        required: true
-      app_id:
-        description: 'パッケージ名 (com.example.app)'
-        default: 'com.example.app'
-        required: true
-      source_type:
-        description: '取得元 (local / github)'
-        default: 'local'
-        required: true
-      source_path:
-        description: 'アセットのパス'
-        default: '/'
-        required: false
-      selected_files:
-        description: '対象ファイル (カンマ区切り)'
-        default: ''
-        required: false
-      app_icon_base64:
-        description: 'アプリアイコン (Base64 PNG)'
-        default: ''
-        required: false
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with: { node-version: 22 }
-
-      - uses: actions/setup-java@v4
-        with: { distribution: 'temurin', java-version: '17' }
-
-      - name: Clean existing config files
-        run: |
-          rm -f package.json package-lock.json capacitor.config.json capacitor.config.ts
-          rm -rf node_modules android ios
-
-      - name: Configure Capacitor
-        run: |
-          node -e "
-            const cfg = {
-              appId: process.argv[1],
-              appName: process.argv[2],
-              webDir: 'www'
+            const initMsg = {
+                id: Date.now().toString(),
+                role: 'ai system-msg',
+                text: 'Gemini Web Studio 2026 起動。\n要件を教えてください。プランが固まったら「⚡️コードを作成」ボタンを表示します。',
+                html: false
             };
-            require('fs').writeFileSync('capacitor.config.json', JSON.stringify(cfg, null, 2));
-            console.log('--- capacitor.config.json ---');
-            console.log(JSON.stringify(cfg, null, 2));
-          " "\${{ github.event.inputs.app_id }}" "\${{ github.event.inputs.app_name }}"
-
-      - name: Install Capacitor
-        run: |
-          npm init -y
-          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
-          echo "--- Installed packages ---"
-          npx cap --version
-          ls node_modules/@capacitor/
-
-      - name: Extract Web Assets (Local)
-        if: github.event.inputs.source_type == 'local'
-        run: |
-          rm -rf www www_temp
-          mkdir www
-          unzip -o www.zip -d www_temp
-          # ネストされたフォルダ構造を自動フラット化
-          if [ -f "www_temp/index.html" ]; then
-            mv www_temp/* www/ 2>/dev/null || true
-          else
-            # サブフォルダ内にindex.htmlがある場合
-            FOUND=\$(find www_temp -name "index.html" -type f | head -1)
-            if [ -n "$FOUND" ]; then
-              TARGET_DIR=\$(dirname "$FOUND")
-              cp -R "$TARGET_DIR/." www/
-            else
-              cp -R www_temp/* www/ 2>/dev/null || true
-            fi
-          fi
-          rm -rf www_temp
-          echo "=== www/ contents ==="
-          find www -type f | head -20
-
-      - name: Checkout Source Repo (GitHub)
-        if: github.event.inputs.source_type == 'github'
-        uses: actions/checkout@v4
-        with:
-          path: source_repo_temp
-          fetch-depth: 1
-
-      - name: Copy Web Assets (GitHub)
-        if: github.event.inputs.source_type == 'github'
-        run: |
-          rm -rf www
-          mkdir www
-          SOURCE_PATH="\${{ github.event.inputs.source_path }}"
-          SOURCE_PATH="\${SOURCE_PATH#/}"
-          SOURCE_PATH="\${SOURCE_PATH%/}"
-          SELECTED="\${{ github.event.inputs.selected_files }}"
-          
-          echo "DEBUG: SOURCE_PATH=[$SOURCE_PATH]"
-          echo "DEBUG: SELECTED=[$SELECTED]"
-          
-          if [ -n "$SELECTED" ]; then
-            IFS=',' read -ra ADDR <<< "$SELECTED"
-            for i in "\${ADDR[@]}"; do
-              i="\$(echo "$i" | xargs)"
-              if [ -z "$SOURCE_PATH" ]; then
-                DEST="$i"
-              else
-                DEST="\${i#$SOURCE_PATH/}"
-              fi
-              echo "Copying: source_repo_temp/$i -> www/$DEST"
-              mkdir -p "www/\$(dirname "$DEST")" || true
-              if [ -d "source_repo_temp/$i" ]; then
-                cp -R "source_repo_temp/$i/." "www/$DEST/" 2>/dev/null || cp -R "source_repo_temp/$i" "www/$DEST" || true
-              else
-                cp "source_repo_temp/$i" "www/$DEST" || true
-              fi
-            done
-          else
-            if [ -z "$SOURCE_PATH" ]; then
-              shopt -s dotglob 2>/dev/null || true
-              for item in source_repo_temp/*; do
-                bname="\$(basename "$item")"
-                [ "$bname" = ".git" ] && continue
-                [ "$bname" = ".github" ] && continue
-                [ "$bname" = "node_modules" ] && continue
-                cp -R "$item" "www/" || true
-              done
-            else
-              cp -R "source_repo_temp/$SOURCE_PATH/." www/ || true
-            fi
-          fi
-          
-          echo "=== www/ contents ==="
-          find www -type f | head -30
-          echo "=== Total files: \$(find www -type f | wc -l) ==="
-
-      - name: Verify Web Assets
-        run: |
-          if [ ! -f "www/index.html" ]; then
-            echo "::error::index.html not found in www/ directory!"
-            echo "Contents of www/:"
-            ls -laR www/ | head -50
-            exit 1
-          fi
-          echo "✅ index.html found in www/"
-
-      - name: Android Platform Setup
-        run: |
-          npx cap add android
-          npx cap sync android
-          echo "✅ Android platform added and synced"
-
-      - name: Set App Icon and PWA Manifest
-        if: github.event.inputs.app_icon_base64 != ''
-        run: |
-          mkdir -p temp_icon
-          ICON_B64="\${{ github.event.inputs.app_icon_base64 }}"
-          if [ "$ICON_B64" = "__FROM_REPO__" ]; then
-            if [ -f "app-icon.png.b64" ]; then
-              base64 -d app-icon.png.b64 > temp_icon/icon.png
-            else
-              echo "⚠️ app-icon.png.b64 not found, skipping icon"
-              exit 0
-            fi
-          else
-            echo "$ICON_B64" | base64 -d > temp_icon/icon.png
-          fi
-          RES_DIR="android/app/src/main/res"
-          if [ -d "$RES_DIR" ]; then
-            for dpi in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
-              mkdir -p "$RES_DIR/mipmap-\$dpi"
-              cp temp_icon/icon.png "$RES_DIR/mipmap-\$dpi/ic_launcher.png" || true
-              cp temp_icon/icon.png "$RES_DIR/mipmap-\$dpi/ic_launcher_round.png" || true
-            done
-          fi
-          mkdir -p www/assets/icons
-          cp temp_icon/icon.png www/assets/icons/icon.png || true
-          printf '{"name":"%s","short_name":"%s","display":"standalone","icons":[{"src":"assets/icons/icon.png","sizes":"512x512","type":"image/png"}]}' "\${{ github.event.inputs.app_name }}" "\${{ github.event.inputs.app_name }}" > www/manifest.json
-
-      - name: Build APK
-        run: |
-          cd android
-          chmod +x gradlew
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "JAVA_HOME=$JAVA_HOME"
-          ./gradlew assembleDebug --no-daemon --stacktrace
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: \${{ github.event.inputs.app_name }}-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-`;
-
-    // --- デプロイ処理 ---
-    $('deployBtn').onclick = async () => {
-        const sourceType = document.querySelector('input[name="sourceType"]:checked').value;
-        const sourceRepo = $('sourceRepoSelect').value;
-        const sourcePath = $('sourceRepoPath').value || '/';
-        const owner = await dbGet('gh_owner');
-        let filesToZip = [];
-        let selectedGhPaths = '';
-
-        if (sourceType === 'local') {
-            const checkedCbs = Array.from(document.querySelectorAll('.local-file-cb:checked'));
-            filesToZip = checkedCbs.map(cb => selectedFiles[parseInt(cb.dataset.index)]);
-            if (filesToZip.length === 0) { 
-                showToast('⚠️ パッケージに含めるファイルが選択されていません。'); return; 
-            }
-        } else if (sourceType === 'github') {
-            if (!sourceRepo) { showToast('⚠️ 対象リポジトリを選択してください。'); return; }
-            if (ghSelectedFilesData.length > 0) {
-                const checkedCbs = Array.from(document.querySelectorAll('.gh-file-cb:checked'));
-                if (checkedCbs.length === 0) {
-                     showToast('⚠️ パッケージに含めるファイルが選択されていません。'); return;
-                }
-                selectedGhPaths = checkedCbs.map(cb => cb.dataset.path).join(',');
-            }
+            chatHistory.push(initMsg);
+            saveToDB('chatHistory', chatHistory);
+            renderMessageFromHistory(initMsg);
+            rebuildConversationContext();
         }
+    }
 
-        const token = await dbGet('gh_token');
-        if (!token || !sourceRepo) { 
-            showToast('⚠️ 対象リポジトリ(取得・デプロイ先)を設定してください。');
-            return; 
+    function renderMessageFromHistory(msg) {
+        const log = document.getElementById('chat-log');
+        const msgElement = createMessageElement(msg);
+        log.appendChild(msgElement);
+        log.scrollTop = log.scrollHeight;
+    }
+
+    function createMessageElement(msg) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `msg ${msg.role}`;
+        msgDiv.dataset.id = msg.id;
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'msg-content';
+        if (msg.html) contentDiv.innerHTML = msg.text;
+        else contentDiv.textContent = msg.text;
+        msgDiv.appendChild(contentDiv);
+
+        // システムメッセージやストリーミング中(html)はアクションボタンを付けない
+        if (!msg.role.includes('system-msg') && !msg.html) {
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'msg-actions';
+            
+            const editBtn = document.createElement('button');
+            editBtn.className = 'msg-action-btn';
+            editBtn.innerHTML = '✏️';
+            editBtn.title = '編集';
+            editBtn.onclick = () => toggleEditMessage(msg.id, contentDiv, editBtn);
+            
+            const delBtn = document.createElement('button');
+            delBtn.className = 'msg-action-btn';
+            delBtn.innerHTML = '🗑️';
+            delBtn.title = '削除';
+            delBtn.onclick = () => deleteMessage(msg.id, msgDiv);
+            
+            // コピーボタンは除外要請により追加しない
+            actionsDiv.appendChild(editBtn);
+            actionsDiv.appendChild(delBtn);
+            msgDiv.appendChild(actionsDiv);
         }
         
-        const btn = $('deployBtn');
-        const appName = $('appName').value || 'My App';
-        const appId = $('appId').value || 'com.example.app';
-        let pureBase64Icon = '';
-        if (currentIconBase64 && currentIconBase64.includes(',')) {
-            pureBase64Icon = currentIconBase64.split(',')[1];
+        // AIの応答内容に応じて各種アクションボタンを復元
+        if (msg.role === 'ai' && !msg.html) {
+            const btnWrapper = document.createElement('div'); 
+            btnWrapper.className = 'generate-btn-wrapper';
+            
+            let hasBtn = false;
+            
+            if (msg.text.includes('素晴らしいプランです。⚡️コードを作成')) {
+                const genBtn = document.createElement('button'); 
+                genBtn.className = 'generate-btn'; 
+                genBtn.innerHTML = '⚡️ コードを作成 (BUILD)';
+                genBtn.onclick = generateCode; 
+                btnWrapper.appendChild(genBtn);
+                hasBtn = true;
+            }
+            
+            if (msg.text.includes('✨ 要件をおまかせ')) {
+                const planBtn = document.createElement('button'); 
+                planBtn.className = 'generate-btn'; 
+                planBtn.style.background = 'var(--accent)';
+                planBtn.innerHTML = '✨ 要件をおまかせ';
+                planBtn.onclick = askForPlan; 
+                btnWrapper.appendChild(planBtn);
+                hasBtn = true;
+            }
+
+            if (hasBtn) {
+                msgDiv.appendChild(btnWrapper);
+            }
         }
 
-        $('downloadArea').style.display = 'none';
+        return msgDiv;
+    }
 
+    function toggleEditMessage(id, contentDiv, btn) {
+        if (contentDiv.contentEditable === "true") {
+            contentDiv.contentEditable = "false";
+            contentDiv.style.border = "none";
+            contentDiv.style.padding = "0";
+            btn.innerHTML = '✏️';
+            
+            const msg = chatHistory.find(m => m.id === id);
+            if (msg) {
+                msg.text = contentDiv.textContent;
+                saveToDB('chatHistory', chatHistory);
+                rebuildConversationContext();
+                showToast('編集を保存しました');
+            }
+        } else {
+            contentDiv.contentEditable = "true";
+            contentDiv.style.border = "1px solid var(--primary)";
+            contentDiv.style.padding = "4px";
+            contentDiv.focus();
+            btn.innerHTML = '💾';
+        }
+    }
+
+    function deleteMessage(id, msgDiv) {
+        chatHistory = chatHistory.filter(m => m.id !== id);
+        msgDiv.remove();
+        saveToDB('chatHistory', chatHistory);
+        rebuildConversationContext();
+        showToast('削除しました');
+    }
+
+    function rebuildConversationContext() {
+        conversationContext = "";
+        chatHistory.forEach(msg => {
+            if (msg.role === 'user') {
+                conversationContext += `\nユーザー: ${msg.text}`;
+                if(msg.attachment) conversationContext += ` (添付ファイル: ${msg.attachment})`;
+            } else if (msg.role === 'ai') {
+                conversationContext += `\nアシスタント: ${msg.text}`;
+            }
+        });
+    }
+
+    function confirmReset() {
+        if (confirm("会話とコードをリセットしますか？")) {
+            chatHistory = [];
+            document.getElementById('chat-log').innerHTML = '';
+            window.setCode("");
+            document.getElementById('preview-frame').srcdoc = "";
+            removeAttachment();
+            
+            const initMsg = {
+                id: Date.now().toString(),
+                role: 'ai system-msg',
+                text: '会話をリセットしました。\n要件を教えてください。',
+                html: false
+            };
+            chatHistory.push(initMsg);
+            saveToDB('chatHistory', chatHistory);
+            renderMessageFromHistory(initMsg);
+            rebuildConversationContext();
+        }
+    }
+
+    /* --- Service Worker 登録 --- */
+    const swCode = `
+        self.addEventListener('message', async (e) => {
+            if (e.data.type === 'generate') {
+                try {
+                    const res = await fetch(e.data.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: e.data.body });
+                    const data = await res.json();
+                    if (data.error) throw new Error(data.error.message);
+                    let result = data.candidates ? data.candidates[0].content.parts[0].text : (data.response || data.text || (typeof data === 'string' ? data : JSON.stringify(data)));
+                    result = result.replace(/^\\\`\\\`\\\`html\\s*/i, '').replace(/^\\\`\\\`\\\`\\s*/, '').replace(/\\\`\\\`\\\`$/g, '').trim();
+                    const dbReq = indexedDB.open('WebStudioBG', 2);
+                    dbReq.onsuccess = () => {
+                        const db = dbReq.result;
+                        const tx = db.transaction('tasks', 'readwrite');
+                        tx.objectStore('tasks').put({ code: result, done: true, ts: Date.now() }, 'bgResult');
+                        tx.oncomplete = () => {
+                            self.clients.matchAll().then(clients => clients.forEach(c => c.postMessage({ type: 'generateDone', code: result })));
+                        };
+                    };
+                } catch (err) {
+                    const dbReq = indexedDB.open('WebStudioBG', 2);
+                    dbReq.onsuccess = () => {
+                        const db = dbReq.result;
+                        const tx = db.transaction('tasks', 'readwrite');
+                        tx.objectStore('tasks').put({ error: err.message, done: true, ts: Date.now() }, 'bgResult');
+                        tx.oncomplete = () => {
+                            self.clients.matchAll().then(clients => clients.forEach(c => c.postMessage({ type: 'generateError', error: err.message })));
+                        };
+                    };
+                }
+            }
+        });
+    `;
+    async function registerSW() {
+        if (!('serviceWorker' in navigator)) return;
         try {
-            await requestWakeLock();
-            btn.disabled = true;
-            setStatus('status-working', 'Processing...');
-            $('logConsole').innerHTML = ''; 
-            log(`🚀 <b>${appName}</b> のデプロイを開始します... (ソース: ${sourceType})`);
-
-            if (sourceType === 'local') {
-                log(`1/5: 📦 選択された ${filesToZip.length} ファイルからZIPパッケージを作成中...`);
-                const zip = new JSZip();
-                // webkitRelativePath のトップフォルダを除去してフラットに格納
-                filesToZip.forEach(file => {
-                    let path = file.webkitRelativePath || file.name;
-                    const parts = path.split('/');
-                    // フォルダ選択時は最初のセグメント(フォルダ名)を除去
-                    if (file.webkitRelativePath && parts.length > 1) {
-                        path = parts.slice(1).join('/');
-                    }
-                    zip.file(path, file);
-                });
-                const zipBase64 = await zip.generateAsync({ type: 'base64' });
-                log('✅ ZIPパッケージ作成完了.', 'log-suc');
-
-                log('2/5: 🔍 対象リポジトリの既存構成を確認中 (www.zip)...');
-                let sha = null;
-                try {
-                    const fileRes = await ghApi('/contents/www.zip');
-                    sha = fileRes.sha;
-                } catch (e) {
-                    if (!e.message.includes('404')) throw e; 
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            swRegistration = await navigator.serviceWorker.register(swUrl);
+            navigator.serviceWorker.addEventListener('message', (e) => {
+                const notify = document.getElementById('bg-notify');
+                if (e.data.type === 'generateDone') {
+                    window.setCode(e.data.code);
+                    updatePreview();
+                    notify.classList.remove('show');
+                    
+                    const sysMsgObj = { id: Date.now().toString(), role: 'ai system-msg', text: '✨ バックグラウンド構築完了。PREVIEWを確認してください。', html: false };
+                    chatHistory.push(sysMsgObj); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(sysMsgObj);
+                    deleteFromDB('bgResult');
+                } else if (e.data.type === 'generateError') {
+                    notify.classList.remove('show');
+                    const sysMsgObj = { id: Date.now().toString(), role: 'ai system-msg', text: '<span style="color:var(--danger)">BG エラー: ' + e.data.error + '</span>', html: true };
+                    chatHistory.push(sysMsgObj); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(sysMsgObj);
+                    deleteFromDB('bgResult');
                 }
-
-                log('3/5: ☁️ www.zip をGitHubへアップロード中...');
-                await ghApi('/contents/www.zip', 'PUT', { message: `Deploy Web Assets (App: ${appName})`, content: zipBase64, sha: sha });
-                log('✅ アップロード成功.', 'log-suc');
-            } else {
-                log('1〜3/5: ☁️ GitHubリポジトリからの取得を選択しました。ZIPアップロードをスキップします。');
-            }
-
-            log('4/5: 📄 GitHub Actionsワークフローファイル (build-apk.yml) の確認・更新中...');
-            let wfSha = null;
-            try {
-                const wfRes = await ghApi('/contents/.github/workflows/build-apk.yml');
-                wfSha = wfRes.sha;
-            } catch (e) {
-                if (!e.message.includes('404')) throw e; 
-            }
-
-            const b64Yaml = btoa(unescape(encodeURIComponent(buildApkYamlContent)));
-            await ghApi('/contents/.github/workflows/build-apk.yml', 'PUT', {
-                message: 'feat: Update build-apk.yml for Native App Packager',
-                content: b64Yaml,
-                sha: wfSha
             });
-            log('✅ ワークフローファイルを更新・コミットしました。', 'log-suc');
-            
-            log('⏳ GitHub Actionsが認識するのを待機中 (15秒)...');
-            await new Promise(resolve => setTimeout(resolve, 15000));
-            
-            log('5/5: ⚡ GitHub Actionsワークフローをトリガー中...');
+        } catch (e) { console.log('SW registration skipped:', e); }
+    }
 
-            // デフォルトブランチを自動取得 (main / master 等)
-            let defaultBranch = 'main';
-            try {
-                const repoInfo = await ghApi('');
-                defaultBranch = repoInfo.default_branch || 'main';
-                log(`   ブランチ: ${defaultBranch}`);
-            } catch(e) {
-                log('⚠️ ブランチ検出失敗、"main" を使用します', 'log-war');
+    /* --- GitHub & デプロイ等の既存ロジック --- */
+    async function openGitHubImport() {
+        const token = await getFromDB('gh_token');
+        if (!token) return alert('GitHubトークンが未設定です。\nDeployの「🚀 GitHub Deploy」または設定からトークンを登録してください。');
+        document.getElementById('gh-import-modal').classList.add('show');
+        document.getElementById('gh-step-repo').style.display = '';
+        document.getElementById('gh-step-file').style.display = 'none';
+        fetchImportRepos(token);
+    }
+    function closeGitHubImport() { document.getElementById('gh-import-modal').classList.remove('show'); }
+
+    async function fetchImportRepos(token) {
+        const status = document.getElementById('gh-modal-status'); status.textContent = '読み込み中...';
+        try {
+            const res = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100', { headers: { 'Authorization': 'Bearer ' + token } });
+            if (!res.ok) throw new Error('認証エラー');
+            ghImportRepos = await res.json();
+            status.textContent = ghImportRepos.length + ' 件のリポジトリ';
+            renderImportRepos(ghImportRepos);
+        } catch (e) { status.textContent = 'エラー: ' + e.message; }
+    }
+    function renderImportRepos(repos) {
+        const list = document.getElementById('gh-repo-list'); list.innerHTML = '';
+        repos.forEach(r => {
+            const li = document.createElement('li');
+            li.innerHTML = '<span>' + (r.private ? '🔒 ' : '🌐 ') + r.name + '</span><span class="repo-meta-sm">' + new Date(r.updated_at).toLocaleDateString() + '</span>';
+            li.onclick = () => selectImportRepo(r); list.appendChild(li);
+        });
+    }
+    function filterImportRepos() {
+        const q = document.getElementById('gh-repo-search').value.toLowerCase();
+        renderImportRepos(ghImportRepos.filter(r => r.name.toLowerCase().includes(q)));
+    }
+    async function selectImportRepo(repo) {
+        document.getElementById('gh-step-repo').style.display = 'none'; document.getElementById('gh-step-file').style.display = '';
+        const status = document.getElementById('gh-file-status'); status.textContent = repo.full_name + ' のファイルを取得中...';
+        const token = await getFromDB('gh_token');
+        try {
+            let res = await fetch('https://api.github.com/repos/' + repo.full_name + '/git/trees/main?recursive=1', { headers: { 'Authorization': 'Bearer ' + token } });
+            if (!res.ok) res = await fetch('https://api.github.com/repos/' + repo.full_name + '/git/trees/master?recursive=1', { headers: { 'Authorization': 'Bearer ' + token } });
+            renderFileTree(await res.json(), repo.full_name);
+        } catch (e) { status.textContent = 'エラー: ' + e.message; }
+    }
+    function renderFileTree(tree, fullName) {
+        const list = document.getElementById('gh-file-list'); list.innerHTML = '';
+        const files = tree.tree.filter(f => f.type === 'blob');
+        document.getElementById('gh-file-status').textContent = files.length + ' ファイル';
+        files.forEach(f => {
+            const li = document.createElement('li');
+            li.innerHTML = '<span>📄 ' + f.path + '</span><span class="repo-meta-sm">' + f.size + 'B</span>';
+            li.onclick = () => loadFileFromRepo(fullName, f.path); list.appendChild(li);
+        });
+    }
+    async function loadFileFromRepo(fullName, path) {
+        const token = await getFromDB('gh_token'); document.getElementById('gh-file-status').textContent = '読み込み中...';
+        try {
+            const res = await fetch('https://api.github.com/repos/' + fullName + '/contents/' + path, { headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3.raw' } });
+            window.setCode(await res.text()); updatePreview(); closeGitHubImport(); showPage('editor', document.getElementById('tab-editor'));
+            resetChatForNewCode('GitHub Import「' + path + '」');
+        } catch (e) { document.getElementById('gh-file-status').textContent = 'エラー'; }
+    }
+    function backToRepoList() { document.getElementById('gh-step-repo').style.display = ''; document.getElementById('gh-step-file').style.display = 'none'; }
+
+    let deployRepos = []; let selectedDeployRepo = null;
+    async function openGitHubDeploy() {
+        document.getElementById('gh-deploy-modal').classList.add('show');
+        const token = await getFromDB('gh_token');
+        if (token) { showDeployStep('repo'); fetchDeployRepos(); } else { showDeployStep('token'); }
+    }
+    function closeGitHubDeploy() { document.getElementById('gh-deploy-modal').classList.remove('show'); }
+    function showDeployStep(step) {
+        ['token','repo','new-repo','details'].forEach(s => document.getElementById('deploy-step-'+s).style.display = (s===step ? (s==='repo'||s==='token'?'block':'flex') : 'none'));
+    }
+    async function saveDeployToken() {
+        const input = document.getElementById('deploy-token-input').value.trim();
+        if (!input) return; document.getElementById('deploy-token-status').textContent = '認証中...';
+        try {
+            await fetch('https://api.github.com/user', { headers: { 'Authorization': 'Bearer ' + input } }).then(r=>r.json());
+            await saveToDB('gh_token', input); document.getElementById('setting-gh-token').value = input;
+            document.getElementById('deploy-token-status').textContent = '成功！'; showDeployStep('repo'); fetchDeployRepos();
+        } catch (e) { document.getElementById('deploy-token-status').textContent = 'エラー'; }
+    }
+    async function fetchDeployRepos() {
+        const token = await getFromDB('gh_token');
+        const res = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100', { headers: { 'Authorization': 'Bearer ' + token } });
+        deployRepos = await res.json(); renderDeployRepos(deployRepos);
+    }
+    function renderDeployRepos(repos) {
+        const list = document.getElementById('deploy-repo-list'); list.innerHTML = '';
+        repos.forEach(r => {
+            const li = document.createElement('li'); li.innerHTML = `<span>${r.name}</span>`;
+            li.onclick = () => selectDeployRepo(r); list.appendChild(li);
+        });
+    }
+    function filterDeployRepos() {
+        const q = document.getElementById('deploy-repo-search').value.toLowerCase(); renderDeployRepos(deployRepos.filter(r => r.name.toLowerCase().includes(q)));
+    }
+    async function selectDeployRepo(repo) {
+        selectedDeployRepo = repo; document.getElementById('deploy-target-repo-name').textContent = repo.full_name;
+        const pendingDeploy = await getFromDB('pending_deploy');
+        document.getElementById('deploy-readme-content').value = pendingDeploy && pendingDeploy.readme ? pendingDeploy.readme : '';
+        showDeployStep('details');
+    }
+    async function createNewRepo() {
+        const name = document.getElementById('new-repo-name').value.trim(); const token = await getFromDB('gh_token');
+        if (!name) return;
+        const res = await fetch('https://api.github.com/user/repos', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name, auto_init: true }) });
+        selectDeployRepo(await res.json());
+    }
+    function encodeBase64Unicode(str) { return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1))); }
+    async function executeDeploy() {
+        const btn = document.getElementById('deploy-exec-btn'); const status = document.getElementById('deploy-execute-status');
+        btn.disabled = true; status.innerHTML = 'デプロイ中...';
+        const branch = document.getElementById('deploy-branch').value || 'main'; const filepath = document.getElementById('deploy-filepath').value || 'index.html';
+        const token = await getFromDB('gh_token'); const repoFullName = selectedDeployRepo.full_name;
+        const pendingDeploy = await getFromDB('pending_deploy'); const codeContent = pendingDeploy ? pendingDeploy.code : window.getCode();
+        
+        const pushFile = async (path, content, msg) => {
+            let sha = null; const url = `https://api.github.com/repos/${repoFullName}/contents/${path}`;
+            try { const getRes = await fetch(url + '?ref=' + branch, { headers: { 'Authorization': 'Bearer ' + token } }); if(getRes.ok) sha = (await getRes.json()).sha; } catch(e){}
+            const body = { message: msg, content: encodeBase64Unicode(content), branch: branch }; if (sha) body.sha = sha;
+            await fetch(url, { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        };
+        try {
+            await pushFile(filepath, codeContent, 'Deploy via App');
+            if (document.getElementById('deploy-readme-content').value) await pushFile('README.md', document.getElementById('deploy-readme-content').value, 'Update README');
+            if (document.getElementById('deploy-gh-pages').checked) {
+                try { await fetch(`https://api.github.com/repos/${repoFullName}/pages`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' }, body: JSON.stringify({ source: { branch: branch, path: '/' } }) }); } catch(e){}
             }
+            status.innerHTML = `<span style="color:var(--success)">✅ 成功！</span>`;
+            await deleteFromDB('pending_deploy');
+        } catch (e) { status.innerHTML = `<span style="color:var(--danger)">❌ エラー</span>`; }
+        btn.disabled = false;
+    }
 
-            // アイコンBase64はdispatch inputの65535文字制限に注意
-            let iconForDispatch = pureBase64Icon;
-            if (iconForDispatch && iconForDispatch.length > 60000) {
-                log('⚠️ アイコンデータが大きすぎるため、dispatch inputから除外します。リポジトリにコミットします...', 'log-war');
-                try {
-                    let iconSha = null;
-                    try {
-                        const existingIcon = await ghApi('/contents/app-icon.png.b64');
-                        iconSha = existingIcon.sha;
-                    } catch(e) {}
-                    await ghApi('/contents/app-icon.png.b64', 'PUT', {
-                        message: 'Update app icon',
-                        content: btoa(iconForDispatch),
-                        sha: iconSha
-                    });
-                    iconForDispatch = '__FROM_REPO__';
-                    log('✅ アイコンをリポジトリにコミットしました', 'log-suc');
-                } catch(e) {
-                    log('⚠️ アイコンコミット失敗、アイコンなしで続行します', 'log-war');
-                    iconForDispatch = '';
+    /* --- メイン初期化 --- */
+    window.onload = async () => {
+        try {
+            const settings = await getFromDB('settings');
+            if (settings) {
+                if (settings.aiProvider) { document.getElementById('ai-provider').value = settings.aiProvider; }
+                onProviderChange(); // モデルセレクト再構築 + APIキー欄表示切替
+
+                // プロバイダー別APIキーの読み込み（旧形式マイグレーション対応）
+                if (settings.apiKeys) {
+                    document.getElementById('api-key-gemini').value = settings.apiKeys.gemini || '';
+                    document.getElementById('api-key-openai').value = settings.apiKeys.openai || '';
+                    document.getElementById('api-key-claude').value = settings.apiKeys.claude || '';
+                    document.getElementById('api-key-xai').value = settings.apiKeys.xai || '';
+                    document.getElementById('api-key-groq').value = settings.apiKeys.groq || '';
+                } else if (settings.apiKey) {
+                    // 旧形式: 単一キーを現在のプロバイダーに割り当てる
+                    const provider = settings.aiProvider || 'gemini';
+                    const el = document.getElementById('api-key-' + provider);
+                    if (el) el.value = settings.apiKey;
                 }
-            }
 
-            // リトライ付きでdispatch
-            let dispatchSuccess = false;
-            for (let attempt = 1; attempt <= 3; attempt++) {
-                try {
-                    await ghApi('/actions/workflows/build-apk.yml/dispatches', 'POST', { 
-                        ref: defaultBranch, 
-                        inputs: { 
-                            app_name: appName, 
-                            app_id: appId,
-                            source_type: sourceType,
-                            source_path: sourceType === 'github' ? sourcePath : '/',
-                            selected_files: selectedGhPaths,
-                            app_icon_base64: iconForDispatch
-                        } 
-                    });
-                    dispatchSuccess = true;
-                    break;
-                } catch(e) {
-                    log(`⚠️ トリガー試行 ${attempt}/3 失敗: ${e.message}`, 'log-war');
-                    if (attempt < 3) {
-                        log(`⏳ ${10 * attempt}秒後にリトライ...`);
-                        await new Promise(r => setTimeout(r, 10000 * attempt));
-                    } else {
-                        throw e;
-                    }
+                document.getElementById('user-profile').value = settings.userProfile || DEFAULT_USER_PROFILE;
+                document.getElementById('system-prompt').value = settings.systemPrompt || DEFAULT_SYSTEM_PROMPT;
+                document.getElementById('code-principles').value = settings.codePrinciples || DEFAULT_CODE_PRINCIPLES;
+                document.getElementById('prompt-plan').value = settings.promptPlan || DEFAULT_PROMPT_PLAN;
+                document.getElementById('prompt-suggest').value = settings.promptSuggest || DEFAULT_PROMPT_SUGGEST;
+                document.getElementById('prompt-debug').value = settings.promptDebug || DEFAULT_PROMPT_DEBUG;
+                if (settings.chatModel) document.getElementById('chat-model').value = settings.chatModel;
+                if (settings.codeModel) document.getElementById('code-model').value = settings.codeModel;
+            } else {
+                onProviderChange(); // デフォルトのモデルリスト構築
+                // 初回起動: デフォルト値をプリセット
+                document.getElementById('system-prompt').value = DEFAULT_SYSTEM_PROMPT;
+                document.getElementById('user-profile').value = DEFAULT_USER_PROFILE;
+                document.getElementById('code-principles').value = DEFAULT_CODE_PRINCIPLES;
+                document.getElementById('prompt-plan').value = DEFAULT_PROMPT_PLAN;
+                document.getElementById('prompt-suggest').value = DEFAULT_PROMPT_SUGGEST;
+                document.getElementById('prompt-debug').value = DEFAULT_PROMPT_DEBUG;
+            }
+            toggleModelSelects();
+            const ghToken = await getFromDB('gh_token');
+            if (ghToken) { document.getElementById('setting-gh-token').value = ghToken; document.getElementById('deploy-token-input').value = ghToken; }
+        } catch(e) {}
+
+        await registerSW();
+        
+        // CodeMirror初期化
+        const savedCode = await getFromDB('currentCode');
+        await initCodeMirror(savedCode);
+
+        // チャット履歴ロード
+        await loadChatHistory();
+
+        // テンプレート一覧ロード
+        loadTemplateList();
+
+        // テーママネージャーロード
+        loadThemeManager();
+
+        // BG復帰チェック
+        try {
+            const bgResult = await getFromDB('bgResult');
+            if (bgResult && bgResult.done) {
+                if (bgResult.code) {
+                    window.setCode(bgResult.code); updatePreview();
+                    const sysMsgObj = { id: Date.now().toString(), role: 'ai system-msg', text: '✨ バックグラウンド構築完了（復帰）。PREVIEWを確認してください。', html: false };
+                    chatHistory.push(sysMsgObj); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(sysMsgObj);
+                } else if (bgResult.error) {
+                    const sysMsgObj = { id: Date.now().toString(), role: 'ai system-msg', text: '<span style="color:var(--danger)">前回のBG生成エラー: ' + bgResult.error + '</span>', html: true };
+                    chatHistory.push(sysMsgObj); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(sysMsgObj);
                 }
+                await deleteFromDB('bgResult');
             }
-
-            log('✅ ワークフローのディスパッチ成功.', 'log-suc');
-
-            startPolling(appName);
-
-        } catch (e) {
-            log(`❌ エラー発生: ${e.message}`, 'log-err');
-            setStatus('status-error', 'Deployment Failed');
-            btn.disabled = false;
-            releaseWakeLock();
-        }
+        } catch(e) {}
     };
 
-    // --- ビルド監視 (ポーリング) ---
-    let pollingInterval;
-    function startPolling(appName) {
-        log('⏳ Actionsの実行キューを検索しています。少々お待ちください...');
+    function showPage(id, btn) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('p-' + id).classList.add('active');
+        if (btn) btn.classList.add('active');
+        if(id === 'preview') updatePreview();
+    }
+
+    function autoGrow(element) { element.style.height = "5px"; element.style.height = (element.scrollHeight) + "px"; }
+
+    /* --- アタッチメント --- */
+    function toggleAttachmentMenu() {
+        if (currentFileName) { removeAttachment(); return; }
+        document.getElementById('attach-menu').classList.toggle('show');
+    }
+    function triggerFile(type) { document.getElementById('file-' + type).click(); document.getElementById('attach-menu').classList.remove('show'); }
+    function handleAttachment(input) {
+        const file = input.files[0]; if (!file) return;
+        currentMimeType = file.type; currentFileName = file.name;
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            currentImageBase64 = reader.result.split(',')[1];
+            document.querySelector('.file-label').innerHTML = '✕'; document.querySelector('.file-label').style.background = 'var(--danger)';
+            if (currentMimeType.startsWith('image/')) { document.getElementById('file-preview').src = reader.result; document.getElementById('file-preview').style.display = 'block'; document.getElementById('file-name-display').style.display = 'none'; } 
+            else { document.getElementById('file-preview').style.display = 'none'; document.getElementById('file-name-display').innerText = `📄 ${currentFileName}`; document.getElementById('file-name-display').style.display = 'inline-block'; }
+        }; reader.readAsDataURL(file); input.value = '';
+    }
+    function removeAttachment() {
+        currentImageBase64 = null; currentMimeType = null; currentFileName = null;
+        document.getElementById('file-preview').style.display = 'none'; document.getElementById('file-name-display').style.display = 'none';
+        document.querySelector('.file-label').innerHTML = '＋'; document.querySelector('.file-label').style.background = 'var(--color-bg-elevated)';
+        document.getElementById('attach-menu').classList.remove('show');
+    }
+
+    function triggerCodeUpload() { document.getElementById('code-upload-input').click(); }
+    function handleCodeUpload(input) {
+        const file = input.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => { window.setCode(e.target.result); updatePreview(); resetChatForNewCode('Upload「' + file.name + '」'); };
+        reader.readAsText(file); input.value = '';
+    }
+
+    document.addEventListener('click', (e) => {
+        const menu = document.getElementById('attach-menu'); const label = document.querySelector('.file-label');
+        if (menu && menu.classList.contains('show') && !menu.contains(e.target) && !label.contains(e.target)) menu.classList.remove('show');
+    });
+
+    async function saveSettings() {
+        const settings = {
+            aiProvider: document.getElementById('ai-provider').value,
+            apiKeys: {
+                gemini: document.getElementById('api-key-gemini').value,
+                openai: document.getElementById('api-key-openai').value,
+                claude: document.getElementById('api-key-claude').value,
+                xai: document.getElementById('api-key-xai').value,
+                groq: document.getElementById('api-key-groq').value,
+            },
+            userProfile: document.getElementById('user-profile').value,
+            chatModel: document.getElementById('chat-model').value,
+            codeModel: document.getElementById('code-model').value,
+            systemPrompt: document.getElementById('system-prompt').value,
+            codePrinciples: document.getElementById('code-principles').value,
+            promptPlan: document.getElementById('prompt-plan').value,
+            promptSuggest: document.getElementById('prompt-suggest').value,
+            promptDebug: document.getElementById('prompt-debug').value,
+        };
+        const ghToken = document.getElementById('setting-gh-token').value.trim();
+        await saveToDB('settings', settings);
+        if (ghToken) { await saveToDB('gh_token', ghToken); document.getElementById('deploy-token-input').value = ghToken; } else { await deleteFromDB('gh_token'); document.getElementById('deploy-token-input').value = ''; }
+        const btn = document.getElementById('save-btn'); const originalText = btn.innerHTML;
+        btn.innerHTML = '✓ 保存しました'; btn.style.background = 'var(--success)'; btn.style.color = '#fff';
+        setTimeout(() => { btn.innerHTML = originalText; btn.style.background = '#fff'; btn.style.color = '#000'; }, 2000);
+    }
+
+    function updatePreview() { document.getElementById('preview-frame').srcdoc = window.getCode(); }
+
+    function askForPlan() {
+        const input = document.getElementById('user-prompt');
+        const tpl = document.getElementById('prompt-suggest').value.trim() || DEFAULT_PROMPT_SUGGEST;
+        input.value = tpl;
+        askAI();
+    }
+
+    async function askAI() {
+        const prof = document.getElementById('user-profile').value;
+        const model = document.getElementById('chat-model').value;
+        const input = document.getElementById('user-prompt'); const promptText = input.value.trim();
+        if(!promptText && !currentFileName) return showToast('入力またはファイルが必要です');
         
-        const startTime = new Date(Date.now() - 120000); 
-        const maxTimeMinutes = 20; 
-        let foundRunId = null;
-        let searchAttempts = 0;
-        let networkErrorCount = 0;
+        const userMsgObj = { id: Date.now().toString(), role: 'user', text: promptText, html: false };
+        if(currentFileName) userMsgObj.attachment = currentFileName;
+        chatHistory.push(userMsgObj); saveToDB('chatHistory', chatHistory);
+        renderMessageFromHistory(userMsgObj);
+        
+        const aiMsgId = (Date.now() + 1).toString();
+        const aiMsgObj = { id: aiMsgId, role: 'ai', text: '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>考案中...</span></div>', html: true };
+        chatHistory.push(aiMsgObj); saveToDB('chatHistory', chatHistory);
+        const log = document.getElementById('chat-log');
+        const aiMsgElement = createMessageElement(aiMsgObj);
+        log.appendChild(aiMsgElement); log.scrollTop = log.scrollHeight;
+        const contentDiv = aiMsgElement.querySelector('.msg-content');
+        
+        input.value = ''; input.style.height = "44px"; rebuildConversationContext();
 
-        if (pollingInterval) clearInterval(pollingInterval);
+        const currentCode = window.getCode();
+        const codeContext = currentCode ? `\n\n【現在のコード】\n\`\`\`html\n${currentCode}\n\`\`\`\n※上記コードを踏まえて、内容を大きく変更せずに修正案や設計の提案を行ってください。` : "";
+        const sysPrompt = document.getElementById('system-prompt').value.trim();
+        const tpl = document.getElementById('prompt-plan').value.trim() || DEFAULT_PROMPT_PLAN;
+        const system = tpl.replace('{prof}', prof).replace('{codeContext}', codeContext).replace('{systemPrompt}', sysPrompt);
+        
+        const images = [];
+        if (currentImageBase64 && currentMimeType) { images.push({ mime: currentMimeType, base64: currentImageBase64 }); removeAttachment(); }
 
-        pollingInterval = setInterval(async () => {
-            try {
-                if ((new Date() - startTime) > maxTimeMinutes * 60 * 1000 + 120000) {
-                    throw new Error('ビルド監視がタイムアウトしました。GitHubのActionsページを直接確認してください。');
+        let aiText = "";
+        try {
+            const key = getCurrentApiKey();
+            if (key) {
+                const result = await callLLM({ prompt: system + "\n\n会話履歴:\n" + conversationContext, stream: true, model, images });
+                const reader = result.reader; const decoder = new TextDecoder("utf-8"); let buffer = ""; contentDiv.innerHTML = "";
+                while (true) {
+                    const { value, done } = await reader.read(); if (done) break;
+                    buffer += decoder.decode(value, { stream: true }); const lines = buffer.split('\n'); buffer = lines.pop();
+                    for (const line of lines) { if (line.startsWith(result.prefix || 'data: ')) { const chunk = result.parseChunk(line); if (chunk) { aiText += chunk; contentDiv.innerText = aiText; log.scrollTop = log.scrollHeight; } } }
                 }
+            } else {
+                const result = await callLLM({ prompt: system + "\n\n会話履歴:\n" + conversationContext, stream: false, model, images });
+                aiText = result.text; contentDiv.innerText = aiText;
+            }
 
-                const runsData = await ghApi('/actions/runs?event=workflow_dispatch&per_page=5');
-                networkErrorCount = 0; 
+            const aiMsgToUpdate = chatHistory.find(m => m.id === aiMsgId);
+            if(aiMsgToUpdate) {
+                aiMsgToUpdate.text = aiText; aiMsgToUpdate.html = false;
+                saveToDB('chatHistory', chatHistory); rebuildConversationContext();
+                aiMsgElement.replaceWith(createMessageElement(aiMsgToUpdate));
+                log.scrollTop = log.scrollHeight;
+            }
+        } catch (e) { contentDiv.textContent = 'エラー: ' + e.message; }
+    }
 
-                if (!runsData || runsData.workflow_runs.length === 0) {
-                    if(searchAttempts % 3 === 0) log('⏳ 実行履歴を待機中...');
-                    searchAttempts++;
+    async function generateCode() {
+        const prof = document.getElementById('user-profile').value; const model = document.getElementById('code-model').value;
+        const sysPrompt = document.getElementById('system-prompt').value.trim();
+        const principles = document.getElementById('code-principles').value.trim();
+        const currentCode = window.getCode();
+        
+        const sysMsgObj = { id: Date.now().toString(), role: 'ai system-msg', text: '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>構築中...</span></div>', html: true };
+        chatHistory.push(sysMsgObj); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(sysMsgObj);
+
+        const codeRule = currentCode ? `【重要】以下の既存コードが存在します。構造・変数名・スタイル・レイアウトを最大限維持し、会話で合意した差分のみを変更・追加してください。全面書き換えは厳禁です。\n既存コード:\n${currentCode}` : '既存コードはありません。新規に完全なコードを作成してください。';
+        const themeCSS = await getSelectedThemeCSS();
+        const themeRule = themeCSS ? `\n【デザインテーマ】以下のCSS変数をデザインシステムとして使用してください。:rootに含め、各要素のcolor/background等にvar()で参照してください。\n${themeCSS}` : '';
+        const principlesRule = principles ? `\n【コードプリンシプル】${principles}` : '';
+        const sysRule = sysPrompt ? `\n${sysPrompt}` : '';
+        const system = `Expert Full-stack Web Developerとして、完全なHTML/CSS/JSコードを1つのファイルで出力してください。${sysRule}\nプロファイル: ${prof}\nルール: Markdownのコードブロック不要。<!DOCTYPE html>から開始。外部ライブラリはCDN使用。${principlesRule}${themeRule}\n${codeRule}\n会話履歴: ${conversationContext}`;
+
+        try {
+            const result = await callLLM({ prompt: system, stream: false, model });
+            let code = result.text;
+            code = code.replace(/^```html\s*/i, '').replace(/^```\s*/, '').replace(/```$/g, '').trim();
+            window.setCode(code); updatePreview(); showPage('preview', document.getElementById('tab-preview'));
+            sysMsgObj.text = '✨ 構築完了。PREVIEWを確認してください。'; sysMsgObj.html = false;
+            document.querySelector(`[data-id="${sysMsgObj.id}"] .msg-content`).textContent = sysMsgObj.text;
+            saveToDB('chatHistory', chatHistory);
+        } catch (e) {
+            sysMsgObj.text = '<span style="color:var(--danger)">エラー: ' + e.message + '</span>';
+            document.querySelector(`[data-id="${sysMsgObj.id}"] .msg-content`).innerHTML = sysMsgObj.text;
+            saveToDB('chatHistory', chatHistory);
+        }
+    }
+
+    async function openDeployer() {
+        const code = window.getCode(); if (!code) return alert("デプロイするコードがありません。");
+        const model = document.getElementById('code-model').value;
+        await saveToDB('pending_deploy', { code: code, readme: "" });
+        const deployBtn = document.querySelector('.deploy-btn'); const originalText = deployBtn.innerHTML;
+        deployBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 6px 0 0;"></div>README...'; deployBtn.disabled = true;
+
+        const readmePrompt = `以下のHTMLコードを分析し、高品質なREADME.mdを日本語で作成してください。\nコード:\n${code}`;
+        try {
+            const result = await callLLM({ prompt: readmePrompt, stream: false, model });
+            let readme = result.text || '';
+            if (readme) { readme = readme.replace(/^```markdown\s*/i, '').replace(/^```\s*/, '').replace(/```$/g, '').trim(); await saveToDB('pending_deploy', { code: code, readme: readme }); }
+        } catch (e) {}
+        deployBtn.innerHTML = originalText; deployBtn.disabled = false; openGitHubDeploy();
+    }
+
+    function sendDebugRequest() {
+        const memoText = document.getElementById('debug-memo').value.trim(); if (!memoText) return;
+        showPage('chat', document.getElementById('tab-chat'));
+        const chatInput = document.getElementById('user-prompt');
+        const tpl = document.getElementById('prompt-debug').value.trim() || DEFAULT_PROMPT_DEBUG;
+        chatInput.value = tpl.replace('{memoText}', memoText);
+        autoGrow(chatInput); document.getElementById('debug-memo').value = ''; askAI();
+    }
+
+    function downloadCode() {
+        const code = window.getCode(); if (!code) return showToast("コードがありません。");
+        const blob = new Blob([code], { type: 'text/html' }); const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'index.html'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    }
+
+    /* --- テンプレート機能 --- */
+    const TEMPLATE_BASE_URL = './templates/';
+    let templatesData = [];
+    let customTemplates = [];
+    let editingTemplateId = null;
+
+    async function loadTemplateList() {
+        const grid = document.getElementById('template-grid');
+        try {
+            const res = await fetch(TEMPLATE_BASE_URL + 'templates.json');
+            if (res.ok) templatesData = await res.json();
+        } catch (e) { templatesData = []; }
+        try { customTemplates = (await getFromDB('customTemplates')) || []; } catch(e) { customTemplates = []; }
+        renderTemplateGrid();
+    }
+
+    function renderTemplateGrid() {
+        const grid = document.getElementById('template-grid');
+        const all = [...templatesData, ...customTemplates.map(t => ({ ...t, isCustom: true }))];
+        let html = all.map(t => `
+            <div class="template-card" onclick="applyTemplate('${t.id}')" title="${t.description || ''}">
+                ${t.isCustom ? `<div class="template-card-actions">
+                    <button class="theme-action-btn" onclick="event.stopPropagation();editCustomTemplate('${t.id}')" title="編集">✏</button>
+                    <button class="theme-action-btn" onclick="event.stopPropagation();deleteCustomTemplate('${t.id}')" title="削除">🗑</button>
+                </div>` : ''}
+                <span class="template-icon">${t.icon || '📄'}</span>
+                <div class="template-name">${t.name}${t.isCustom ? ' <span class="theme-badge">カスタム</span>' : ''}</div>
+                <div class="template-desc">${t.description || ''}</div>
+                ${t.color ? `<div class="template-color-bar" style="background:${t.color}"></div>` : ''}
+            </div>
+        `).join('');
+        html += `<div class="template-new-card" onclick="openTemplateEditor()">＋<span>追加</span></div>`;
+        grid.innerHTML = html;
+    }
+
+    function openTemplateEditor(existing) {
+        editingTemplateId = existing ? existing.id : null;
+        document.getElementById('tpl-editor-title').textContent = existing ? '📄 テンプレートを編集' : '📄 テンプレートを追加';
+        document.getElementById('tple-name').value = existing ? existing.name : '';
+        document.getElementById('tple-icon').value = existing ? existing.icon : '📄';
+        document.getElementById('tple-desc').value = existing ? (existing.description || '') : '';
+        document.getElementById('tple-code').value = existing ? (existing.code || '') : '';
+        document.getElementById('tpl-editor-modal').classList.add('show');
+    }
+    function closeTemplateEditor() { document.getElementById('tpl-editor-modal').classList.remove('show'); editingTemplateId = null; }
+
+    function triggerTplFileUpload() { document.getElementById('tpl-file-input').click(); }
+    function handleTplFileUpload(input) {
+        const file = input.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('tple-code').value = e.target.result;
+            if (!document.getElementById('tple-name').value) {
+                document.getElementById('tple-name').value = file.name.replace(/\.html$/i, '');
+            }
+            showToast('ファイルを読み込みました');
+        };
+        reader.readAsText(file); input.value = '';
+    }
+
+    async function saveCustomTemplate() {
+        const name = document.getElementById('tple-name').value.trim();
+        const icon = document.getElementById('tple-icon').value.trim() || '📄';
+        const desc = document.getElementById('tple-desc').value.trim();
+        const code = document.getElementById('tple-code').value;
+        if (!name) return showToast('テンプレート名を入力してください');
+        if (!code.trim()) return showToast('コードを入力またはファイルを読み込んでください');
+        const id = editingTemplateId || 'ctpl-' + Date.now();
+        const tplObj = { id, name, icon, description: desc || 'カスタムテンプレート', code };
+        if (editingTemplateId) {
+            const idx = customTemplates.findIndex(t => t.id === editingTemplateId);
+            if (idx !== -1) customTemplates[idx] = tplObj; else customTemplates.push(tplObj);
+        } else { customTemplates.push(tplObj); }
+        await saveToDB('customTemplates', customTemplates);
+        renderTemplateGrid();
+        closeTemplateEditor();
+        showToast(`テンプレート「${name}」を${editingTemplateId ? '更新' : '追加'}しました`);
+    }
+
+    function editCustomTemplate(id) {
+        const t = customTemplates.find(t => t.id === id);
+        if (t) openTemplateEditor(t);
+    }
+
+    async function deleteCustomTemplate(id) {
+        const t = customTemplates.find(t => t.id === id);
+        if (!t || !confirm(`テンプレート「${t.name}」を削除しますか？`)) return;
+        customTemplates = customTemplates.filter(t => t.id !== id);
+        await saveToDB('customTemplates', customTemplates);
+        renderTemplateGrid();
+        showToast('テンプレートを削除しました');
+    }
+
+    async function applyTemplate(templateId) {
+        const allTpls = [...templatesData, ...customTemplates];
+        const tpl = allTpls.find(t => t.id === templateId);
+        if (!tpl) return;
+        if (window.getCode() && !confirm(`「${tpl.name}」テンプレートを読み込みます。\n現在のコードは上書きされます。よろしいですか？`)) return;
+
+        try {
+            let code;
+            if (tpl.code) {
+                // カスタムテンプレート（IndexedDB保存済みコード）
+                code = tpl.code;
+            } else {
+                const res = await fetch(TEMPLATE_BASE_URL + tpl.file);
+                if (!res.ok) throw new Error('Failed to fetch template');
+                code = await res.text();
+            }
+            window.setCode(code);
+            updatePreview();
+            // テーマが選択済みなら自動注入
+            if (currentThemeId !== 'none') await injectThemeToCode(true);
+            resetChatForNewCode('テンプレート「' + tpl.name + '」');
+            showPage('preview', document.getElementById('tab-preview'));
+        } catch (e) {
+            showToast('テンプレートの読み込みに失敗しました');
+        }
+    }
+
+    /* --- テーママネージャー（コードに反映） --- */
+    const THEME_BASE_URL = './themes/';
+    let presetThemes = [];
+    let customThemes = [];
+    let currentThemeId = 'none';
+    let editingThemeId = null;
+
+    const THEME_VARS = [
+        { key: 'color-bg-deep',       label: '背景 (深)',       default: '#0D0F14' },
+        { key: 'color-bg-surface',    label: '背景 (面)',       default: '#161920' },
+        { key: 'color-bg-elevated',   label: '背景 (浮)',       default: '#1E2433' },
+        { key: 'color-border',        label: 'ボーダー',        default: '#2A2D36' },
+        { key: 'color-border-focus',  label: 'ボーダー (F)',    default: '#4A4F5E' },
+        { key: 'color-text-primary',  label: 'テキスト (主)',   default: '#E8E4F0' },
+        { key: 'color-text-secondary',label: 'テキスト (副)',   default: '#6B7280' },
+        { key: 'primary',             label: 'プライマリ',      default: '#3b82f6' },
+        { key: 'accent',              label: 'アクセント',      default: '#8b5cf6' },
+    ];
+
+    async function loadThemeManager() {
+        try {
+            const res = await fetch(THEME_BASE_URL + 'themes.json');
+            if (res.ok) presetThemes = await res.json();
+        } catch (e) { presetThemes = []; }
+        try { customThemes = (await getFromDB('customThemes')) || []; } catch(e) { customThemes = []; }
+        try { const saved = await getFromDB('codeTheme'); if (saved) currentThemeId = saved; } catch(e) {}
+        renderThemeGrid();
+    }
+
+    function getAllThemes() {
+        return [...presetThemes, ...customThemes.map(t => ({ ...t, isCustom: true }))];
+    }
+
+    function renderThemeGrid() {
+        const grid = document.getElementById('theme-grid');
+        const all = getAllThemes();
+        // 「なし」カード + プリセット + カスタム + 新規ボタン
+        let html = `<div class="theme-card ${currentThemeId === 'none' ? 'active' : ''}" onclick="selectTheme('none')">
+            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#888"></div></div>
+            <div class="theme-card-name">🚫 なし</div>
+            <div class="theme-card-desc">テーマ指定なし</div>
+        </div>`;
+        html += all.map(t => {
+            const colors = t.colors || {};
+            const c1 = colors['color-bg-deep'] || t.preview || '#333';
+            const c2 = colors['primary'] || '#3b82f6';
+            const c3 = colors['accent'] || '#8b5cf6';
+            return `<div class="theme-card ${t.id === currentThemeId ? 'active' : ''}" onclick="selectTheme('${t.id}')">
+                <div class="theme-preview-dots">
+                    <div class="theme-preview-dot" style="background:${c1}"></div>
+                    <div class="theme-preview-dot" style="background:${c2}"></div>
+                    <div class="theme-preview-dot" style="background:${c3}"></div>
+                </div>
+                <div class="theme-card-name">${t.icon} ${t.name}${t.isCustom ? ' <span class="theme-badge">カスタム</span>' : ''}</div>
+                <div class="theme-card-desc">${t.description}</div>
+                ${t.isCustom ? `<div class="theme-card-actions">
+                    <button class="theme-action-btn" onclick="event.stopPropagation();editTheme('${t.id}')" title="編集">✏</button>
+                    <button class="theme-action-btn" onclick="event.stopPropagation();duplicateTheme('${t.id}')" title="複製">📋</button>
+                    <button class="theme-action-btn" onclick="event.stopPropagation();deleteTheme('${t.id}')" title="削除">🗑</button>
+                </div>` : ''}
+            </div>`;
+        }).join('');
+        html += `<div class="theme-new-card" onclick="openThemeEditor()">＋<span>新規作成</span></div>`;
+        grid.innerHTML = html;
+    }
+
+    async function selectTheme(themeId) {
+        currentThemeId = themeId;
+        await saveToDB('codeTheme', themeId);
+        renderThemeGrid();
+        if (themeId === 'none') {
+            showToast('テーマ指定を解除しました');
+            return;
+        }
+        const t = getAllThemes().find(t => t.id === themeId);
+        // コードが存在すれば即座に注入
+        if (window.getCode()) {
+            await injectThemeToCode(true);
+        } else if (t) {
+            showToast(`テーマ「${t.name}」を選択（コード生成時に反映）`);
+        }
+    }
+
+    // 現在のテーマのCSS文字列を取得（コード注入・プロンプト用）
+    async function getSelectedThemeCSS() {
+        if (currentThemeId === 'none') return null;
+        // カスタムテーマ
+        const custom = customThemes.find(t => t.id === currentThemeId);
+        if (custom && custom.css) return custom.css;
+        // プリセットテーマ
+        const preset = presetThemes.find(t => t.id === currentThemeId);
+        if (!preset) return null;
+        // ファイルがあればfetch
+        if (preset.file) {
+            try {
+                const res = await fetch(THEME_BASE_URL + preset.file);
+                if (res.ok) return await res.text();
+            } catch (e) {}
+        }
+        // ファイルがなくてもcolorsがあればCSS生成
+        if (preset.colors) return buildCSSFromColors(preset.colors);
+        return null;
+    }
+
+    function getSelectedThemeName() {
+        if (currentThemeId === 'none') return null;
+        const t = getAllThemes().find(t => t.id === currentThemeId);
+        return t ? t.name : null;
+    }
+
+    // コードにテーマCSSを注入 (silent=true の場合はエラー時のみtoast)
+    async function injectThemeToCode(silent) {
+        const css = await getSelectedThemeCSS();
+        if (!css) { if (!silent) showToast('テーマが選択されていません'); return; }
+        let code = window.getCode();
+        if (!code) { if (!silent) showToast('コードがありません'); return; }
+        const themeName = getSelectedThemeName() || 'Custom';
+        const marker = '/* === CODE THEME: ';
+        const block = `/* === CODE THEME: ${themeName} === */\n${css.trim()}\n/* === /CODE THEME === */`;
+        // 既存テーマブロックがあれば置換
+        const regex = /\/\* === CODE THEME:.*?=== \*\/[\s\S]*?\/\* === \/CODE THEME === \*\//;
+        if (regex.test(code)) {
+            code = code.replace(regex, block);
+        } else {
+            // </style> の直前に挿入
+            const pos = code.lastIndexOf('</style>');
+            if (pos !== -1) {
+                code = code.slice(0, pos) + '\n' + block + '\n' + code.slice(pos);
+            } else {
+                // <style>がない場合、<head>の末尾に追加
+                const headEnd = code.indexOf('</head>');
+                if (headEnd !== -1) {
+                    code = code.slice(0, headEnd) + '<style>\n' + block + '\n</style>\n' + code.slice(headEnd);
+                } else {
+                    showToast('テーマの挿入位置が見つかりません');
                     return;
                 }
-
-                let targetRun = null;
-                if (!foundRunId) {
-                    targetRun = runsData.workflow_runs.find(run => new Date(run.created_at) >= startTime);
-                    if (targetRun) {
-                        foundRunId = targetRun.id;
-                        log(`🚀 ワークフローの実行を検知しました！`);
-                    } else {
-                        if(searchAttempts % 3 === 0) log('⏳ 実行開始を待機中... (GitHub Actions側の反映待ち)');
-                        searchAttempts++;
-                        return;
-                    }
-                } else {
-                    targetRun = runsData.workflow_runs.find(run => run.id === foundRunId);
-                }
-
-                if (!targetRun) return;
-
-                setStatus('status-working', `Building (${targetRun.status})...`);
-
-                if (targetRun.status === 'completed') {
-                    clearInterval(pollingInterval);
-                    releaseWakeLock();
-                    $('deployBtn').disabled = false;
-
-                    if (targetRun.conclusion === 'success') {
-                        log('🎉 Android APKのビルドが完了しました！', 'log-suc');
-                        setStatus('status-success', 'Build Success');
-                        
-                        // 【修正点】ダウンロードリンク取得処理のログ強化・フォールバック修正
-                        log('📥 ダウンロードリンクを取得中...');
-                        try {
-                            const artifactsRes = await ghApi(`/actions/runs/${targetRun.id}/artifacts`);
-                            log(`🔍 アーティファクトを検索: ${artifactsRes?.artifacts?.length || 0}件見つかりました`);
-                            if (artifactsRes && artifactsRes.artifacts && artifactsRes.artifacts.length > 0) {
-                                const apkArtifact = artifactsRes.artifacts.find(a => a.name.includes('APK')) || artifactsRes.artifacts[0];
-                                log(`✅ APKアーティファクト取得成功: ${apkArtifact.name}`, 'log-suc');
-                                $('downloadLink').dataset.downloadUrl = apkArtifact.archive_download_url;
-                                $('downloadLink').href = '#';
-                                $('downloadLink').removeAttribute('target');
-                            } else {
-                                log('⚠️ アーティファクトが見つかりません。Actionsページへフォールバックします。', 'log-war');
-                                $('downloadLink').dataset.downloadUrl = '';
-                                $('downloadLink').href = `${targetRun.html_url}#artifacts`;
-                                $('downloadLink').target = '_blank';
-                            }
-                        } catch(err) {
-                            log(`⚠️ アーティファクト取得エラー: ${err.message}。Actionsページへフォールバックします。`, 'log-err');
-                            $('downloadLink').dataset.downloadUrl = '';
-                            $('downloadLink').href = `${targetRun.html_url}#artifacts`;
-                            $('downloadLink').target = '_blank';
-                        }
-                        
-                        $('downloadArea').style.display = 'block';
-                        showToast('✅ APKのダウンロード準備ができました');
-                    } else {
-                        log(`❌ ビルドが失敗しました (Conclusion: ${targetRun.conclusion})`, 'log-err');
-                        log(`🔗 <a href="${targetRun.html_url}" target="_blank" style="color:var(--primary)">Actions ログを開く</a>`);
-                        
-                        // 失敗したジョブ・ステップのログを自動取得
-                        try {
-                            log('📋 失敗の詳細を取得中...');
-                            const jobsRes = await ghApi(`/actions/runs/${targetRun.id}/jobs`);
-                            if (jobsRes && jobsRes.jobs) {
-                                for (const job of jobsRes.jobs) {
-                                    if (job.conclusion === 'failure') {
-                                        log(`<b>❌ 失敗したジョブ: ${job.name}</b>`, 'log-err');
-                                        const failedSteps = (job.steps || []).filter(s => s.conclusion === 'failure');
-                                        for (const step of failedSteps) {
-                                            log(`   ステップ #${step.number}: "${step.name}" が失敗`, 'log-err');
-                                        }
-                                        // ジョブのログを取得
-                                        try {
-                                            const token = await dbGet('gh_token');
-                                            const logRes = await fetch(`https://api.github.com/repos/${await dbGet('gh_owner')}/${await dbGet('source_repo_name')}/actions/jobs/${job.id}/logs`, {
-                                                headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github+json' }
-                                            });
-                                            if (logRes.ok) {
-                                                const logText = await logRes.text();
-                                                // ログの末尾（エラー付近）を抽出して表示
-                                                const lines = logText.split('\n');
-                                                const errorLines = lines.filter(l => 
-                                                    l.toLowerCase().includes('error') || 
-                                                    l.toLowerCase().includes('fail') ||
-                                                    l.toLowerCase().includes('exception')
-                                                ).slice(-15);
-                                                if (errorLines.length > 0) {
-                                                    log('<b>--- エラーログ抜粋 ---</b>', 'log-err');
-                                                    errorLines.forEach(l => log(l.replace(/</g, '&lt;').substring(0, 300), 'log-err'));
-                                                    log('<b>--- ここまで ---</b>', 'log-err');
-                                                } else {
-                                                    // エラー行がなければ末尾50行
-                                                    log('<b>--- ログ末尾 ---</b>', 'log-war');
-                                                    lines.slice(-50).forEach(l => log(l.replace(/</g, '&lt;').substring(0, 300)));
-                                                    log('<b>--- ここまで ---</b>', 'log-war');
-                                                }
-                                            }
-                                        } catch(logErr) {
-                                            log(`⚠️ ログ取得失敗: ${logErr.message}`, 'log-war');
-                                        }
-                                    }
-                                }
-                            }
-                        } catch(jobErr) {
-                            log(`⚠️ ジョブ詳細の取得に失敗: ${jobErr.message}`, 'log-war');
-                        }
-                        
-                        setStatus('status-error', 'Build Failed');
-                    }
-                }
-
-            } catch (e) {
-                if (e.message.includes('Failed to fetch') || e.message.includes('ネットワークエラー')) {
-                    networkErrorCount++;
-                    if (networkErrorCount < 3) return;
-                }
-                clearInterval(pollingInterval);
-                releaseWakeLock();
-                log(`❌ 監視エラー: ${e.message}`, 'log-err');
-                setStatus('status-error', 'Monitoring Error');
-                $('deployBtn').disabled = false;
             }
-        }, 10000);
+        }
+        window.setCode(code);
+        updatePreview();
+        if (!silent) showToast(`テーマ「${themeName}」をコードに反映しました`);
     }
 
-    // --- 直接ダウンロード処理 ---
-    $('downloadLink').onclick = async (e) => {
-        const url = $('downloadLink').dataset.downloadUrl;
-        if (!url) return; // href fallback に設定されている場合はデフォルト動作で別タブへ
-        
-        e.preventDefault();
-        const token = await dbGet('gh_token');
-        const btn = $('downloadLink');
-        const origText = btn.innerText;
-        
-        try {
-            btn.innerText = '⏳ ダウンロード中...';
-            btn.style.pointerEvents = 'none';
-            showToast('⏳ APKのダウンロードを開始しています...');
+    /* --- テーマエディタ --- */
+    function openThemeEditor(existing) {
+        editingThemeId = existing ? existing.id : null;
+        document.getElementById('theme-editor-title').textContent = existing ? '🎨 テーマを編集' : '🎨 テーマを新規作成';
+        document.getElementById('te-name').value = existing ? existing.name : '';
+        document.getElementById('te-icon').value = existing ? existing.icon : '🎨';
+        document.getElementById('te-desc').value = existing ? existing.description : '';
+        const colorsDiv = document.getElementById('te-colors');
+        colorsDiv.innerHTML = THEME_VARS.map(v => {
+            const val = (existing && existing.colors && existing.colors[v.key]) || v.default;
+            return `<div class="theme-color-field">
+                <label>${v.label}</label>
+                <div class="theme-color-row">
+                    <input type="color" class="theme-color-input" data-key="${v.key}" value="${val}" oninput="syncColorHex(this)">
+                    <input type="text" class="theme-color-hex" data-key="${v.key}" value="${val}" oninput="syncColorPicker(this)" maxlength="7">
+                </div>
+            </div>`;
+        }).join('');
+        updateEditorPreview();
+        document.getElementById('theme-editor-modal').classList.add('show');
+    }
+    function closeThemeEditor() { document.getElementById('theme-editor-modal').classList.remove('show'); editingThemeId = null; }
 
-            const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` }});
-            if (!res.ok) throw new Error('Download request failed');
-            
-            const blob = await res.blob();
-            const blobUrl = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = blobUrl;
-            a.download = `${$('appName').value || 'app'}-release.zip`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(blobUrl);
+    function syncColorHex(picker) {
+        picker.parentElement.querySelector('.theme-color-hex').value = picker.value;
+        updateEditorPreview();
+    }
+    function syncColorPicker(hex) {
+        if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) hex.parentElement.querySelector('.theme-color-input').value = hex.value;
+        updateEditorPreview();
+    }
+    function updateEditorPreview() {
+        const bar = document.getElementById('te-preview-bar');
+        const c = getEditorColors();
+        bar.innerHTML = [c['color-bg-deep'],c['color-bg-surface'],c['color-bg-elevated'],c['primary'],c['accent'],c['color-text-primary'],c['color-text-secondary']]
+            .map(v => `<div style="background:${v}"></div>`).join('');
+    }
+    function getEditorColors() {
+        const colors = {};
+        document.querySelectorAll('#te-colors .theme-color-hex').forEach(el => { colors[el.dataset.key] = el.value; });
+        return colors;
+    }
 
-            btn.innerText = origText;
-            btn.style.pointerEvents = 'auto';
-            showToast('✅ ダウンロードが完了しました');
-        } catch(err) {
-            console.error(err);
-            showToast('❌ 直接ダウンロードに失敗しました。Actionsページを開きます。');
-            btn.innerText = origText;
-            btn.style.pointerEvents = 'auto';
-            // fetch失敗時はActionsページを開くようフォールバック
-            const owner = await dbGet('gh_owner');
-            const repo = await dbGet('source_repo_name');
-            window.open(`https://github.com/${owner}/${repo}/actions`, '_blank');
+    function buildCSSFromColors(colors) {
+        let css = ':root {\n';
+        THEME_VARS.forEach(v => { if (colors[v.key]) css += `  --${v.key}: ${colors[v.key]};\n`; });
+        css += `  --bg: ${colors['color-bg-deep']};\n  --sidebar: ${colors['color-bg-surface']};\n  --user-msg: ${colors['color-bg-elevated']};\n  --ai-msg: ${colors['color-bg-deep']};\n`;
+        css += '}\n';
+        // ライトテーマ判定
+        const bg = colors['color-bg-deep'] || '#0D0F14';
+        const r = parseInt(bg.slice(1,3),16), g = parseInt(bg.slice(3,5),16), b = parseInt(bg.slice(5,7),16);
+        if ((r*299 + g*587 + b*114) / 1000 > 128) {
+            const txt = colors['color-text-primary'] || '#1f2937';
+            css += `body { color: ${txt}; background: ${bg}; }\n`;
+        } else {
+            css += `body { color: ${colors['color-text-primary']}; background: ${bg}; }\n`;
         }
-    };
+        return css;
+    }
 
-    // 初期化
-    window.addEventListener('DOMContentLoaded', loadSettings);
+    async function saveThemeFromEditor() {
+        const name = document.getElementById('te-name').value.trim();
+        const icon = document.getElementById('te-icon').value.trim() || '🎨';
+        const desc = document.getElementById('te-desc').value.trim();
+        if (!name) return showToast('テーマ名を入力してください');
+        const colors = getEditorColors();
+        const css = buildCSSFromColors(colors);
+        const id = editingThemeId || 'custom-' + Date.now();
+        const themeObj = { id, name, icon, description: desc || 'カスタムテーマ', preview: colors['color-bg-deep'], colors, css };
+        if (editingThemeId) { const idx = customThemes.findIndex(t => t.id === editingThemeId); if (idx !== -1) customThemes[idx] = themeObj; }
+        else customThemes.push(themeObj);
+        await saveToDB('customThemes', customThemes);
+        currentThemeId = id;
+        await saveToDB('codeTheme', id);
+        renderThemeGrid();
+        closeThemeEditor();
+        showToast(`テーマ「${name}」を${editingThemeId ? '更新' : '作成'}しました`);
+    }
 
+    function editTheme(id) { const t = customThemes.find(t => t.id === id); if (t) openThemeEditor(t); }
+    function duplicateTheme(id) {
+        const t = customThemes.find(t => t.id === id); if (!t) return;
+        openThemeEditor({ ...t, id: 'custom-' + Date.now(), name: t.name + ' (コピー)', colors: { ...t.colors } });
+    }
+    async function deleteTheme(id) {
+        const t = customThemes.find(t => t.id === id);
+        if (!t || !confirm(`テーマ「${t.name}」を削除しますか？`)) return;
+        customThemes = customThemes.filter(t => t.id !== id);
+        await saveToDB('customThemes', customThemes);
+        if (currentThemeId === id) { currentThemeId = 'none'; await saveToDB('codeTheme', 'none'); }
+        renderThemeGrid();
+        showToast('テーマを削除しました');
+    }
+    function exportThemeCSS() {
+        const name = document.getElementById('te-name').value.trim() || 'custom-theme';
+        const css = buildCSSFromColors(getEditorColors());
+        const blob = new Blob([css], { type: 'text/css' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = name.replace(/\s+/g, '-').toLowerCase() + '.css';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+        showToast('CSSをエクスポートしました');
+    }
 </script>
 </body>
 </html>
