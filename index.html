@@ -207,33 +207,33 @@
 <div class="toast-container" id="toast-container"></div>
 
 <div class="tabs">
-    <button class="tab-btn active" id="tab-chat" onclick="showPage('chat', this)">CHAT</button>
-    <button class="tab-btn" id="tab-editor" onclick="showPage('editor', this)">CODE</button>
-    <button class="tab-btn" id="tab-preview" onclick="showPage('preview', this)">PREVIEW</button>
-    <button class="tab-btn" id="tab-settings" onclick="showPage('settings', this)">SET</button>
+    <button class="tab-btn active" id="tab-chat" onclick="showPage('chat', this)"></button>
+    <button class="tab-btn" id="tab-editor" onclick="showPage('editor', this)"></button>
+    <button class="tab-btn" id="tab-preview" onclick="showPage('preview', this)"></button>
+    <button class="tab-btn" id="tab-settings" onclick="showPage('settings', this)"></button>
 </div>
 
 <div class="content">
     <div id="p-chat" class="page active">
         <div class="chat-header">
-            <span class="header-title">CONVERSATION</span>
+            <span class="header-title"></span>
             <div class="header-actions">
-                <button class="spec-btn" onclick="openSpecModal()">📋 仕様 <span id="spec-badge" class="tab-badge empty">0</span></button>
-                <button class="reset-btn" onclick="confirmReset()">＋ New</button>
+                <button class="spec-btn" onclick="openSpecModal()"></button>
+                <button class="reset-btn" onclick="confirmReset()"></button>
             </div>
         </div>
 
         <div id="chat-log"></div>
 
         <div id="floating-generate-container" class="floating-generate-container">
-            <button class="generate-btn" style="box-shadow: 0 4px 12px rgba(16,185,129,0.4);" onclick="generateCode()">⚡️ コードを作成 (BUILD)</button>
+            <button class="generate-btn" style="box-shadow: 0 4px 12px rgba(16,185,129,0.4);" onclick="generateCode()"></button>
         </div>
 
         <div class="input-container">
             <div id="attach-menu" class="attachment-menu">
-                <div class="menu-item" onclick="triggerFile('camera')">📸 カメラ</div>
-                <div class="menu-item" onclick="triggerFile('gallery')">🖼️ ギャラリー</div>
-                <div class="menu-item" onclick="triggerFile('files')">📁 ファイル</div>
+                <div class="menu-item" onclick="triggerFile('camera')"></div>
+                <div class="menu-item" onclick="triggerFile('gallery')"></div>
+                <div class="menu-item" onclick="triggerFile('files')"></div>
             </div>
 
             <div style="display:flex; align-items:center; gap:10px; padding-bottom:5px;">
@@ -246,8 +246,8 @@
                 <input type="file" id="file-camera" accept="image/*" capture="environment" style="display:none" onchange="handleAttachment(this)">
                 <input type="file" id="file-gallery" accept="image/*" style="display:none" onchange="handleAttachment(this)">
                 <input type="file" id="file-files" accept="*/*" style="display:none" onchange="handleAttachment(this)">
-                <textarea id="user-prompt" placeholder="例：ダークモードのTodoアプリを作りたい..." rows="1" oninput="autoGrow(this)"></textarea>
-                <button class="send-btn" id="send-btn" onclick="askAI()">↑</button>
+                <textarea id="user-prompt" rows="1" oninput="autoGrow(this)"></textarea>
+                <button class="send-btn" id="send-btn"></button>
             </div>
         </div>
     </div>
@@ -255,11 +255,11 @@
     <div id="p-editor" class="page">
          <div class="editor-wrapper">
             <div class="editor-actions">
-                <button class="action-btn import-btn" onclick="openGitHubImport()">📥 Import</button>
-                <button class="action-btn upload-btn" onclick="triggerCodeUpload()">Upload</button> 
-                <button class="action-btn search-btn" onclick="openSearchModal()">🔍 Search</button>
-                <button class="action-btn download-btn" onclick="downloadCode()">Download</button>
-                <button class="action-btn deploy-btn" onclick="openDeployer()">🚀 Deploy</button>
+                <button class="action-btn import-btn" onclick="openGitHubImport()"></button>
+                <button class="action-btn upload-btn" onclick="triggerCodeUpload()"></button> 
+                <button class="action-btn search-btn" onclick="openSearchModal()"></button>
+                <button class="action-btn download-btn" onclick="downloadCode()"></button>
+                <button class="action-btn deploy-btn" onclick="openDeployer()"></button>
             </div>
             <input type="file" id="code-upload-input" style="display:none" accept=".html,.css,.js,.txt" onchange="handleCodeUpload(this)">
             <div id="code-editor-container"></div>
@@ -269,15 +269,15 @@
     <div id="p-preview" class="page">
         <iframe id="preview-frame" sandbox="allow-scripts"></iframe>
         <div class="debug-panel">
-            <textarea id="debug-memo" placeholder="修正したい点を入力..." rows="1" oninput="autoGrow(this)"></textarea>
-            <button class="debug-btn" onclick="sendDebugRequest()">修正を依頼</button>
+            <textarea id="debug-memo" rows="1" oninput="autoGrow(this)"></textarea>
+            <button class="debug-btn" onclick="sendDebugRequest()"></button>
         </div>
     </div>
 
     <div id="p-settings" class="page settings">
         <div style="display: flex; gap: 15px; margin-bottom: 20px;">
             <div class="field" style="flex:0 0 auto; min-width:140px; margin-bottom:0;">
-                <label>AI PROVIDER</label>
+                <label></label>
                 <select id="ai-provider" class="setting-input" onchange="onProviderChange(); autoSaveSettings();">
                     <option value="gemini">Google Gemini</option>
                     <option value="openai">OpenAI (GPT)</option>
@@ -287,74 +287,74 @@
                 </select>
             </div>
             <div class="field" style="flex:1; margin-bottom:0;">
-                <label>CHAT MODEL</label>
+                <label></label>
                 <select id="chat-model" class="setting-input" onchange="autoSaveSettings()"></select>
             </div>
             <div class="field" style="flex:1; margin-bottom:0;">
-                <label>CODE MODEL</label>
+                <label></label>
                 <select id="code-model" class="setting-input" onchange="autoSaveSettings()"></select>
             </div>
         </div>
         <div id="api-keys-section">
             <div class="field api-key-field" data-provider="gemini">
-                <label>API KEY — GEMINI</label>
+                <label></label>
                 <input type="password" id="api-key-gemini" class="api-key-input" placeholder="Gemini APIキー" onchange="toggleModelSelects(); autoSaveSettings();">
             </div>
             <div class="field api-key-field" data-provider="openai" style="display:none;">
-                <label>API KEY — OPENAI</label>
+                <label></label>
                 <input type="password" id="api-key-openai" class="api-key-input" placeholder="sk-..." onchange="toggleModelSelects(); autoSaveSettings();">
             </div>
             <div class="field api-key-field" data-provider="claude" style="display:none;">
-                <label>API KEY — CLAUDE</label>
+                <label></label>
                 <input type="password" id="api-key-claude" class="api-key-input" placeholder="sk-ant-..." onchange="toggleModelSelects(); autoSaveSettings();">
             </div>
             <div class="field api-key-field" data-provider="xai" style="display:none;">
-                <label>API KEY — GROK (xAI)</label>
+                <label></label>
                 <input type="password" id="api-key-xai" class="api-key-input" placeholder="xai-..." onchange="toggleModelSelects(); autoSaveSettings();">
             </div>
             <div class="field api-key-field" data-provider="groq" style="display:none;">
-                <label>API KEY — GROQ</label>
+                <label></label>
                 <input type="password" id="api-key-groq" class="api-key-input" placeholder="gsk_..." onchange="toggleModelSelects(); autoSaveSettings();">
             </div>
         </div>
         <div class="field" style="margin-top:-10px;">
-            <label>API KEY SECURITY</label>
+            <label></label>
             <div style="font-size:12px; color:var(--color-text-secondary);">🔒 自動暗号化 + 2週間で自動消去</div>
             <div class="key-status" id="key-expiry-status"></div>
         </div>
         <div class="field">
-            <label>GITHUB TOKEN</label>
+            <label></label>
             <input type="password" id="setting-gh-token" placeholder="ghp_..." onchange="autoSaveSettings()">
         </div>
         <div class="field">
-            <div class="field-header"><label>ユーザーペルソナ</label><button class="reset-default-btn" onclick="resetFieldDefault('user-profile')">↺ 初期値</button></div>
-            <textarea id="user-profile" class="setting-input" rows="4" onchange="autoSaveSettings()" placeholder="モダンなUI/UXを好む、など開発の好みを入力"></textarea>
+            <div class="field-header"><label></label><button class="reset-default-btn" onclick="resetFieldDefault('user-profile')"></button></div>
+            <textarea id="user-profile" class="setting-input" rows="4" onchange="autoSaveSettings()" placeholder=""></textarea>
         </div>
         <div class="field">
-            <div class="field-header"><label>SYSTEM PROMPT</label><button class="reset-default-btn" onclick="resetFieldDefault('system-prompt')">↺ 初期値</button></div>
+            <div class="field-header"><label></label><button class="reset-default-btn" onclick="resetFieldDefault('system-prompt')"></button></div>
             <textarea id="system-prompt" class="setting-input" rows="3" onchange="autoSaveSettings()"></textarea>
         </div>
         <div class="field">
-            <div class="field-header"><label>CODE PRINCIPLES</label><button class="reset-default-btn" onclick="resetFieldDefault('code-principles')">↺ 初期値</button></div>
+            <div class="field-header"><label></label><button class="reset-default-btn" onclick="resetFieldDefault('code-principles')"></button></div>
             <textarea id="code-principles" class="setting-input" rows="3" onchange="autoSaveSettings()"></textarea>
-        </div>
+        </details>
         <details class="field prompt-details">
-            <summary>PROMPT TEMPLATES（詳細設定）</summary>
-            <div class="field-header"><label style="font-size:10px;">PLANプロンプト</label><button class="reset-default-btn" onclick="resetFieldDefault('prompt-plan')">↺ 初期値</button></div>
+            <summary></summary>
+            <div class="field-header"><label style="font-size:10px;"></label><button class="reset-default-btn" onclick="resetFieldDefault('prompt-plan')"></button></div>
             <textarea id="prompt-plan" rows="3" onchange="autoSaveSettings()"></textarea>
-            <div class="field-header"><label style="font-size:10px;">要件おまかせ</label><button class="reset-default-btn" onclick="resetFieldDefault('prompt-suggest')">↺ 初期値</button></div>
+            <div class="field-header"><label style="font-size:10px;"></label><button class="reset-default-btn" onclick="resetFieldDefault('prompt-suggest')"></button></div>
             <textarea id="prompt-suggest" rows="2" onchange="autoSaveSettings()"></textarea>
-            <div class="field-header"><label style="font-size:10px;">修正依頼</label><button class="reset-default-btn" onclick="resetFieldDefault('prompt-debug')">↺ 初期値</button></div>
+            <div class="field-header"><label style="font-size:10px;"></label><button class="reset-default-btn" onclick="resetFieldDefault('prompt-debug')"></button></div>
             <textarea id="prompt-debug" rows="3" onchange="autoSaveSettings()"></textarea>
         </details>
 
         <div class="theme-section">
-            <label>CODE THEME（コードに反映）</label>
+            <label></label>
             <div id="theme-grid" class="theme-grid"></div>
         </div>
 
         <div class="template-section">
-            <label>TEMPLATES</label>
+            <label></label>
             <div id="template-grid" class="template-grid"></div>
         </div>
     </div>
@@ -364,19 +364,19 @@
 <div id="spec-modal" class="modal-overlay" onclick="if(event.target===this)closeSpecModal()">
     <div class="modal">
         <div class="modal-header">
-            <h3>📋 仕様・修正リスト</h3>
+            <h3></h3>
             <button class="modal-close" onclick="closeSpecModal()">✕</button>
         </div>
         <div class="modal-body spec-page" style="padding: 12px; display:flex; flex-direction:column; height: 60vh;">
-            <p style="font-size:11px; color:var(--color-text-secondary); margin:0 0 10px 0;">※項目を左にスワイプして編集・削除ができます</p>
+            <p style="font-size:11px; color:var(--color-text-secondary); margin:0 0 10px 0;"></p>
             <div id="spec-card-view" class="spec-card-list" style="flex:1; overflow-y:auto; overflow-x:hidden; padding-right:4px;"></div>
             <div id="spec-add-row" class="spec-add-row" style="margin-top:10px;">
-                <input type="text" id="spec-add-input" class="spec-add-input" placeholder="仕様・修正点を追加..." onkeydown="if(event.key==='Enter')addSpecManual()">
-                <button class="spec-add-btn" onclick="addSpecManual()">＋</button>
+                <input type="text" id="spec-add-input" class="spec-add-input" onkeydown="if(event.key==='Enter')addSpecManual()">
+                <button class="spec-add-btn" onclick="addSpecManual()"></button>
             </div>
             <div class="spec-footer" style="margin-top:10px;">
-                <button class="spec-footer-btn" id="spec-restore-btn" onclick="restoreSpecList()" style="display:none;">↩ 前回のリストに戻す</button>
-                <button class="spec-footer-btn danger" onclick="clearSpecList()">🗑 リストをクリア</button>
+                <button class="spec-footer-btn" id="spec-restore-btn" onclick="restoreSpecList()" style="display:none;"></button>
+                <button class="spec-footer-btn danger" onclick="clearSpecList()"></button>
             </div>
         </div>
     </div>
@@ -386,22 +386,22 @@
 <div id="profile-proposal-modal" class="modal-overlay">
     <div class="modal">
         <div class="modal-header">
-            <h3>💡 ユーザーペルソナの更新提案</h3>
+            <h3></h3>
             <button class="modal-close" onclick="closeProfileProposalModal()">✕</button>
         </div>
         <div class="modal-body" style="display:flex; flex-direction:column; gap:12px;">
-            <p style="font-size:12px; color:var(--color-text-secondary); margin:0;">AIが会話から新しいペルソナ情報を抽出しました。更新しますか？</p>
+            <p style="font-size:12px; color:var(--color-text-secondary); margin:0;"></p>
             <div>
-                <label style="font-size:11px; color:var(--color-text-muted);">現在のペルソナ</label>
+                <label style="font-size:11px; color:var(--color-text-muted);"></label>
                 <div id="old-profile-text" style="background:var(--color-bg-elevated); padding:10px; border-radius:8px; font-size:12px; color:#aaa; max-height:100px; overflow-y:auto; white-space:pre-wrap;"></div>
             </div>
             <div>
-                <label style="font-size:11px; color:var(--primary);">提案されたペルソナ</label>
+                <label style="font-size:11px; color:var(--primary);"></label>
                 <div id="new-profile-text" style="background:rgba(59,130,246,0.1); border:1px solid var(--primary); padding:10px; border-radius:8px; font-size:12px; color:#fff; max-height:150px; overflow-y:auto; white-space:pre-wrap;"></div>
             </div>
             <div style="display:flex; gap:10px; margin-top:8px;">
-                <button class="modal-btn" style="background:var(--color-bg-elevated); flex:1; margin-top:0;" onclick="closeProfileProposalModal()">破棄する</button>
-                <button class="modal-btn" style="background:var(--success); flex:1; margin-top:0;" onclick="acceptProfileProposal()">適用する</button>
+                <button class="modal-btn" style="background:var(--color-bg-elevated); flex:1; margin-top:0;" onclick="closeProfileProposalModal()"></button>
+                <button class="modal-btn" style="background:var(--success); flex:1; margin-top:0;" onclick="acceptProfileProposal()"></button>
             </div>
         </div>
     </div>
@@ -411,7 +411,7 @@
 <div id="ai-question-modal" class="modal-overlay" onclick="if(event.target===this)closeAIQuestionModal()">
     <div class="modal">
         <div class="modal-header">
-            <h3>❓ AIからの質問</h3>
+            <h3></h3>
             <button class="modal-close" onclick="closeAIQuestionModal()">✕</button>
         </div>
         <div class="modal-body" style="display:flex; flex-direction:column; gap:16px;">
@@ -424,7 +424,7 @@
 <div id="search-modal" class="modal-overlay" style="background: transparent; pointer-events: none;" onclick="if(event.target===this)closeSearchModal()">
     <div class="modal" style="pointer-events: auto; position: absolute; top: 60px; right: 15px; width: 300px; margin: 0;">
         <div class="modal-header" style="padding: 10px 12px;">
-            <h3 style="font-size: 13px;">🔍 Find in Code</h3>
+            <h3></h3>
             <button class="modal-close" onclick="closeSearchModal()" style="font-size: 16px;">✕</button>
         </div>
         <div class="modal-body" style="padding: 10px 12px; display: flex; gap: 6px; align-items: center; overflow: visible;">
@@ -440,17 +440,17 @@
 <div id="gh-import-modal" class="modal-overlay" onclick="if(event.target===this)closeGitHubImport()">
     <div class="modal">
         <div class="modal-header">
-            <h3>📥 GitHub Import</h3>
+            <h3></h3>
             <button class="modal-close" onclick="closeGitHubImport()">✕</button>
         </div>
         <div class="modal-body">
             <div id="gh-step-repo">
-                <input id="gh-repo-search" class="modal-input" placeholder="リポジトリを検索..." oninput="filterImportRepos()">
+                <input id="gh-repo-search" class="modal-input" oninput="filterImportRepos()">
                 <div id="gh-modal-status" class="modal-status"></div>
                 <ul id="gh-repo-list" class="repo-list"></ul>
             </div>
             <div id="gh-step-file" style="display:none">
-                <button class="modal-btn" style="background:var(--color-bg-elevated);margin-bottom:12px" onclick="backToRepoList()">← 戻る</button>
+                <button class="modal-btn" style="background:var(--color-bg-elevated);margin-bottom:12px;" onclick="backToRepoList()"></button>
                 <div id="gh-file-status" class="modal-status"></div>
                 <ul id="gh-file-list" class="file-list"></ul>
             </div>
@@ -462,50 +462,50 @@
 <div id="gh-deploy-modal" class="modal-overlay" onclick="if(event.target===this)closeGitHubDeploy()">
     <div class="modal">
         <div class="modal-header">
-            <h3>🚀 GitHub Deploy</h3>
+            <h3></h3>
             <button class="modal-close" onclick="closeGitHubDeploy()">✕</button>
         </div>
         <div class="modal-body" style="display:flex; flex-direction:column; gap:12px;">
             <div id="deploy-step-token">
-                <input type="password" id="deploy-token-input" class="modal-input" placeholder="ghp_...">
-                <button class="modal-btn" onclick="saveDeployToken()">保存 & 認証</button>
+                <input type="password" id="deploy-token-input" class="modal-input">
+                <button class="modal-btn" onclick="saveDeployToken()"></button>
                 <div id="deploy-token-status" class="modal-status"></div>
             </div>
             <div id="deploy-step-repo" style="display:none">
-                <button class="modal-btn" style="background:var(--success); margin-bottom:12px;" onclick="showDeployStep('new-repo')">＋ 新規リポジトリ</button>
-                <input id="deploy-repo-search" class="modal-input" placeholder="検索..." oninput="filterDeployRepos()">
+                <button class="modal-btn" style="background:var(--success); margin-bottom:12px;" onclick="showDeployStep('new-repo')"></button>
+                <input id="deploy-repo-search" class="modal-input" oninput="filterDeployRepos()">
                 <div id="deploy-repo-status" class="modal-status"></div>
                 <ul id="deploy-repo-list" class="repo-list"></ul>
             </div>
             <div id="deploy-step-new-repo" style="display:none; flex-direction:column; gap:12px;">
-                <button class="modal-btn" style="background:var(--color-bg-elevated); width:auto; align-self:flex-start; margin:0; padding:6px 12px; font-size:11px;" onclick="showDeployStep('repo')">← 戻る</button>
-                <input id="new-repo-name" class="modal-input" placeholder="リポジトリ名">
+                <button class="modal-btn" style="background:var(--color-bg-elevated); width:auto; align-self:flex-start; margin:0; padding:6px 12px; font-size:11px;" onclick="showDeployStep('repo')"></button>
+                <input id="new-repo-name" class="modal-input">
                 <select id="new-repo-private" class="modal-input" style="appearance:auto; background-image:none;">
-                    <option value="false">Public (公開)</option>
-                    <option value="true">Private (非公開)</option>
+                    <option value="false"></option>
+                    <option value="true"></option>
                 </select>
-                <button class="modal-btn" onclick="createNewRepo()">✨ 作成</button>
+                <button class="modal-btn" onclick="createNewRepo()"></button>
                 <div id="new-repo-status" class="modal-status"></div>
             </div>
             <div id="deploy-step-details" style="display:none; flex-direction:column; gap:12px;">
-                <button class="modal-btn" style="background:var(--color-bg-elevated); width:auto; align-self:flex-start; margin:0; padding:6px 12px; font-size:11px;" onclick="showDeployStep('repo')">← 戻る</button>
-                <div style="font-size:13px; color:#fff;">Target: <strong id="deploy-target-repo-name" style="color:var(--primary);"></strong></div>
+                <button class="modal-btn" style="background:var(--color-bg-elevated); width:auto; align-self:flex-start; margin:0; padding:6px 12px; font-size:11px;" onclick="showDeployStep('repo')"></button>
+                <div style="font-size:13px; color:#fff;"><strong id="deploy-target-repo-name" style="color:var(--primary);"></strong></div>
                 <div style="display:flex; gap:10px;">
-                    <input id="deploy-branch" class="modal-input" value="main" placeholder="Branch">
-                    <input id="deploy-filepath" class="modal-input" value="index.html" placeholder="File">
+                    <input id="deploy-branch" class="modal-input" value="main">
+                    <input id="deploy-filepath" class="modal-input" value="index.html">
                 </div>
-                <textarea id="deploy-readme-content" class="modal-input" rows="4" placeholder="README内容..."></textarea>
+                <textarea id="deploy-readme-content" class="modal-input" rows="4"></textarea>
                 <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#fff; cursor:pointer;">
-                    <input type="checkbox" id="deploy-gh-pages" checked style="accent-color:var(--primary); width:16px; height:16px;"> GitHub Pages有効化
+                    <input type="checkbox" id="deploy-gh-pages" checked style="accent-color:var(--primary); width:16px; height:16px;"> <span></span>
                 </label>
-                <button class="modal-btn" id="deploy-exec-btn" onclick="executeDeploy()" style="background:var(--accent);">🚀 デプロイ実行</button>
+                <button class="modal-btn" id="deploy-exec-btn" onclick="executeDeploy()" style="background:var(--accent);"></button>
                 <div id="deploy-execute-status" class="modal-status"></div>
             </div>
             <div id="deploy-step-success" style="display:none; flex-direction:column; gap:12px;">
-                <h4 style="font-size:16px; color:var(--success); margin:0;">🎉 デプロイ成功！</h4>
-                <div id="gh-pages-countdown-display" style="font-size:14px; color:var(--color-text-secondary);">公開準備中...</div>
-                <div style="font-size:13px; color:#fff;">URL: <a id="deploy-success-url" href="#" target="_blank" style="color:var(--primary); word-break:break-all;"></a></div>
-                <button class="modal-btn" id="view-site-btn" onclick="openDeployedSite()" style="background:var(--primary); margin-top:10px;" disabled>🌐 サイトを見る</button>
+                <h4 style="font-size:16px; color:var(--success); margin:0;"></h4>
+                <div id="gh-pages-countdown-display" style="font-size:14px; color:var(--color-text-secondary);"></div>
+                <div style="font-size:13px; color:#fff;"><a id="deploy-success-url" href="#" target="_blank" style="color:var(--primary); word-break:break-all;"></a></div>
+                <button class="modal-btn" id="view-site-btn" onclick="openDeployedSite()" style="background:var(--primary); margin-top:10px;" disabled></button>
             </div>
         </div>
     </div>
@@ -513,35 +513,35 @@
 
 <div id="bg-notify" class="bg-notify">
     <div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0"></div>
-    <span>バックグラウンドで生成中...</span>
+    <span></span>
 </div>
 
 <div id="theme-editor-modal" class="modal-overlay" onclick="if(event.target===this)closeThemeEditor()">
     <div class="modal" style="max-width:440px;">
-        <div class="modal-header"><h3 id="theme-editor-title">🎨 テーマを作成</h3><button class="modal-close" onclick="closeThemeEditor()">✕</button></div>
+        <div class="modal-header"><h3 id="theme-editor-title"></h3><button class="modal-close" onclick="closeThemeEditor()">✕</button></div>
         <div class="modal-body" style="display:flex; flex-direction:column; gap:12px;">
-            <div style="display:flex; gap:10px;"><input id="te-name" class="modal-input" placeholder="My Theme" style="flex:1;"><input id="te-icon" class="modal-input" placeholder="🎨" style="width:70px;"></div>
-            <input id="te-desc" class="modal-input" placeholder="説明">
+            <div style="display:flex; gap:10px;"><input id="te-name" class="modal-input" style="flex:1;"><input id="te-icon" class="modal-input" style="width:70px;"></div>
+            <input id="te-desc" class="modal-input">
             <div class="theme-editor-grid" id="te-colors" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
             <div class="theme-preview-bar" id="te-preview-bar" style="display:flex; border-radius:8px; overflow:hidden; height:32px; border:1px solid var(--color-border);"></div>
             <div style="display:flex; gap:8px;">
-                <button class="modal-btn" onclick="saveThemeFromEditor()" style="flex:1;">💾 保存</button>
-                <button class="modal-btn" onclick="injectThemeToCode()" style="flex:1; background:var(--success);">⚡ 反映</button>
+                <button class="modal-btn" onclick="saveThemeFromEditor()" style="flex:1;"></button>
+                <button class="modal-btn" onclick="injectThemeToCode()" style="flex:1; background:var(--success);"></button>
             </div>
         </div>
     </div>
 </div>
 <div id="tpl-editor-modal" class="modal-overlay" onclick="if(event.target===this)closeTemplateEditor()">
     <div class="modal" style="max-width:500px;">
-        <div class="modal-header"><h3 id="tpl-editor-title">📄 テンプレートを追加</h3><button class="modal-close" onclick="closeTemplateEditor()">✕</button></div>
+        <div class="modal-header"><h3 id="tpl-editor-title"></h3><button class="modal-close" onclick="closeTemplateEditor()">✕</button></div>
         <div class="modal-body" style="display:flex; flex-direction:column; gap:12px;">
-            <div style="display:flex; gap:10px;"><input id="tple-name" class="modal-input" placeholder="My Template" style="flex:1;"><input id="tple-icon" class="modal-input" placeholder="📄" style="width:70px;"></div>
-            <input id="tple-desc" class="modal-input" placeholder="説明">
-            <textarea id="tple-code" class="modal-input" rows="8" placeholder="<!DOCTYPE html>..."></textarea>
+            <div style="display:flex; gap:10px;"><input id="tple-name" class="modal-input" style="flex:1;"><input id="tple-icon" class="modal-input" style="width:70px;"></div>
+            <input id="tple-desc" class="modal-input">
+            <textarea id="tple-code" class="modal-input" rows="8"></textarea>
             <div style="display:flex; gap:8px;">
-                <button class="modal-btn" onclick="triggerTplFileUpload()" style="flex:0; background:var(--color-bg-elevated); width:auto;">📁 読込</button>
+                <button class="modal-btn" onclick="triggerTplFileUpload()" style="flex:0; background:var(--color-bg-elevated); width:auto;"></button>
                 <input type="file" id="tpl-file-input" accept=".html" style="display:none" onchange="handleTplFileUpload(this)">
-                <button class="modal-btn" onclick="saveCustomTemplate()" style="flex:1;">💾 保存</button>
+                <button class="modal-btn" onclick="saveCustomTemplate()" style="flex:1;"></button>
             </div>
         </div>
     </div>
@@ -566,6 +566,7 @@
     /* === プロンプト管理 === */
     let PROMPTS_DATA = null;
     async function loadPrompts() {
+        // ハードコードされたデフォルトのプロンプトとUIテキスト
         PROMPTS_DATA = {
             defaults: {
                 'system-prompt': 'あなたは優秀なAIアシスタントです。簡潔に答えてください。\nユーザーに選択させたい場合は、文末に必ず [OPTIONS: 選択肢A | 選択肢B] と記載してください。',
@@ -579,6 +580,91 @@
                 extract: '以下のやり取りから、実装すべき要件を抽出しJSONの文字列配列で出力してください。\n【ユーザー】{userMessage}\n【AI】{aiResponse}\n【既存】{existingSpecs}',
                 verify: '仕様とコードを照合し、未実装の要件をJSONの文字列配列で返してください。\n【仕様】{specList}\n【コード】{generatedCode}',
                 extractProfile: '以下の会話から、ユーザーの好みや開発におけるペルソナ（使用技術、デザインの好み等）に関する新しい情報があれば抽出してください。\n現在のペルソナ:\n{currentProfile}\nユーザーの発言:\n{userText}\nAIの応答:\n{aiText}\n\n【ルール】\n- 既存と重複しない新情報のみを抽出し、ペルソナを充実させた「更新後の文章全体」を生成してください。\n- ユーザーの好みや開発スタイルに関する情報のみ抽出し、システムの機能要件や具体的な仕様に関する記述は絶対に含めないでください。\n- 新情報がなければ空のJSON `{}` を返してください。\n- 更新がある場合は `{ "newProfile": "更新後の文章全体" }` 形式のJSONのみ出力すること。'
+            },
+            ui: { // 新しいUIラベルセクション
+                tabChat: "CHAT", tabCode: "CODE", tabPreview: "PREVIEW", tabSettings: "SET",
+                headerConversation: "CONVERSATION", specButton: "📋 仕様", newButton: "＋ New",
+                generateCodeButton: "⚡️ コードを作成 (BUILD)",
+                cameraOption: "📸 カメラ", galleryOption: "🖼️ ギャラリー", filesOption: "📁 ファイル",
+                userPromptPlaceholder: "例：ダークモードのTodoアプリを作りたい...", sendButton: "↑",
+                importButton: "📥 Import", uploadButton: "Upload", searchButton: "🔍 Search",
+                downloadButton: "Download", deployButton: "🚀 Deploy",
+                debugMemoPlaceholder: "修正したい点を入力...", debugRequestButton: "修正を依頼",
+                aiProviderLabel: "AI PROVIDER", chatModelLabel: "CHAT MODEL", codeModelLabel: "CODE MODEL",
+                apiKeyGeminiLabel: "API KEY — GEMINI", apiKeyOpenAILabel: "API KEY — OPENAI",
+                apiKeyClaudeLabel: "API KEY — CLAUDE", apiKeyXaiLabel: "API KEY — GROK (xAI)",
+                apiKeyGroqLabel: "API KEY — GROQ", apiKeySecurityLabel: "API KEY SECURITY",
+                ghTokenLabel: "GITHUB TOKEN", userPersonaLabel: "ユーザーペルソナ", resetDefaultButton: "↺ 初期値",
+                systemPromptLabel: "SYSTEM PROMPT", codePrinciplesLabel: "CODE PRINCIPLES",
+                promptTemplatesSummary: "PROMPT TEMPLATES（詳細設定）", planPromptLabel: "PLANプロンプト",
+                suggestPromptLabel: "要件おまかせ", debugPromptLabel: "修正依頼",
+                codeThemeLabel: "CODE THEME（コードに反映）", templatesLabel: "TEMPLATES",
+                specModalTitle: "📋 仕様・修正リスト", specModalDescription: "※項目を左にスワイプして編集・削除ができます",
+                specAddPlaceholder: "仕様・修正点を追加...", specAddButton: "＋",
+                specRestoreButton: "↩ 前回のリストに戻す", specClearButton: "🗑 リストをクリア",
+                noSpecsMessage: "仕様項目はありません",
+                toastSpecExists: "既に同じ仕様が存在します", toastSpecAdded: "仕様を追加しました",
+                toastSpecUpdated: "仕様を更新しました", toastSpecCleared: "クリアしました",
+                toastSpecRestored: "復元しました", toastEmptySpecs: "空です",
+                profileProposalModalTitle: "💡 ユーザーペルソナの更新提案",
+                profileProposalDescription: "AIが会話から新しいペルソナ情報を抽出しました。更新しますか？",
+                currentPersonaLabel: "現在のペルソナ", proposedPersonaLabel: "提案されたペルソナ",
+                discardButton: "破棄する", applyButton: "適用する",
+                toastProfileUpdated: "ユーザーペルソナを更新しました",
+                aiQuestionModalTitle: "❓ AIからの質問",
+                aiQuestionPromptMissingReqs: "未実装の要件が残っています。これらの修正を依頼しますか？",
+                aiQuestionOptionFix: "⚡️修正を依頼", aiQuestionOptionSuggest: "✨要件をおまかせ",
+                aiSystemMsgSpecsUpdated: "📋 仕様リスト更新（+{count}件）",
+                aiSystemMsgMissingReqs: "⚠️ 未実装の要件があります:\n", // Newline for formatting
+                aiSystemMsgAllSpecsCovered: "✅ 全仕様を網羅しました",
+                aiSystemMsgInitial: "AI Web Studio 起動。\n要件を教えてください。プランが固まったら「⚡️コードを作成」ボタンを表示します。",
+                aiSystemMsgReset: "リセットしました。\n要件を教えてください。",
+                aiSystemMsgCodeLoaded: "{source} からコードを読み込みました。\n修正したい点があれば教えてください。",
+                aiSystemMsgThinking: "考案中...", aiSystemMsgBuildingCode: "構築中...",
+                aiSystemMsgBuildComplete: "✨ 構築完了。PREVIEWを確認してください。",
+                aiSystemMsgBuildError: "エラー:", toastInputRequired: "入力が必要です",
+                toastSettingsSaved: "設定を自動保存しました", toastDefaultRestored: "デフォルト値に戻しました",
+                toastCodeMissing: "コードがありません", toastDownloadStarted: "ダウンロード開始",
+                toastThemeSaved: "保存しました", toastThemeApplied: "反映しました",
+                toastTemplateSaved: "保存しました", tabButtonResetConfirm: "リセットしますか？",
+                tabButtonOverwriteConfirm: "上書きしますか？", tokenNotSetAlert: "トークン未設定",
+                ghImportModalTitle: "📥 GitHub Import", ghRepoSearchPlaceholder: "リポジトリを検索...",
+                ghLoading: "読込中...", ghError: "エラー", ghFilePrefix: "📄", ghBackToRepos: "← 戻る",
+                ghDeployModalTitle: "🚀 GitHub Deploy", deployTokenInputPlaceholder: "ghp_...",
+                deploySaveAndAuth: "保存 & 認証", deployNewRepoButton: "＋ 新規リポジトリ",
+                deploySearchPlaceholder: "検索...", deployNewRepoBack: "← 戻る",
+                newRepoNamePlaceholder: "リポジトリ名", newRepoPublicOption: "Public (公開)",
+                newRepoPrivateOption: "Private (非公開)", newRepoCreateButton: "✨ 作成",
+                newRepoCreating: "作成中...", newRepoError: "❌ エラー",
+                deployTargetLabel: "Target:", deployBranchPlaceholder: "Branch",
+                deployFilePlaceholder: "File", deployReadmePlaceholder: "README内容...",
+                deployGhPagesCheckbox: "GitHub Pages有効化", deployExecButton: "🚀 デプロイ実行",
+                deploying: "デプロイ中...", deploySuccess: "✅ 成功！", deployError: "❌ エラー",
+                deploySuccessTitle: "🎉 デプロイ成功！", ghPagesCountdownPreparing: "公開準備中...",
+                ghPagesReady: "✨ 公開されました！", deployUrlLabel: "URL:",
+                viewSiteButton: "🌐 サイトを見る", bgNotifyText: "バックグラウンドで生成中...",
+                themeEditorModalTitleCreate: "🎨 テーマを作成", themeEditorNamePlaceholder: "My Theme",
+                themeEditorIconPlaceholder: "🎨", themeEditorDescPlaceholder: "説明",
+                themeEditorSaveButton: "💾 保存", themeEditorApplyButton: "⚡ 反映",
+                themeDeleteConfirm: "削除しますか？",
+                templateEditorModalTitleAdd: "📄 テンプレートを追加", templateEditorNamePlaceholder: "My Template",
+                templateEditorIconPlaceholder: "📄", templateEditorDescPlaceholder: "説明",
+                templateEditorCodePlaceholder: "<!DOCTYPE html>...",
+                templateEditorLoadButton: "📁 読込", templateEditorSaveButton: "💾 保存",
+                templateDeleteConfirm: "削除しますか？",
+                chatSpinnerThinking: "考案中...", chatSpinnerBuilding: "構築中...",
+                chatSpinnerInterrupted: "⚠️ 中断されました。",
+                chatMsgEdit: "✏️", chatMsgSave: "💾", chatMsgDelete: "🗑️",
+                searchModalTitle: "🔍 Find in Code", searchInputPlaceholder: "Find...",
+                deployTargetRepoPrefix: "Target: ", // Specific prefix for deploy target
+                deployStatusSuccess: "✅ 成功！",
+                deployStatusError: "❌ エラー",
+                deployStatusCreating: "作成中...",
+                deployStatusDeploying: "デプロイ中...",
+                keyExpiryStatusNotSaved: "キー未保存。設定から入力してください。",
+                keyExpiryStatusExpired: "期限切れです",
+                keyExpiryStatusRemaining: "残り{remaining}日で自動消去されます",
+                aiSystemMsgInterrupted: "⚠️ 中断されました。",
             }
         };
 
@@ -598,6 +684,9 @@
                         }
                     }
                 }
+                if (loadedPrompts.ui) { // UIセクションをロード
+                    Object.assign(PROMPTS_DATA.ui, loadedPrompts.ui);
+                }
             } else {
                 console.warn('prompts.json could not be loaded. Using hardcoded defaults.');
             }
@@ -607,8 +696,9 @@
     }
     function getPrompt(name) { return PROMPTS_DATA?.prompts?.[name] || ''; }
     function getDefault(fieldId) { return PROMPTS_DATA?.defaults?.[fieldId] || ''; }
+    function getLabel(key) { return PROMPTS_DATA?.ui?.[key] || ''; } // 新しいヘルパー関数
     function getFieldDefaults() { return { 'system-prompt': getDefault('system-prompt'), 'user-profile': getDefault('user-profile'), 'code-principles': getDefault('code-principles'), 'prompt-plan': getPrompt('plan'), 'prompt-suggest': getPrompt('suggest'), 'prompt-debug': getPrompt('debug') }; }
-    function resetFieldDefault(fieldId) { const def = getFieldDefaults()[fieldId]; if (def !== undefined) { document.getElementById(fieldId).value = def; autoSaveSettings(); showToast('デフォルト値に戻しました'); } }
+    function resetFieldDefault(fieldId) { const def = getFieldDefaults()[fieldId]; if (def !== undefined) { document.getElementById(fieldId).value = def; autoSaveSettings(); showToast(getLabel('toastDefaultRestored')); } }
 
     /* === 仕様・修正リスト === */
     function openSpecModal() { document.getElementById('spec-modal').classList.add('show'); renderSpecCards(); }
@@ -629,14 +719,14 @@
 
     function renderSpecCards() {
         const list = getSpecList(); const container = document.getElementById('spec-card-view'); if (!container) return;
-        if (list.length === 0) { container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--color-text-muted);font-size:13px;">仕様項目はありません</div>'; } 
+        if (list.length === 0) { container.innerHTML = `<div style="text-align:center;padding:30px;color:var(--color-text-muted);font-size:13px;">${getLabel('noSpecsMessage')}</div>`; } 
         else {
             container.innerHTML = list.map(item => `
                 <div class="swipe-container ${item.isNew ? 'is-new-card' : ''}" data-id="${item.id}">
                     ${item.isNew ? '<div class="is-new-badge">NEW</div>' : ''}
                     <div class="swipe-actions">
-                        <button class="swipe-btn edit" onclick="editSpecText('${item.id}')">編集</button>
-                        <button class="swipe-btn delete" onclick="deleteSpecItem('${item.id}')">削除</button>
+                        <button class="swipe-btn edit" onclick="editSpecText('${item.id}')">${getLabel('chatMsgEdit')}</button>
+                        <button class="swipe-btn delete" onclick="deleteSpecItem('${item.id}')">${getLabel('chatMsgDelete')}</button>
                     </div>
                     <div class="swipe-content" ontouchstart="handleTouchStart(event, this)" ontouchmove="handleTouchMove(event, this)" ontouchend="handleTouchEnd(event, this)">
                         <span class="spec-card-source ${item.source}">${item.source === 'auto' ? 'AI' : 'USER'}</span>
@@ -648,12 +738,12 @@
         updateSpecBadge();
     }
     function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
-    function addSpecManual() { const input = document.getElementById('spec-add-input'); const text = input.value.trim(); if (!text) return; const list = getSpecList(); if (list.some(item => item.text === text)) { showToast('既に同じ仕様が存在します'); return; } list.push({ id: Date.now().toString(), text, source: 'user', isNew: true }); saveSpecList(list); input.value = ''; renderSpecCards(); showToast('仕様を追加しました'); }
+    function addSpecManual() { const input = document.getElementById('spec-add-input'); const text = input.value.trim(); if (!text) return; const list = getSpecList(); if (list.some(item => item.text === text)) { showToast(getLabel('toastSpecExists')); return; } list.push({ id: Date.now().toString(), text, source: 'user', isNew: true }); saveSpecList(list); input.value = ''; renderSpecCards(); showToast(getLabel('toastSpecAdded')); }
     function deleteSpecItem(id) { const list = getSpecList().filter(item => item.id !== id); saveSpecList(list); renderSpecCards(); }
     function editSpecText(id) { const el = document.getElementById('spec-text-' + id); if (el) { if (activeSwipeElement) { activeSwipeElement.style.transform = 'translateX(0)'; activeSwipeElement = null; } el.focus(); } }
-    function updateSpecText(id, newText) { const text = newText.trim(); if (!text) { deleteSpecItem(id); return; } const list = getSpecList(); const item = list.find(i => i.id === id); if (item && item.text !== text) { item.text = text; saveSpecList(list); showToast('仕様を更新しました'); } }
-    function clearSpecList() { const list = getSpecList(); if (list.length === 0) return showToast('空です'); if (!confirm('クリアしますか？')) return; saveSpecBackup(list); saveSpecList([]); renderSpecCards(); document.getElementById('spec-restore-btn').style.display = ''; showToast('クリアしました'); }
-    function restoreSpecList() { const backup = getSpecBackup(); if (backup.length === 0) return; saveSpecList(backup); renderSpecCards(); document.getElementById('spec-restore-btn').style.display = 'none'; showToast('復元しました'); }
+    function updateSpecText(id, newText) { const text = newText.trim(); if (!text) { deleteSpecItem(id); return; } const list = getSpecList(); const item = list.find(i => i.id === id); if (item && item.text !== text) { item.text = text; saveSpecList(list); showToast(getLabel('toastSpecUpdated')); } }
+    function clearSpecList() { const list = getSpecList(); if (list.length === 0) return showToast(getLabel('toastEmptySpecs')); if (!confirm(getLabel('specClearConfirm'))) return; saveSpecBackup(list); saveSpecList([]); renderSpecCards(); document.getElementById('spec-restore-btn').style.display = ''; showToast(getLabel('toastSpecCleared')); }
+    function restoreSpecList() { const backup = getSpecBackup(); if (backup.length === 0) return; saveSpecList(backup); renderSpecCards(); document.getElementById('spec-restore-btn').style.display = 'none'; showToast(getLabel('toastSpecRestored')); }
     function specListToString() { const list = getSpecList(); return list.length === 0 ? '（なし）' : list.map((item, i) => `${i + 1}. ${item.text}`).join('\n'); }
 
     /* === AI機能 / ペルソナ抽出 === */
@@ -669,11 +759,11 @@
                 items.forEach(text => { if (typeof text === 'string' && text.trim()) { const trimmed = text.trim(); if (!list.some(item => item.text === trimmed)) { list.push({ id: Date.now().toString() + Math.random().toString(36).slice(2, 6), text: trimmed, source: 'auto', isNew: true }); addedCount++; } } });
                 if (addedCount > 0) {
                     saveSpecList(list); renderSpecCards();
-                    const sysMsg = { id: Date.now().toString(), role: 'ai system-msg', text: `📋 仕様リスト更新（+${addedCount}件）`, html: false };
+                    const sysMsg = { id: Date.now().toString(), role: 'ai system-msg', text: getLabel('aiSystemMsgSpecsUpdated').replace('{count}', addedCount), html: false };
                     chatHistory.push(sysMsg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(sysMsg);
                 }
             }
-        } catch(e) {}
+        } catch(e) { /* silent error */ }
     }
 
     // ユーザーペルソナ抽出・更新提案
@@ -686,11 +776,11 @@
             if (!cleaned || cleaned === '{}') return;
             const data = JSON.parse(cleaned);
             if (data.newProfile && data.newProfile !== currentProfile) { showProfileProposalModal(currentProfile, data.newProfile); }
-        } catch(e) {}
+        } catch(e) { /* silent error */ }
     }
     function showProfileProposalModal(oldProfile, newProfile) { document.getElementById('old-profile-text').textContent = oldProfile; document.getElementById('new-profile-text').textContent = newProfile; document.getElementById('profile-proposal-modal').classList.add('show'); }
     function closeProfileProposalModal() { document.getElementById('profile-proposal-modal').classList.remove('show'); }
-    function acceptProfileProposal() { document.getElementById('user-profile').value = document.getElementById('new-profile-text').textContent; autoSaveSettings(); closeProfileProposalModal(); showToast('ユーザーペルソナを更新しました'); }
+    function acceptProfileProposal() { document.getElementById('user-profile').value = document.getElementById('new-profile-text').textContent; autoSaveSettings(); closeProfileProposalModal(); showToast(getLabel('toastProfileUpdated')); }
 
     // AIからの質問・選択肢モーダル
     function showAIQuestionModal(text, options) {
@@ -706,10 +796,10 @@
             btn.onclick = () => { 
                 closeAIQuestionModal(); 
                 const choice = opt.trim();
-                if (choice === "⚡️修正を依頼") {
-                    document.getElementById('user-prompt').value = "未実装の要件を全て実装してください。";
-                } else if (choice === "✨要件をおまかせ" || choice === "✨ 要件をおまかせ") {
-                    document.getElementById('user-prompt').value = document.getElementById('prompt-suggest').value.trim() || getPrompt('suggest');
+                if (choice === getLabel('aiQuestionOptionFix') || choice === getLabel('aiQuestionOptionFixAlt')) {
+                    document.getElementById('user-prompt').value = getPrompt('debug').replace('{memoText}', getLabel('aiQuestionOptionFixPrompt')); // AIへの指示はprompt-debugで
+                } else if (choice === getLabel('aiQuestionOptionSuggest')) {
+                    document.getElementById('user-prompt').value = getPrompt('suggest');
                 } else {
                     document.getElementById('user-prompt').value = choice; 
                 }
@@ -730,24 +820,24 @@
             const missing = JSON.parse(result.text.replace(/```json|```/g, '').trim());
             let sysMsg;
             if (Array.isArray(missing) && missing.length > 0) { 
-                sysMsg = { id: Date.now().toString(), role: 'ai system-msg', text: `⚠️ 未実装の要件があります:\n${missing.map((m,i) => `  ${i+1}. ${m}`).join('\n')}`, html: false }; 
+                sysMsg = { id: Date.now().toString(), role: 'ai system-msg', text: `${getLabel('aiSystemMsgMissingReqs')}${missing.map((m,i) => `  ${i+1}. ${m}`).join('\n')}`, html: false }; 
                 const newList = missing.map(m => ({ id: Date.now().toString() + Math.random().toString(36).slice(2, 6), text: m, source: 'auto', isNew: true }));
                 saveSpecBackup(list); saveSpecList(newList); renderSpecCards();
-                setTimeout(() => showAIQuestionModal("未実装の要件が残っています。これらの修正を依頼しますか？", ["⚡️修正を依頼", "✨要件をおまかせ"]), 1000);
+                setTimeout(() => showAIQuestionModal(getLabel('aiQuestionPromptMissingReqs'), [getLabel('aiQuestionOptionFix'), getLabel('aiQuestionOptionSuggest')]), 1000);
             } else { 
-                sysMsg = { id: Date.now().toString(), role: 'ai system-msg', text: '✅ 全仕様を網羅しました', html: false }; 
+                sysMsg = { id: Date.now().toString(), role: 'ai system-msg', text: getLabel('aiSystemMsgAllSpecsCovered'), html: false }; 
                 saveSpecBackup(list); saveSpecList([]); document.getElementById('spec-restore-btn').style.display = ''; renderSpecCards();
             }
             chatHistory.push(sysMsg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(sysMsg);
-        } catch(e) {}
+        } catch(e) { /* silent error */ }
     }
 
     /* === APIキー暗号化 === */
     const KEY_EXPIRYDAYS = 14; const CRYPTO_SALT = 'AIWebStudio-salt';
     async function getCryptoKey() { const enc = new TextEncoder(); const km = await crypto.subtle.importKey('raw', enc.encode(CRYPTO_SALT + navigator.userAgent.slice(0, 50)), 'PBKDF2', false, ['deriveKey']); return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: enc.encode(CRYPTO_SALT), iterations: 100000, hash: 'SHA-256' }, km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']); }
     async function saveEncryptedKeys(keys) { const key = await getCryptoKey(); const enc = new TextEncoder(); const iv = crypto.getRandomValues(new Uint8Array(12)); const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(keys))); await saveToDB('encryptedApiKeys', { iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)), ts: Date.now() }); }
-    async function loadEncryptedKeys() { try { const obj = await getFromDB('encryptedApiKeys'); if (!obj) return null; if (Date.now() - obj.ts > KEY_EXPIRYDAYS * 24 * 60 * 60 * 1000) { await deleteFromDB('encryptedApiKeys'); return null; } const key = await getCryptoKey(); const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(obj.iv) }, key, new Uint8Array(obj.data)); return JSON.parse(new TextDecoder().decode(decrypted)); } catch(e) { return null; } }
-    function updateKeyExpiryStatus(keys) { const el = document.getElementById('key-expiry-status'); if (!el) return; if (!keys) { el.innerHTML = 'キー未保存。設定から入力してください。'; return; } getFromDB('encryptedApiKeys').then(obj => { if (!obj || !obj.ts) { el.textContent = ''; return; } const remaining = Math.ceil((new Date(obj.ts + KEY_EXPIRYDAYS * 24 * 60 * 60 * 1000) - Date.now()) / (24 * 60 * 60 * 1000)); el.textContent = remaining > 0 ? `残り${remaining}日で自動消去されます` : '期限切れです'; }); }
+    async function loadEncryptedKeys() { try { const obj = await getFromDB('encryptedApiKeys'); if (!obj) return null; if (Date.now() - obj.ts > KEY_EXPIRYDAYS * 24 * 60 * 60 * 1000) { await deleteFromDB('encryptedApiKeys'); return null; } const key = await getCryptoKey(); const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(obj.iv) }, key, new Uint8Array(decrypted)); return JSON.parse(new TextDecoder().decode(decrypted)); } catch(e) { return null; } }
+    function updateKeyExpiryStatus(keys) { const el = document.getElementById('key-expiry-status'); if (!el) return; if (!keys) { el.innerHTML = getLabel('keyExpiryStatusNotSaved'); return; } getFromDB('encryptedApiKeys').then(obj => { if (!obj || !obj.ts) { el.textContent = ''; return; } const remaining = Math.ceil((new Date(obj.ts + KEY_EXPIRYDAYS * 24 * 60 * 60 * 1000) - Date.now()) / (24 * 60 * 60 * 1000)); el.textContent = remaining > 0 ? getLabel('keyExpiryStatusRemaining').replace('{remaining}', remaining) : getLabel('keyExpiryStatusExpired'); }); }
     function getCurrentApiKey() { const provider = document.getElementById('ai-provider').value; const el = document.getElementById('api-key-' + provider); return el ? el.value.trim() : ''; }
     function onProviderChange() { const provider = document.getElementById('ai-provider').value; updateModelOptions('chat-model', PROVIDER_MODELS[provider].chat); updateModelOptions('code-model', PROVIDER_MODELS[provider].code); document.querySelectorAll('.api-key-field').forEach(el => el.style.display = el.dataset.provider === provider ? '' : 'none'); toggleModelSelects(); }
     function updateModelOptions(selectId, models) { document.getElementById(selectId).innerHTML = models.map(([v, l]) => `<option value="${v}">${l}</option>`).join(''); }
@@ -770,7 +860,7 @@
             await saveToDB('settings', settings);
             const ghToken = document.getElementById('setting-gh-token').value.trim();
             if (ghToken) { await saveToDB('gh_token', ghToken); document.getElementById('deploy-token-input').value = ghToken; } else await deleteFromDB('gh_token');
-            showToast('設定を自動保存しました');
+            showToast(getLabel('toastSettingsSaved'));
         }, 800);
     }
 
@@ -813,30 +903,30 @@
 
     async function loadChatHistory() {
         const history = await getFromDB('chatHistory');
-        if (history && history.length > 0) { chatHistory = history; document.getElementById('chat-log').innerHTML = ''; chatHistory.forEach(msg => { if(msg.html && msg.text.includes('spinner')) { msg.text = '⚠️ 中断されました。'; msg.html = false; } renderMessageFromHistory(msg); }); rebuildConversationContext(); } 
-        else { const initMsg = { id: Date.now().toString(), role: 'ai system-msg', text: 'AI Web Studio 起動。\n要件を教えてください。プランが固まったら「⚡️コードを作成」ボタンを表示します。', html: false }; chatHistory.push(initMsg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(initMsg); rebuildConversationContext(); }
+        if (history && history.length > 0) { chatHistory = history; document.getElementById('chat-log').innerHTML = ''; chatHistory.forEach(msg => { if(msg.html && msg.text.includes('spinner')) { msg.text = getLabel('aiSystemMsgInterrupted'); msg.html = false; } renderMessageFromHistory(msg); }); rebuildConversationContext(); } 
+        else { const initMsg = { id: Date.now().toString(), role: 'ai system-msg', text: getLabel('aiSystemMsgInitial'), html: false }; chatHistory.push(initMsg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(initMsg); rebuildConversationContext(); }
     }
     function renderMessageFromHistory(msg) { const log = document.getElementById('chat-log'); log.appendChild(createMessageElement(msg)); log.scrollTop = log.scrollHeight; }
     function createMessageElement(msg) {
         const d = document.createElement('div'); d.className = `msg ${msg.role}`; d.dataset.id = msg.id;
         const c = document.createElement('div'); c.className = 'msg-content'; if (msg.html) c.innerHTML = msg.text; else c.textContent = msg.text; d.appendChild(c);
-        if (!msg.role.includes('system-msg') && !msg.html) { const a = document.createElement('div'); a.className = 'msg-actions'; const ed = document.createElement('button'); ed.className = 'msg-action-btn'; ed.innerHTML = '✏️'; ed.onclick = () => { if (c.contentEditable === "true") { c.contentEditable = "false"; c.style.border = "none"; c.style.padding = "0"; ed.innerHTML = '✏️'; const m = chatHistory.find(x => x.id === msg.id); if (m) { m.text = c.textContent; saveToDB('chatHistory', chatHistory); rebuildConversationContext(); showToast('保存しました'); } } else { c.contentEditable = "true"; c.style.border = "1px solid var(--primary)"; c.style.padding = "4px"; c.focus(); ed.innerHTML = '💾'; } }; const dl = document.createElement('button'); dl.className = 'msg-action-btn'; dl.innerHTML = '🗑️'; dl.onclick = () => { chatHistory = chatHistory.filter(x => x.id !== msg.id); d.remove(); saveToDB('chatHistory', chatHistory); rebuildConversationContext(); showToast('削除しました'); }; a.appendChild(ed); a.appendChild(dl); d.appendChild(a); }
-        if (msg.role === 'ai' && !msg.html) { const b = document.createElement('div'); b.className = 'generate-btn-wrapper'; let h = false; if (msg.text.includes('⚡️コードを作成')) { const gb = document.createElement('button'); gb.className = 'generate-btn'; gb.innerHTML = '⚡️ コードを作成 (BUILD)'; gb.onclick = generateCode; b.appendChild(gb); h = true; } if (msg.text.includes('✨ 要件をおまかせ')) { const pb = document.createElement('button'); pb.className = 'generate-btn'; pb.style.background = 'var(--accent)'; pb.innerHTML = '✨ 要件をおまかせ'; pb.onclick = askForPlan; b.appendChild(pb); h = true; } if (h) d.appendChild(b); }
+        if (!msg.role.includes('system-msg') && !msg.html) { const a = document.createElement('div'); a.className = 'msg-actions'; const ed = document.createElement('button'); ed.className = 'msg-action-btn'; ed.innerHTML = getLabel('chatMsgEdit'); ed.onclick = () => { if (c.contentEditable === "true") { c.contentEditable = "false"; c.style.border = "none"; c.style.padding = "0"; ed.innerHTML = getLabel('chatMsgEdit'); const m = chatHistory.find(x => x.id === msg.id); if (m) { m.text = c.textContent; saveToDB('chatHistory', chatHistory); rebuildConversationContext(); showToast(getLabel('toastSettingsSaved')); } } else { c.contentEditable = "true"; c.style.border = "1px solid var(--primary)"; c.style.padding = "4px"; c.focus(); ed.innerHTML = getLabel('chatMsgSave'); } }; const dl = document.createElement('button'); dl.className = 'msg-action-btn'; dl.innerHTML = getLabel('chatMsgDelete'); dl.onclick = () => { chatHistory = chatHistory.filter(x => x.id !== msg.id); d.remove(); saveToDB('chatHistory', chatHistory); rebuildConversationContext(); showToast(getLabel('toastSettingsSaved')); }; a.appendChild(ed); a.appendChild(dl); d.appendChild(a); }
+        if (msg.role === 'ai' && !msg.html) { const b = document.createElement('div'); b.className = 'generate-btn-wrapper'; let h = false; if (msg.text.includes(getLabel('generateCodeButton'))) { const gb = document.createElement('button'); gb.className = 'generate-btn'; gb.innerHTML = getLabel('generateCodeButton'); gb.onclick = generateCode; b.appendChild(gb); h = true; } if (msg.text.includes(getLabel('aiQuestionOptionSuggest'))) { const pb = document.createElement('button'); pb.className = 'generate-btn'; pb.style.background = 'var(--accent)'; pb.innerHTML = getLabel('aiQuestionOptionSuggest'); pb.onclick = askForPlan; b.appendChild(pb); h = true; } if (h) d.appendChild(b); }
         return d;
     }
     function rebuildConversationContext() { conversationContext = ""; chatHistory.forEach(msg => { if (msg.role === 'user') { conversationContext += `\nユーザー: ${msg.text}`; if(msg.attachment) conversationContext += ` (添付: ${msg.attachment})`; } else if (msg.role === 'ai') { conversationContext += `\nアシスタント: ${msg.text}`; } }); }
-    function confirmReset() { if (confirm("リセットしますか？")) { chatHistory = []; document.getElementById('chat-log').innerHTML = ''; window.setCode(""); updatePreview(); removeAttachment(); const initMsg = { id: Date.now().toString(), role: 'ai system-msg', text: 'リセットしました。\n要件を教えてください。', html: false }; chatHistory.push(initMsg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(initMsg); rebuildConversationContext(); clearSpecList(); } }
-    function resetChatForNewCode(source) { chatHistory = []; document.getElementById('chat-log').innerHTML = ''; const msg = { id: Date.now().toString(), role: 'ai system-msg', text: source + ' からコードを読み込みました。\n修正したい点があれば教えてください。', html: false }; chatHistory.push(msg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(msg); rebuildConversationContext(); clearSpecList(); }
+    function confirmReset() { if (confirm(getLabel('tabButtonResetConfirm'))) { chatHistory = []; document.getElementById('chat-log').innerHTML = ''; window.setCode(""); updatePreview(); removeAttachment(); const initMsg = { id: Date.now().toString(), role: 'ai system-msg', text: getLabel('aiSystemMsgReset'), html: false }; chatHistory.push(initMsg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(initMsg); rebuildConversationContext(); clearSpecList(); } }
+    function resetChatForNewCode(source) { chatHistory = []; document.getElementById('chat-log').innerHTML = ''; const msg = { id: Date.now().toString(), role: 'ai system-msg', text: getLabel('aiSystemMsgCodeLoaded').replace('{source}', source), html: false }; chatHistory.push(msg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(msg); rebuildConversationContext(); clearSpecList(); }
 
     /* --- チャット・コード生成実行 --- */
-    function askForPlan() { document.getElementById('user-prompt').value = document.getElementById('prompt-suggest').value.trim() || getPrompt('suggest'); askAI(); }
+    function askForPlan() { document.getElementById('user-prompt').value = getPrompt('suggest'); askAI(); }
     async function askAI() {
         const prof = document.getElementById('user-profile').value; const model = document.getElementById('chat-model').value;
         const input = document.getElementById('user-prompt'); const promptText = input.value.trim();
-        if(!promptText && !currentFileName) return showToast('入力が必要です');
+        if(!promptText && !currentFileName) return showToast(getLabel('toastInputRequired'));
         const userMsgObj = { id: Date.now().toString(), role: 'user', text: promptText, html: false }; if(currentFileName) userMsgObj.attachment = currentFileName;
         chatHistory.push(userMsgObj); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(userMsgObj);
-        const aiMsgId = (Date.now() + 1).toString(); const aiMsgObj = { id: aiMsgId, role: 'ai', text: '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>考案中...</span></div>', html: true };
+        const aiMsgId = (Date.now() + 1).toString(); const aiMsgObj = { id: aiMsgId, role: 'ai', text: `<div style="display:flex;align-items:center;"><div class="spinner"></div><span>${getLabel('aiSystemMsgThinking')}</span></div>`, html: true };
         chatHistory.push(aiMsgObj); saveToDB('chatHistory', chatHistory); const log = document.getElementById('chat-log'); const aiMsgElement = createMessageElement(aiMsgObj); log.appendChild(aiMsgElement); log.scrollTop = log.scrollHeight; const contentDiv = aiMsgElement.querySelector('.msg-content');
         input.value = ''; input.style.height = "44px";
         const codeContext = window.getCode() ? `\n\n【現在のコード】\n\`\`\`html\n${window.getCode()}\n\`\`\`\n※上記を踏まえて提案してください。` : "";
@@ -858,19 +948,19 @@
             if (match) {
                 const options = match[1].split('|').map(s => s.trim()).filter(s => s);
                 aiText = aiText.replace(optionRegex, '').trim();
-                showAIQuestionModal("次の選択肢から選んでください:", options);
+                showAIQuestionModal(getLabel('aiQuestionModalTitle'), options);
             }
 
             const aiMsgToUpdate = chatHistory.find(m => m.id === aiMsgId); if(aiMsgToUpdate) { aiMsgToUpdate.text = aiText; aiMsgToUpdate.html = false; saveToDB('chatHistory', chatHistory); aiMsgElement.replaceWith(createMessageElement(aiMsgToUpdate)); log.scrollTop = log.scrollHeight; }
             if (aiText) { await extractSpecsFromChat(promptText, aiText); extractUserProfileFromChat(promptText, aiText); }
-        } catch (e) { contentDiv.textContent = 'エラー: ' + e.message; } finally { clearNewSpecFlags(); }
+        } catch (e) { contentDiv.textContent = `${getLabel('aiSystemMsgBuildError')} ${e.message}`; } finally { clearNewSpecFlags(); }
     }
 
     async function generateCode() {
         clearNewSpecFlags();
         const prof = document.getElementById('user-profile').value; const model = document.getElementById('code-model').value;
         const currentCode = window.getCode();
-        const sysMsgObj = { id: Date.now().toString(), role: 'ai system-msg', text: '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>構築中...</span></div>', html: true };
+        const sysMsgObj = { id: Date.now().toString(), role: 'ai system-msg', text: `<div style="display:flex;align-items:center;"><div class="spinner"></div><span>${getLabel('aiSystemMsgBuildingCode')}</span></div>`, html: true };
         chatHistory.push(sysMsgObj); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(sysMsgObj);
         const themeCSS = await getSelectedThemeCSS();
         const system = `Expert Full-stack Web Developerとして完全なHTMLファイルを出力してください。\n${document.getElementById('system-prompt').value.trim()}\nペルソナ: ${prof}\nルール: Markdownのコードブロック不要。\n${document.getElementById('code-principles').value.trim()}\n${themeCSS ? `【デザイン】以下のCSS変数を使用\n${themeCSS}` : ''}\n${currentCode ? `既存コード:\n${currentCode}` : '新規作成'}\n【実装要件】\n${specListToString()}`;
@@ -878,16 +968,165 @@
             const result = await callLLM({ prompt: system, stream: false, model });
             let code = result.text.replace(/^```html\s*/i, '').replace(/^```\s*/, '').replace(/```$/g, '').trim();
             window.setCode(code); updatePreview(); showPage('preview', document.getElementById('tab-preview'));
-            sysMsgObj.text = '✨ 構築完了。PREVIEWを確認してください。'; sysMsgObj.html = false; document.querySelector(`[data-id="${sysMsgObj.id}"] .msg-content`).textContent = sysMsgObj.text; saveToDB('chatHistory', chatHistory);
+            sysMsgObj.text = getLabel('aiSystemMsgBuildComplete'); sysMsgObj.html = false; document.querySelector(`[data-id="${sysMsgObj.id}"] .msg-content`).textContent = sysMsgObj.text; saveToDB('chatHistory', chatHistory);
             verifySpecCoverage(code);
-        } catch (e) { sysMsgObj.text = '<span style="color:var(--danger)">エラー: ' + e.message + '</span>'; document.querySelector(`[data-id="${sysMsgObj.id}"] .msg-content`).innerHTML = sysMsgObj.text; saveToDB('chatHistory', chatHistory); }
+        } catch (e) { sysMsgObj.text = `<span style="color:var(--danger)">${getLabel('aiSystemMsgBuildError')} ${e.message}</span>`; document.querySelector(`[data-id="${sysMsgObj.id}"] .msg-content`).innerHTML = sysMsgObj.text; saveToDB('chatHistory', chatHistory); }
     }
 
-    function sendDebugRequest() { const text = document.getElementById('debug-memo').value.trim(); if (!text) return; showPage('chat', document.getElementById('tab-chat')); const input = document.getElementById('user-prompt'); input.value = (document.getElementById('prompt-debug').value.trim() || getPrompt('debug')).replace('{memoText}', text); autoGrow(input); document.getElementById('debug-memo').value = ''; askAI(); }
+    function sendDebugRequest() { 
+        const text = document.getElementById('debug-memo').value.trim(); 
+        if (!text) return; 
+        showPage('chat', document.getElementById('tab-chat')); 
+        const input = document.getElementById('user-prompt'); 
+        // 修正依頼のプロンプトテキストをプロンプトファイルから取得
+        input.value = getPrompt('debug').replace('{memoText}', text); 
+        autoGrow(input); 
+        document.getElementById('debug-memo').value = ''; 
+        askAI(); 
+    }
+
+    /* --- UIテキストの適用 --- */
+    function applyUITexts() {
+        // Tabs
+        document.getElementById('tab-chat').textContent = getLabel('tabChat');
+        document.getElementById('tab-editor').textContent = getLabel('tabCode');
+        document.getElementById('tab-preview').textContent = getLabel('tabPreview');
+        document.getElementById('tab-settings').textContent = getLabel('tabSettings');
+
+        // Chat Header
+        document.querySelector('.chat-header .header-title').textContent = getLabel('headerConversation');
+        document.querySelector('.chat-header .spec-btn').innerHTML = `${getLabel('specButton')} <span id="spec-badge" class="tab-badge empty">0</span>`;
+        document.querySelector('.chat-header .reset-btn').textContent = getLabel('newButton');
+
+        // Floating Generate Container
+        document.getElementById('floating-generate-container').querySelector('.generate-btn').innerHTML = getLabel('generateCodeButton');
+
+        // Input Container
+        document.querySelector('#attach-menu .menu-item:nth-child(1)').textContent = getLabel('cameraOption');
+        document.querySelector('#attach-menu .menu-item:nth-child(2)').textContent = getLabel('galleryOption');
+        document.querySelector('#attach-menu .menu-item:nth-child(3)').textContent = getLabel('filesOption');
+        document.getElementById('user-prompt').placeholder = getLabel('userPromptPlaceholder');
+        document.getElementById('send-btn').textContent = getLabel('sendButton');
+
+        // Editor Actions
+        document.querySelector('.action-btn.import-btn').textContent = getLabel('importButton');
+        document.querySelector('.action-btn.upload-btn').textContent = getLabel('uploadButton');
+        document.querySelector('.action-btn.search-btn').textContent = getLabel('searchButton');
+        document.querySelector('.action-btn.download-btn').textContent = getLabel('downloadButton');
+        document.querySelector('.action-btn.deploy-btn').textContent = getLabel('deployButton');
+
+        // Debug Panel
+        document.getElementById('debug-memo').placeholder = getLabel('debugMemoPlaceholder');
+        document.querySelector('.debug-panel .debug-btn').textContent = getLabel('debugRequestButton');
+
+        // Settings Page
+        document.querySelector('#p-settings .field:nth-child(1) label').textContent = getLabel('aiProviderLabel');
+        document.querySelector('#p-settings .field:nth-child(2) label').textContent = getLabel('chatModelLabel');
+        document.querySelector('#p-settings .field:nth-child(3) label').textContent = getLabel('codeModelLabel');
+        document.querySelector('.api-key-field[data-provider="gemini"] label').textContent = getLabel('apiKeyGeminiLabel');
+        document.querySelector('.api-key-field[data-provider="openai"] label').textContent = getLabel('apiKeyOpenAILabel');
+        document.querySelector('.api-key-field[data-provider="claude"] label').textContent = getLabel('apiKeyClaudeLabel');
+        document.querySelector('.api-key-field[data-provider="xai"] label').textContent = getLabel('apiKeyXaiLabel');
+        document.querySelector('.api-key-field[data-provider="groq"] label').textContent = getLabel('apiKeyGroqLabel');
+        document.querySelector('#api-keys-section + .field label').textContent = getLabel('apiKeySecurityLabel');
+        document.querySelector('#api-keys-section + .field + .field label').textContent = getLabel('ghTokenLabel');
+        document.querySelector('#api-keys-section + .field + .field + .field label').textContent = getLabel('userPersonaLabel');
+        document.querySelector('#api-keys-section + .field + .field + .field .reset-default-btn').textContent = getLabel('resetDefaultButton');
+        document.getElementById('user-profile').placeholder = getLabel('userPersonaPlaceholder'); // Placeholder for user-profile
+        document.querySelector('.field:nth-of-type(6) .field-header label').textContent = getLabel('systemPromptLabel');
+        document.querySelector('.field:nth-of-type(6) .reset-default-btn').textContent = getLabel('resetDefaultButton');
+        document.querySelector('.field:nth-of-type(7) .field-header label').textContent = getLabel('codePrinciplesLabel');
+        document.querySelector('.field:nth-of-type(7) .reset-default-btn').textContent = getLabel('resetDefaultButton');
+        document.querySelector('.prompt-details summary').textContent = getLabel('promptTemplatesSummary');
+        document.querySelector('.prompt-details .field-header:nth-of-type(1) label').textContent = getLabel('planPromptLabel');
+        document.querySelector('.prompt-details .field-header:nth-of-type(1) .reset-default-btn').textContent = getLabel('resetDefaultButton');
+        document.querySelector('.prompt-details .field-header:nth-of-type(2) label').textContent = getLabel('suggestPromptLabel');
+        document.querySelector('.prompt-details .field-header:nth-of-type(2) .reset-default-btn').textContent = getLabel('resetDefaultButton');
+        document.querySelector('.prompt-details .field-header:nth-of-type(3) label').textContent = getLabel('debugPromptLabel');
+        document.querySelector('.prompt-details .field-header:nth-of-type(3) .reset-default-btn').textContent = getLabel('resetDefaultButton');
+        document.querySelector('.theme-section label').textContent = getLabel('codeThemeLabel');
+        document.querySelector('.template-section label').textContent = getLabel('templatesLabel');
+
+        // Spec Modal
+        document.querySelector('#spec-modal .modal-header h3').textContent = getLabel('specModalTitle');
+        document.querySelector('#spec-modal .modal-close').textContent = '✕'; // Icon
+        document.querySelector('#spec-modal .modal-body p').textContent = getLabel('specModalDescription');
+        document.getElementById('spec-add-input').placeholder = getLabel('specAddPlaceholder');
+        document.querySelector('#spec-modal .spec-add-btn').textContent = getLabel('specAddButton');
+        document.getElementById('spec-restore-btn').textContent = getLabel('specRestoreButton');
+        document.querySelector('#spec-modal .spec-footer-btn.danger').textContent = getLabel('specClearButton');
+
+        // Profile Proposal Modal
+        document.querySelector('#profile-proposal-modal .modal-header h3').textContent = getLabel('profileProposalModalTitle');
+        document.querySelector('#profile-proposal-modal .modal-close').textContent = '✕';
+        document.querySelector('#profile-proposal-modal .modal-body p').textContent = getLabel('profileProposalDescription');
+        document.querySelector('#profile-proposal-modal .modal-body div:nth-child(2) label').textContent = getLabel('currentPersonaLabel');
+        document.querySelector('#profile-proposal-modal .modal-body div:nth-child(3) label').textContent = getLabel('proposedPersonaLabel');
+        document.querySelector('#profile-proposal-modal .modal-body .modal-btn:nth-child(1)').textContent = getLabel('discardButton');
+        document.querySelector('#profile-proposal-modal .modal-body .modal-btn:nth-child(2)').textContent = getLabel('applyButton');
+
+        // AI Question Modal
+        document.querySelector('#ai-question-modal .modal-header h3').textContent = getLabel('aiQuestionModalTitle');
+        document.querySelector('#ai-question-modal .modal-close').textContent = '✕';
+
+        // Search Modal
+        document.querySelector('#search-modal .modal-header h3').textContent = getLabel('searchModalTitle');
+        document.querySelector('#search-modal .modal-close').textContent = '✕';
+        document.getElementById('code-search-input').placeholder = getLabel('searchInputPlaceholder');
+
+        // GitHub Import Modal
+        document.querySelector('#gh-import-modal .modal-header h3').textContent = getLabel('ghImportModalTitle');
+        document.querySelector('#gh-import-modal .modal-close').textContent = '✕';
+        document.getElementById('gh-repo-search').placeholder = getLabel('ghRepoSearchPlaceholder');
+        document.querySelector('#gh-step-file .modal-btn').textContent = getLabel('ghBackToRepos');
+
+        // GitHub Deploy Modal
+        document.querySelector('#gh-deploy-modal .modal-header h3').textContent = getLabel('ghDeployModalTitle');
+        document.querySelector('#gh-deploy-modal .modal-close').textContent = '✕';
+        document.getElementById('deploy-token-input').placeholder = getLabel('deployTokenInputPlaceholder');
+        document.querySelector('#deploy-step-token .modal-btn').textContent = getLabel('deploySaveAndAuth');
+        document.querySelector('#deploy-step-repo .modal-btn').textContent = getLabel('deployNewRepoButton');
+        document.getElementById('deploy-repo-search').placeholder = getLabel('deploySearchPlaceholder');
+        document.querySelector('#deploy-step-new-repo .modal-btn:nth-child(1)').textContent = getLabel('deployNewRepoBack');
+        document.getElementById('new-repo-name').placeholder = getLabel('newRepoNamePlaceholder');
+        document.querySelector('#new-repo-private option[value="false"]').textContent = getLabel('newRepoPublicOption');
+        document.querySelector('#new-repo-private option[value="true"]').textContent = getLabel('newRepoPrivateOption');
+        document.querySelector('#deploy-step-new-repo .modal-btn:nth-child(5)').textContent = getLabel('newRepoCreateButton');
+        document.querySelector('#deploy-step-details .modal-btn').textContent = getLabel('deployNewRepoBack');
+        document.querySelector('#deploy-step-details div:nth-child(2)').childNodes[0].nodeValue = getLabel('deployTargetRepoPrefix'); // Text node access for prefix
+        document.getElementById('deploy-branch').placeholder = getLabel('deployBranchPlaceholder');
+        document.getElementById('deploy-filepath').placeholder = getLabel('deployFilePlaceholder');
+        document.getElementById('deploy-readme-content').placeholder = getLabel('deployReadmePlaceholder');
+        document.querySelector('#deploy-gh-pages + span').textContent = getLabel('deployGhPagesCheckbox'); // Label text for checkbox
+        document.getElementById('deploy-exec-btn').textContent = getLabel('deployExecButton');
+        document.querySelector('#deploy-step-success h4').textContent = getLabel('deploySuccessTitle');
+        document.getElementById('view-site-btn').textContent = getLabel('viewSiteButton');
+
+        // Background Notify
+        document.querySelector('#bg-notify span').textContent = getLabel('bgNotifyText');
+
+        // Theme Editor Modal
+        document.getElementById('theme-editor-title').textContent = getLabel('themeEditorModalTitleCreate');
+        document.getElementById('te-name').placeholder = getLabel('themeEditorNamePlaceholder');
+        document.getElementById('te-icon').placeholder = getLabel('themeEditorIconPlaceholder');
+        document.getElementById('te-desc').placeholder = getLabel('themeEditorDescPlaceholder');
+        document.querySelector('#theme-editor-modal .modal-btn:nth-of-type(1)').textContent = getLabel('themeEditorSaveButton');
+        document.querySelector('#theme-editor-modal .modal-btn:nth-of-type(2)').textContent = getLabel('themeEditorApplyButton');
+
+        // Template Editor Modal
+        document.getElementById('tpl-editor-title').textContent = getLabel('templateEditorModalTitleAdd');
+        document.getElementById('tple-name').placeholder = getLabel('templateEditorNamePlaceholder');
+        document.getElementById('tple-icon').placeholder = getLabel('templateEditorIconPlaceholder');
+        document.getElementById('tple-desc').placeholder = getLabel('templateEditorDescPlaceholder');
+        document.getElementById('tple-code').placeholder = getLabel('templateEditorCodePlaceholder');
+        document.querySelector('#tpl-editor-modal .modal-btn:nth-of-type(1)').textContent = getLabel('templateEditorLoadButton');
+        document.querySelector('#tpl-editor-modal .modal-btn:nth-of-type(2)').textContent = getLabel('templateEditorSaveButton');
+    }
 
     /* --- Init --- */
     window.onload = async () => {
-        await loadPrompts();
+        await loadPrompts(); // Load prompts first
+        applyUITexts(); // Apply UI texts after loading prompts
         try {
             const settings = await getFromDB('settings');
             if (settings) {
@@ -908,7 +1147,7 @@
                 onProviderChange(); ['user-profile','system-prompt','code-principles','prompt-plan','prompt-suggest','prompt-debug'].forEach(k => document.getElementById(k).value = getFieldDefaults()[k]); updateKeyExpiryStatus(null);
             }
             toggleModelSelects(); const ghToken = await getFromDB('gh_token'); if (ghToken) { document.getElementById('setting-gh-token').value = ghToken; document.getElementById('deploy-token-input').value = ghToken; }
-        } catch(e) {}
+        } catch(e) { /* silent error */ }
         
         await initCodeMirror(await getFromDB('currentCode'));
         await loadChatHistory(); loadThemeManager(); loadTemplateList();
@@ -920,37 +1159,37 @@
     function autoGrow(element) { element.style.height = "5px"; element.style.height = (element.scrollHeight) + "px"; }
     function toggleAttachmentMenu() { if (currentFileName) { removeAttachment(); return; } document.getElementById('attach-menu').classList.toggle('show'); }
     function triggerFile(type) { document.getElementById('file-' + type).click(); document.getElementById('attach-menu').classList.remove('show'); }
-    function handleAttachment(input) { const file = input.files[0]; if (!file) return; currentMimeType = file.type; currentFileName = file.name; const reader = new FileReader(); reader.onloadend = () => { currentImageBase64 = reader.result.split(',')[1]; document.querySelector('.file-label').innerHTML = '✕'; document.querySelector('.file-label').style.background = 'var(--danger)'; if (currentMimeType.startsWith('image/')) { document.getElementById('file-preview').src = reader.result; document.getElementById('file-preview').style.display = 'block'; document.getElementById('file-name-display').style.display = 'none'; } else { document.getElementById('file-preview').style.display = 'none'; document.getElementById('file-name-display').innerText = `📄 ${currentFileName}`; document.getElementById('file-name-display').style.display = 'inline-block'; } }; reader.readAsDataURL(file); input.value = ''; }
+    function handleAttachment(input) { const file = input.files[0]; if (!file) return; currentMimeType = file.type; currentFileName = file.name; const reader = new FileReader(); reader.onloadend = () => { currentImageBase64 = reader.result.split(',')[1]; document.querySelector('.file-label').innerHTML = '✕'; document.querySelector('.file-label').style.background = 'var(--danger)'; if (currentMimeType.startsWith('image/')) { document.getElementById('file-preview').src = reader.result; document.getElementById('file-preview').style.display = 'block'; document.getElementById('file-name-display').style.display = 'none'; } else { document.getElementById('file-preview').style.display = 'none'; document.getElementById('file-name-display').innerText = `${getLabel('ghFilePrefix')} ${currentFileName}`; document.getElementById('file-name-display').style.display = 'inline-block'; } }; reader.readAsDataURL(file); input.value = ''; }
     function removeAttachment() { currentImageBase64 = null; currentMimeType = null; currentFileName = null; document.getElementById('file-preview').style.display = 'none'; document.getElementById('file-name-display').style.display = 'none'; document.querySelector('.file-label').innerHTML = '＋'; document.querySelector('.file-label').style.background = 'var(--color-bg-elevated)'; document.getElementById('attach-menu').classList.remove('show'); }
     function triggerCodeUpload() { document.getElementById('code-upload-input').click(); }
-    function handleCodeUpload(input) { const file = input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { window.setCode(e.target.result); updatePreview(); resetChatForNewCode('Upload「' + file.name + '」'); }; reader.readAsText(file); input.value = ''; }
+    function handleCodeUpload(input) { const file = input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { window.setCode(e.target.result); updatePreview(); resetChatForNewCode(getLabel('uploadButton') + '「' + file.name + '」'); }; reader.readAsText(file); input.value = ''; }
     function updatePreview() { document.getElementById('preview-frame').srcdoc = window.getCode(); }
-    function downloadCode() { const code = window.getCode(); if (!code) return showToast("コードがありません"); const blob = new Blob([code], { type: 'text/html' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'index.html'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(url), 10000); showToast('ダウンロード開始'); }
+    function downloadCode() { const code = window.getCode(); if (!code) return showToast(getLabel('toastCodeMissing')); const blob = new Blob([code], { type: 'text/html' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'index.html'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(url), 10000); showToast(getLabel('toastDownloadStarted')); }
 
     /* --- GitHub --- */
-    async function openGitHubImport() { const token = await getFromDB('gh_token'); if (!token) return alert('トークン未設定'); document.getElementById('gh-import-modal').classList.add('show'); document.getElementById('gh-step-repo').style.display = ''; document.getElementById('gh-step-file').style.display = 'none'; fetchImportRepos(token); }
+    async function openGitHubImport() { const token = await getFromDB('gh_token'); if (!token) return alert(getLabel('tokenNotSetAlert')); document.getElementById('gh-import-modal').classList.add('show'); document.getElementById('gh-step-repo').style.display = ''; document.getElementById('gh-step-file').style.display = 'none'; fetchImportRepos(token); }
     function closeGitHubImport() { document.getElementById('gh-import-modal').classList.remove('show'); }
-    async function fetchImportRepos(token) { const s = document.getElementById('gh-modal-status'); s.textContent = '読込中...'; try { const res = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100', { headers: { 'Authorization': 'Bearer ' + token } }); ghImportRepos = await res.json(); renderImportRepos(ghImportRepos); s.textContent = ''; } catch (e) { s.textContent = 'エラー'; } }
+    async function fetchImportRepos(token) { const s = document.getElementById('gh-modal-status'); s.textContent = getLabel('ghLoading'); try { const res = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100', { headers: { 'Authorization': 'Bearer ' + token } }); ghImportRepos = await res.json(); renderImportRepos(ghImportRepos); s.textContent = ''; } catch (e) { s.textContent = getLabel('ghError'); } }
     function renderImportRepos(repos) { const l = document.getElementById('gh-repo-list'); l.innerHTML = ''; repos.forEach(r => { const li = document.createElement('li'); li.innerHTML = `<span>${r.name}</span>`; li.onclick = () => selectImportRepo(r); l.appendChild(li); }); }
     function filterImportRepos() { const q = document.getElementById('gh-repo-search').value.toLowerCase(); renderImportRepos(ghImportRepos.filter(r => r.name.toLowerCase().includes(q))); }
     async function selectImportRepo(repo) { document.getElementById('gh-step-repo').style.display = 'none'; document.getElementById('gh-step-file').style.display = ''; const token = await getFromDB('gh_token'); try { let res = await fetch(`https://api.github.com/repos/${repo.full_name}/git/trees/main?recursive=1`, { headers: { 'Authorization': 'Bearer ' + token } }); if (!res.ok) res = await fetch(`https://api.github.com/repos/${repo.full_name}/git/trees/master?recursive=1`, { headers: { 'Authorization': 'Bearer ' + token } }); renderFileTree(await res.json(), repo.full_name); } catch(e){} }
-    function renderFileTree(tree, fullName) { const l = document.getElementById('gh-file-list'); l.innerHTML = ''; tree.tree.filter(f => f.type === 'blob').forEach(f => { const li = document.createElement('li'); li.innerHTML = `<span>📄 ${f.path}</span>`; li.onclick = () => loadFileFromRepo(fullName, f.path); l.appendChild(li); }); }
-    async function loadFileFromRepo(fullName, path) { const token = await getFromDB('gh_token'); try { const res = await fetch(`https://api.github.com/repos/${fullName}/contents/${path}`, { headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3.raw' } }); window.setCode(await res.text()); updatePreview(); closeGitHubImport(); showPage('editor', document.getElementById('tab-editor')); resetChatForNewCode('GitHub Import「' + path + '」'); } catch(e){} }
+    function renderFileTree(tree, fullName) { const l = document.getElementById('gh-file-list'); l.innerHTML = ''; tree.tree.filter(f => f.type === 'blob').forEach(f => { const li = document.createElement('li'); li.innerHTML = `<span>${getLabel('ghFilePrefix')} ${f.path}</span>`; li.onclick = () => loadFileFromRepo(fullName, f.path); l.appendChild(li); }); }
+    async function loadFileFromRepo(fullName, path) { const token = await getFromDB('gh_token'); try { const res = await fetch(`https://api.github.com/repos/${fullName}/contents/${path}`, { headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3.raw' } }); window.setCode(await res.text()); updatePreview(); closeGitHubImport(); showPage('editor', document.getElementById('tab-editor')); resetChatForNewCode(getLabel('ghImportModalTitle') + '「' + path + '」'); } catch(e){} }
     function backToRepoList() { document.getElementById('gh-step-repo').style.display = ''; document.getElementById('gh-step-file').style.display = 'none'; }
 
     let selectedDeployRepo = null;
-    async function openDeployer() { const code = window.getCode(); if (!code) return alert("コードがありません"); await saveToDB('pending_deploy', { code: code, readme: "" }); openGitHubDeploy(); }
+    async function openDeployer() { const code = window.getCode(); if (!code) return alert(getLabel('toastCodeMissing')); await saveToDB('pending_deploy', { code: code, readme: "" }); openGitHubDeploy(); }
     async function openGitHubDeploy() { document.getElementById('gh-deploy-modal').classList.add('show'); const token = await getFromDB('gh_token'); if (token) { showDeployStep('repo'); fetchDeployRepos(); } else showDeployStep('token'); }
     function closeGitHubDeploy() { document.getElementById('gh-deploy-modal').classList.remove('show'); }
     function showDeployStep(s) { ['token','repo','new-repo','details','success'].forEach(x => { const el = document.getElementById('deploy-step-'+x); if(el) el.style.display = (x===s ? (['repo','token','success'].includes(x)?'block':'flex') : 'none'); }); }
-    async function saveDeployToken() { const input = document.getElementById('deploy-token-input').value.trim(); if (!input) return; try { await fetch('https://api.github.com/user', { headers: { 'Authorization': 'Bearer ' + input } }).then(r=>r.json()); await saveToDB('gh_token', input); document.getElementById('setting-gh-token').value = input; showDeployStep('repo'); fetchDeployRepos(); } catch(e){} }
+    async function saveDeployToken() { const input = document.getElementById('deploy-token-input').value.trim(); if (!input) return; try { await fetch('https://api.github.com/user', { headers: { 'Authorization': 'Bearer ' + input } }).then(r=>r.json()); await saveToDB('gh_token', input); document.getElementById('setting-gh-token').value = input; showDeployStep('repo'); fetchDeployRepos(); } catch(e){document.getElementById('deploy-token-status').innerHTML = getLabel('deployStatusError');} }
     let deployRepos = []; async function fetchDeployRepos() { const token = await getFromDB('gh_token'); const res = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100', { headers: { 'Authorization': 'Bearer ' + token } }); deployRepos = await res.json(); renderDeployRepos(deployRepos); }
     function renderDeployRepos(repos) { const l = document.getElementById('deploy-repo-list'); l.innerHTML = ''; repos.forEach(r => { const li = document.createElement('li'); li.innerHTML = `<span>${r.name}</span>`; li.onclick = () => { selectedDeployRepo = r; document.getElementById('deploy-target-repo-name').textContent = r.full_name; showDeployStep('details'); }; l.appendChild(li); }); }
     function filterDeployRepos() { const q = document.getElementById('deploy-repo-search').value.toLowerCase(); renderDeployRepos(deployRepos.filter(r => r.name.toLowerCase().includes(q))); }
-    async function createNewRepo() { const name = document.getElementById('new-repo-name').value.trim(); const token = await getFromDB('gh_token'); if (!name) return; document.getElementById('new-repo-status').textContent = '作成中...'; try { const res = await fetch('https://api.github.com/user/repos', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ name, private: document.getElementById('new-repo-private').value === 'true', auto_init: true }) }); if (!res.ok) throw new Error(); const r = await res.json(); selectedDeployRepo = r; document.getElementById('deploy-target-repo-name').textContent = r.full_name; showDeployStep('details'); } catch(e) { document.getElementById('new-repo-status').innerHTML = '❌ エラー'; } }
+    async function createNewRepo() { const name = document.getElementById('new-repo-name').value.trim(); const token = await getFromDB('gh_token'); if (!name) return; document.getElementById('new-repo-status').textContent = getLabel('newRepoCreating'); try { const res = await fetch('https://api.github.com/user/repos', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ name, private: document.getElementById('new-repo-private').value === 'true', auto_init: true }) }); if (!res.ok) throw new Error(); const r = await res.json(); selectedDeployRepo = r; document.getElementById('deploy-target-repo-name').textContent = r.full_name; showDeployStep('details'); } catch(e) { document.getElementById('new-repo-status').innerHTML = getLabel('newRepoError'); } }
     function encodeBase64Unicode(str) { return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1))); }
     async function executeDeploy() {
-        const btn = document.getElementById('deploy-exec-btn'); const status = document.getElementById('deploy-execute-status'); btn.disabled = true; status.innerHTML = 'デプロイ中...';
+        const btn = document.getElementById('deploy-exec-btn'); const status = document.getElementById('deploy-execute-status'); btn.disabled = true; status.innerHTML = getLabel('deploying');
         const branch = document.getElementById('deploy-branch').value || 'main'; const filepath = document.getElementById('deploy-filepath').value || 'index.html'; const token = await getFromDB('gh_token'); const repoFullName = selectedDeployRepo.full_name; const pendingDeploy = await getFromDB('pending_deploy'); const codeContent = pendingDeploy ? pendingDeploy.code : window.getCode();
         const pushFile = async (path, content, msg) => { let sha = null; const url = `https://api.github.com/repos/${repoFullName}/contents/${path}`; try { const getRes = await fetch(url + '?ref=' + branch, { headers: { 'Authorization': 'Bearer ' + token } }); if(getRes.ok) sha = (await getRes.json()).sha; } catch(e){} const body = { message: msg, content: encodeBase64Unicode(content), branch }; if (sha) body.sha = sha; const res = await fetch(url, { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); if (!res.ok) throw new Error(); };
         try {
@@ -958,10 +1197,10 @@
             if (document.getElementById('deploy-readme-content').value) await pushFile('README.md', document.getElementById('deploy-readme-content').value, 'Update README');
             ghPagesUrl = `https://${selectedDeployRepo.owner.login}.github.io/${selectedDeployRepo.name}/${filepath}`;
             if (document.getElementById('deploy-gh-pages').checked) { try { await fetch(`https://api.github.com/repos/${repoFullName}/pages`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' }, body: JSON.stringify({ source: { branch, path: '/' } }) }); } catch(e){} }
-            status.innerHTML = `<span style="color:var(--success)">✅ 成功！</span>`; await deleteFromDB('pending_deploy');
+            status.innerHTML = `<span style="color:var(--success)">${getLabel('deployStatusSuccess')}</span>`; await deleteFromDB('pending_deploy');
             showDeployStep('success'); document.getElementById('deploy-success-url').href = ghPagesUrl; document.getElementById('deploy-success-url').textContent = ghPagesUrl;
-            let count = 10; const interval = setInterval(() => { count--; document.getElementById('gh-pages-countdown-display').innerHTML = `公開準備中...残り ${count}秒`; if(count <= 0){ clearInterval(interval); document.getElementById('gh-pages-countdown-display').innerHTML = '✨ 公開されました！'; document.getElementById('view-site-btn').disabled = false; } }, 1000);
-        } catch(e) { status.innerHTML = `<span style="color:var(--danger)">❌ エラー</span>`; btn.disabled = false; }
+            let count = 10; const interval = setInterval(() => { count--; document.getElementById('gh-pages-countdown-display').innerHTML = `${getLabel('ghPagesCountdownPreparing')}...残り ${count}秒`; if(count <= 0){ clearInterval(interval); document.getElementById('gh-pages-countdown-display').innerHTML = getLabel('ghPagesReady'); document.getElementById('view-site-btn').disabled = false; } }, 1000);
+        } catch(e) { status.innerHTML = `<span style="color:var(--danger)">${getLabel('deployStatusError')}</span>`; btn.disabled = false; }
     }
     function openDeployedSite() { window.open(ghPagesUrl, '_blank'); closeGitHubDeploy(); }
 
@@ -970,27 +1209,27 @@
     const THEME_VARS = [ {key:'color-bg-deep',label:'背景 (深)',default:'#0D0F14'}, {key:'color-bg-surface',label:'背景 (面)',default:'#161920'}, {key:'color-bg-elevated',label:'背景 (浮)',default:'#1E2433'}, {key:'color-border',label:'ボーダー',default:'#2A2D36'}, {key:'color-text-primary',label:'テキスト',default:'#E8E4F0'}, {key:'primary',label:'Primary',default:'#3b82f6'}, {key:'accent',label:'Accent',default:'#8b5cf6'} ];
     async function loadThemeManager() { try { customThemes = (await getFromDB('customThemes')) || []; const saved = await getFromDB('codeTheme'); if (saved) currentThemeId = saved; } catch(e){} renderThemeGrid(); }
     function renderThemeGrid() {
-        let h = `<div class="theme-card ${currentThemeId==='none'?'active':''}" onclick="selectTheme('none')"><div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#888"></div></div><div class="theme-card-name">🚫 なし</div></div>`;
-        h += customThemes.map(t => `<div class="theme-card ${t.id===currentThemeId?'active':''}" onclick="selectTheme('${t.id}')"><div class="theme-preview-dots"><div class="theme-preview-dot" style="background:${t.colors['color-bg-deep']}"></div><div class="theme-preview-dot" style="background:${t.colors['primary']}"></div></div><div class="theme-card-name">${t.name}</div><div class="theme-card-actions"><button class="theme-action-btn" onclick="event.stopPropagation();deleteTheme('${t.id}')">🗑</button></div></div>`).join('');
-        h += `<div class="theme-new-card" onclick="openThemeEditor()">＋<span>新規作成</span></div>`; document.getElementById('theme-grid').innerHTML = h;
+        let h = `<div class="theme-card ${currentThemeId==='none'?'active':''}" onclick="selectTheme('none')"><div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#888"></div></div><div class="theme-card-name">🚫 ${getLabel('noSpecsMessage')}</div></div>`;
+        h += customThemes.map(t => `<div class="theme-card ${t.id===currentThemeId?'active':''}" onclick="selectTheme('${t.id}')"><div class="theme-preview-dots"><div class="theme-preview-dot" style="background:${t.colors['color-bg-deep']}"></div><div class="theme-preview-dot" style="background:${t.colors['primary']}"></div></div><div class="theme-card-name">${t.name}</div><div class="theme-card-actions"><button class="theme-action-btn" onclick="event.stopPropagation();deleteTheme('${t.id}')">${getLabel('chatMsgDelete')}</button></div></div>`).join('');
+        h += `<div class="theme-new-card" onclick="openThemeEditor()">＋<span>${getLabel('newRepoCreateButton')}</span></div>`; document.getElementById('theme-grid').innerHTML = h;
     }
     async function selectTheme(id) { currentThemeId = id; await saveToDB('codeTheme', id); renderThemeGrid(); if (window.getCode() && id !== 'none') injectThemeToCode(true); }
     async function getSelectedThemeCSS() { if (currentThemeId === 'none') return null; const t = customThemes.find(x => x.id === currentThemeId); return t ? t.css : null; }
-    function openThemeEditor() { editingThemeId = null; document.getElementById('theme-editor-title').textContent = '🎨 テーマ作成'; document.getElementById('te-colors').innerHTML = THEME_VARS.map(v => `<div style="display:flex;flex-direction:column;gap:4px;"><label style="font-size:10px">${v.label}</label><div style="display:flex;gap:4px;"><input type="color" value="${v.default}" oninput="this.nextElementSibling.value=this.value" style="width:30px;height:24px;border:none"><input type="text" class="theme-color-hex" data-key="${v.key}" value="${v.default}" style="flex:1;font-size:11px" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value))this.previousElementSibling.value=this.value"></div></div>`).join(''); document.getElementById('theme-editor-modal').classList.add('show'); }
+    function openThemeEditor() { editingThemeId = null; document.getElementById('theme-editor-title').textContent = getLabel('themeEditorModalTitleCreate'); document.getElementById('te-name').placeholder = getLabel('themeEditorNamePlaceholder'); document.getElementById('te-icon').placeholder = getLabel('themeEditorIconPlaceholder'); document.getElementById('te-desc').placeholder = getLabel('themeEditorDescPlaceholder'); document.getElementById('te-colors').innerHTML = THEME_VARS.map(v => `<div style="display:flex;flex-direction:column;gap:4px;"><label style="font-size:10px">${v.label}</label><div style="display:flex;gap:4px;"><input type="color" value="${v.default}" oninput="this.nextElementSibling.value=this.value" style="width:30px;height:24px;border:none"><input type="text" class="theme-color-hex" data-key="${v.key}" value="${v.default}" style="flex:1;font-size:11px" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value))this.previousElementSibling.value=this.value"></div></div>`).join(''); document.getElementById('theme-editor-modal').classList.add('show'); }
     function closeThemeEditor() { document.getElementById('theme-editor-modal').classList.remove('show'); }
-    async function saveThemeFromEditor() { const name = document.getElementById('te-name').value.trim(); if (!name) return; const colors = {}; document.querySelectorAll('.theme-color-hex').forEach(el => colors[el.dataset.key] = el.value); let css = ':root{\n'; THEME_VARS.forEach(v => css += `  --${v.key}: ${colors[v.key]};\n`); css += `  --bg: ${colors['color-bg-deep']}; --sidebar: ${colors['color-bg-surface']}; --user-msg: ${colors['color-bg-elevated']}; --ai-msg: ${colors['color-bg-deep']};\n}\nbody { color: ${colors['color-text-primary']}; background: ${colors['color-bg-deep']}; }`; const t = { id: 'custom-' + Date.now(), name, colors, css }; customThemes.push(t); await saveToDB('customThemes', customThemes); currentThemeId = t.id; await saveToDB('codeTheme', t.id); renderThemeGrid(); closeThemeEditor(); showToast('保存しました'); }
-    async function deleteTheme(id) { if (!confirm('削除しますか？')) return; customThemes = customThemes.filter(t => t.id !== id); await saveToDB('customThemes', customThemes); if (currentThemeId === id) { currentThemeId = 'none'; await saveToDB('codeTheme', 'none'); } renderThemeGrid(); }
-    async function injectThemeToCode(silent) { const css = await getSelectedThemeCSS(); if (!css) return; let code = window.getCode(); if (!code) return; const block = `/* === CODE THEME === */\n${css.trim()}\n/* === /CODE THEME === */`; const regex = /\/\* === CODE THEME === \*\/[\s\S]*?\/\* === \/CODE THEME === \*\//; if (regex.test(code)) code = code.replace(regex, block); else { const pos = code.lastIndexOf('</style>'); if (pos !== -1) code = code.slice(0, pos) + '\n' + block + '\n' + code.slice(pos); else { const h = code.indexOf('</head>'); if(h !== -1) code = code.slice(0, h) + '<style>\n' + block + '\n</style>\n' + code.slice(h); } } window.setCode(code); updatePreview(); if (!silent) showToast('反映しました'); }
+    async function saveThemeFromEditor() { const name = document.getElementById('te-name').value.trim(); if (!name) return; const colors = {}; document.querySelectorAll('.theme-color-hex').forEach(el => colors[el.dataset.key] = el.value); let css = ':root{\n'; THEME_VARS.forEach(v => css += `  --${v.key}: ${colors[v.key]};\n`); css += `  --bg: ${colors['color-bg-deep']}; --sidebar: ${colors['color-bg-surface']}; --user-msg: ${colors['color-bg-elevated']}; --ai-msg: ${colors['color-bg-deep']};\n}\nbody { color: ${colors['color-text-primary']}; background: ${colors['color-bg-deep']}; }`; const t = { id: 'custom-' + Date.now(), name, colors, css }; customThemes.push(t); await saveToDB('customThemes', customThemes); currentThemeId = t.id; await saveToDB('codeTheme', t.id); renderThemeGrid(); closeThemeEditor(); showToast(getLabel('toastThemeSaved')); }
+    async function deleteTheme(id) { if (!confirm(getLabel('themeDeleteConfirm'))) return; customThemes = customThemes.filter(t => t.id !== id); await saveToDB('customThemes', customThemes); if (currentThemeId === id) { currentThemeId = 'none'; await saveToDB('codeTheme', 'none'); } renderThemeGrid(); }
+    async function injectThemeToCode(silent) { const css = await getSelectedThemeCSS(); if (!css) return; let code = window.getCode(); if (!code) return; const block = `/* === CODE THEME === */\n${css.trim()}\n/* === /CODE THEME === */`; const regex = /\/\* === CODE THEME === \*\/[\s\S]*?\/\* === \/CODE THEME === \*\//; if (regex.test(code)) code = code.replace(regex, block); else { const pos = code.lastIndexOf('</style>'); if (pos !== -1) code = code.slice(0, pos) + '\n' + block + '\n' + code.slice(pos); else { const h = code.indexOf('</head>'); if(h !== -1) code = code.slice(0, h) + '<style>\n' + block + '\n</style>\n' + code.slice(h); } } window.setCode(code); updatePreview(); if (!silent) showToast(getLabel('toastThemeApplied')); }
 
     let customTemplates = []; async function loadTemplateList() { try { customTemplates = (await getFromDB('customTemplates')) || []; } catch(e){} renderTemplateGrid(); }
-    function renderTemplateGrid() { let h = customTemplates.map(t => `<div class="template-card" onclick="applyTemplate('${t.id}')"><div class="template-card-actions"><button class="theme-action-btn" onclick="event.stopPropagation();deleteCustomTemplate('${t.id}')">🗑</button></div><span class="template-icon">${t.icon}</span><div class="template-name">${t.name}</div></div>`).join(''); h += `<div class="template-new-card" onclick="openTemplateEditor()">＋<span>追加</span></div>`; document.getElementById('template-grid').innerHTML = h; }
-    function openTemplateEditor() { document.getElementById('tple-name').value=''; document.getElementById('tple-code').value=''; document.getElementById('tpl-editor-modal').classList.add('show'); }
+    function renderTemplateGrid() { let h = customTemplates.map(t => `<div class="template-card" onclick="applyTemplate('${t.id}')"><div class="template-card-actions"><button class="theme-action-btn" onclick="event.stopPropagation();deleteCustomTemplate('${t.id}')">${getLabel('chatMsgDelete')}</button></div><span class="template-icon">${t.icon}</span><div class="template-name">${t.name}</div></div>`).join(''); h += `<div class="template-new-card" onclick="openTemplateEditor()">＋<span>${getLabel('templateAddButton')}</span></div>`; document.getElementById('template-grid').innerHTML = h; }
+    function openTemplateEditor() { document.getElementById('tple-name').value=''; document.getElementById('tple-code').value=''; document.getElementById('tple-icon').value=getLabel('templateEditorIconPlaceholder'); document.getElementById('tple-name').placeholder = getLabel('templateEditorNamePlaceholder'); document.getElementById('tple-code').placeholder = getLabel('templateEditorCodePlaceholder'); document.getElementById('tpl-editor-modal').classList.add('show'); }
     function closeTemplateEditor() { document.getElementById('tpl-editor-modal').classList.remove('show'); }
     function triggerTplFileUpload() { document.getElementById('tpl-file-input').click(); }
     function handleTplFileUpload(input) { const file = input.files[0]; if(!file)return; const reader = new FileReader(); reader.onload = e => { document.getElementById('tple-code').value = e.target.result; if(!document.getElementById('tple-name').value) document.getElementById('tple-name').value = file.name.replace(/\.html$/i, ''); }; reader.readAsText(file); input.value = ''; }
-    async function saveCustomTemplate() { const name = document.getElementById('tple-name').value.trim(); const code = document.getElementById('tple-code').value; if(!name||!code)return; const t = { id: 'ctpl-' + Date.now(), name, icon: document.getElementById('tple-icon').value||'📄', code }; customTemplates.push(t); await saveToDB('customTemplates', customTemplates); renderTemplateGrid(); closeTemplateEditor(); showToast('保存しました'); }
-    async function deleteCustomTemplate(id) { if(!confirm('削除しますか？'))return; customTemplates = customTemplates.filter(t => t.id !== id); await saveToDB('customTemplates', customTemplates); renderTemplateGrid(); }
-    async function applyTemplate(id) { const t = customTemplates.find(x => x.id === id); if(!t)return; if (window.getCode() && !confirm('上書きしますか？')) return; window.setCode(t.code); updatePreview(); if (currentThemeId !== 'none') await injectThemeToCode(true); resetChatForNewCode('テンプレート「' + t.name + '」'); showPage('preview', document.getElementById('tab-preview')); }
+    async function saveCustomTemplate() { const name = document.getElementById('tple-name').value.trim(); const code = document.getElementById('tple-code').value; if(!name||!code)return; const t = { id: 'ctpl-' + Date.now(), name, icon: document.getElementById('tple-icon').value||getLabel('templateEditorIconPlaceholder'), code }; customTemplates.push(t); await saveToDB('customTemplates', customTemplates); renderTemplateGrid(); closeTemplateEditor(); showToast(getLabel('toastTemplateSaved')); }
+    async function deleteCustomTemplate(id) { if(!confirm(getLabel('templateDeleteConfirm')))return; customTemplates = customTemplates.filter(t => t.id !== id); await saveToDB('customTemplates', customTemplates); renderTemplateGrid(); }
+    async function applyTemplate(id) { const t = customTemplates.find(x => x.id === id); if(!t)return; if (window.getCode() && !confirm(getLabel('tabButtonOverwriteConfirm'))) return; window.setCode(t.code); updatePreview(); if (currentThemeId !== 'none') await injectThemeToCode(true); resetChatForNewCode(getLabel('templatesLabel') + '「' + t.name + '」'); showPage('preview', document.getElementById('tab-preview')); }
 </script>
 </body>
 </html>
