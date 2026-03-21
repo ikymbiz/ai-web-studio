@@ -76,6 +76,9 @@
         .spinner { width: 20px; height: 20px; border: 3px solid rgba(255, 255, 255, 0.2); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
+        .floating-generate-container { padding: 10px 15px 0; background: var(--bg); display: none; justify-content: flex-end; flex-shrink: 0; }
+        .floating-generate-container.show { display: flex; animation: menuFade 0.2s ease; }
+
         .input-container { padding: 15px; background: var(--bg); border-top: 1px solid var(--color-border); display: flex; flex-direction: column; gap: 10px; position: relative; }
         .input-row { display: flex; gap: 10px; align-items: flex-end; }
         #user-prompt { flex: 1; min-height: 44px; max-height: 150px; background: var(--color-bg-elevated); border: 1px solid var(--color-border-focus); border-radius: 22px; padding: 10px 20px; color: #fff; font-size: 16px; outline: none; resize: none; font-family: var(--font-body); }
@@ -181,7 +184,7 @@
         .spec-footer-btn:hover { color:#fff; border-color:var(--color-border-focus); }
         .spec-footer-btn.danger:hover { color:var(--danger); border-color:var(--danger); }
         
-        /* スワイプ・インライン編集用スタイル */
+        /* スワイプ・インライン編集・NEWカード強調用スタイル */
         .swipe-container { position: relative; overflow: hidden; border-radius: 10px; margin-bottom: 8px; border: 1px solid var(--color-border); background: var(--color-bg-elevated); }
         .swipe-content { position: relative; z-index: 2; background: var(--color-bg-elevated); padding: 10px 12px; display: flex; align-items: flex-start; gap: 10px; transition: transform 0.3s ease; }
         .swipe-actions { position: absolute; top: 0; right: 0; bottom: 0; display: flex; z-index: 1; }
@@ -194,6 +197,10 @@
         .spec-card-source.user { background:rgba(139,92,246,0.15); color:var(--accent); }
         .spec-card-text { flex: 1; font-size: 13px; color: var(--color-text-primary); line-height: 1.5; word-break: break-word; outline: none; }
         .spec-card-text[contenteditable="true"]:focus { background: rgba(255,255,255,0.05); border-radius: 4px; padding: 2px 4px; margin: -2px -4px; border: 1px dashed var(--color-border-focus); }
+        
+        @keyframes highlightNew { 0% { box-shadow: 0 0 0 2px var(--primary); background: rgba(59,130,246,0.15); } 100% { box-shadow: 0 0 0 0 transparent; background: var(--color-bg-elevated); } }
+        .is-new-card { animation: highlightNew 2.5s ease-out forwards; border-color: var(--primary); }
+        .is-new-badge { position: absolute; top: -6px; left: -6px; background: var(--danger); color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 8px; font-weight: bold; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.3); letter-spacing: 0.05em; }
     </style>
 </head>
 <body>
@@ -217,6 +224,10 @@
         </div>
 
         <div id="chat-log"></div>
+
+        <div id="floating-generate-container" class="floating-generate-container">
+            <button class="generate-btn" style="box-shadow: 0 4px 12px rgba(16,185,129,0.4);" onclick="generateCode()">⚡️ コードを作成 (BUILD)</button>
+        </div>
 
         <div class="input-container">
             <div id="attach-menu" class="attachment-menu">
@@ -567,7 +578,7 @@
                 debug: '以下の修正依頼に対し、原因と修正案を提示してください。\n依頼: {memoText}',
                 extract: '以下のやり取りから、実装すべき要件を抽出しJSONの文字列配列で出力してください。\n【ユーザー】{userMessage}\n【AI】{aiResponse}\n【既存】{existingSpecs}',
                 verify: '仕様とコードを照合し、未実装の要件をJSONの文字列配列で返してください。\n【仕様】{specList}\n【コード】{generatedCode}',
-                extractProfile: '以下の会話から、ユーザーの好みや開発におけるペルソナ（使用技術、デザインの好み等）に関する新しい情報があれば抽出してください。\n現在のペルソナ:\n{currentProfile}\nユーザーの発言:\n{userText}\nAIの応答:\n{aiText}\n\n【ルール】\n- 既存と重複しない新情報のみを抽出し、ペルソナを充実させた「更新後の文章全体」を生成してください。\n- 新情報がなければ空のJSON `{}` を返してください。\n- 更新がある場合は `{ "newProfile": "更新後の文章全体" }` 形式のJSONのみ出力すること。'
+                extractProfile: '以下の会話から、ユーザーの好みや開発におけるペルソナ（使用技術、デザインの好み等）に関する新しい情報があれば抽出してください。\n現在のペルソナ:\n{currentProfile}\nユーザーの発言:\n{userText}\nAIの応答:\n{aiText}\n\n【ルール】\n- 既存と重複しない新情報のみを抽出し、ペルソナを充実させた「更新後の文章全体」を生成してください。\n- ユーザーの好みや開発スタイルに関する情報のみ抽出し、システムの機能要件や具体的な仕様に関する記述は絶対に含めないでください。\n- 新情報がなければ空のJSON `{}` を返してください。\n- 更新がある場合は `{ "newProfile": "更新後の文章全体" }` 形式のJSONのみ出力すること。'
             }
         };
 
@@ -606,8 +617,10 @@
     function saveSpecList(list) { localStorage.setItem('specList', JSON.stringify(list)); updateSpecBadge(); }
     function getSpecBackup() { try { return JSON.parse(localStorage.getItem('specListBackup') || '[]'); } catch(e) { return []; } }
     function saveSpecBackup(list) { localStorage.setItem('specListBackup', JSON.stringify(list)); }
-    function updateSpecBadge() { const c = getSpecList().length; const b = document.getElementById('spec-badge'); if (b) { b.textContent = c; b.className = 'tab-badge' + (c === 0 ? ' empty' : ''); } }
-    
+    function updateSpecBadge() { const c = getSpecList().length; const b = document.getElementById('spec-badge'); if (b) { b.textContent = c; b.className = 'tab-badge' + (c === 0 ? ' empty' : ''); } updateFloatingGenerateBtn(); }
+    function updateFloatingGenerateBtn() { const container = document.getElementById('floating-generate-container'); if (!container) return; if (getSpecList().length > 0) container.classList.add('show'); else container.classList.remove('show'); }
+    function clearNewSpecFlags() { const list = getSpecList(); let changed = false; list.forEach(i => { if(i.isNew) { i.isNew = false; changed = true; } }); if(changed) { saveSpecList(list); renderSpecCards(); } }
+
     // スワイプ操作変数
     let startX = 0, currentX = 0, activeSwipeElement = null;
     function handleTouchStart(e, el) { startX = e.touches[0].clientX; currentX = 0; if (activeSwipeElement && activeSwipeElement !== el) activeSwipeElement.style.transform = 'translateX(0)'; activeSwipeElement = el; el.style.transition = 'none'; }
@@ -619,7 +632,8 @@
         if (list.length === 0) { container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--color-text-muted);font-size:13px;">仕様項目はありません</div>'; } 
         else {
             container.innerHTML = list.map(item => `
-                <div class="swipe-container" data-id="${item.id}">
+                <div class="swipe-container ${item.isNew ? 'is-new-card' : ''}" data-id="${item.id}">
+                    ${item.isNew ? '<div class="is-new-badge">NEW</div>' : ''}
                     <div class="swipe-actions">
                         <button class="swipe-btn edit" onclick="editSpecText('${item.id}')">編集</button>
                         <button class="swipe-btn delete" onclick="deleteSpecItem('${item.id}')">削除</button>
@@ -634,7 +648,7 @@
         updateSpecBadge();
     }
     function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
-    function addSpecManual() { const input = document.getElementById('spec-add-input'); const text = input.value.trim(); if (!text) return; const list = getSpecList(); list.push({ id: Date.now().toString(), text, source: 'user' }); saveSpecList(list); input.value = ''; renderSpecCards(); showToast('仕様を追加しました'); }
+    function addSpecManual() { const input = document.getElementById('spec-add-input'); const text = input.value.trim(); if (!text) return; const list = getSpecList(); if (list.some(item => item.text === text)) { showToast('既に同じ仕様が存在します'); return; } list.push({ id: Date.now().toString(), text, source: 'user', isNew: true }); saveSpecList(list); input.value = ''; renderSpecCards(); showToast('仕様を追加しました'); }
     function deleteSpecItem(id) { const list = getSpecList().filter(item => item.id !== id); saveSpecList(list); renderSpecCards(); }
     function editSpecText(id) { const el = document.getElementById('spec-text-' + id); if (el) { if (activeSwipeElement) { activeSwipeElement.style.transform = 'translateX(0)'; activeSwipeElement = null; } el.focus(); } }
     function updateSpecText(id, newText) { const text = newText.trim(); if (!text) { deleteSpecItem(id); return; } const list = getSpecList(); const item = list.find(i => i.id === id); if (item && item.text !== text) { item.text = text; saveSpecList(list); showToast('仕様を更新しました'); } }
@@ -651,10 +665,13 @@
             const result = await callLLM({ prompt, stream: false, model: document.getElementById('chat-model').value });
             const items = JSON.parse(result.text.replace(/```json|```/g, '').trim());
             if (Array.isArray(items) && items.length > 0) {
-                const list = getSpecList(); items.forEach(text => { if (typeof text === 'string' && text.trim()) list.push({ id: Date.now().toString() + Math.random().toString(36).slice(2, 6), text: text.trim(), source: 'auto' }); });
-                saveSpecList(list); renderSpecCards();
-                const sysMsg = { id: Date.now().toString(), role: 'ai system-msg', text: `📋 仕様リスト更新（+${items.length}件）`, html: false };
-                chatHistory.push(sysMsg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(sysMsg);
+                const list = getSpecList(); let addedCount = 0;
+                items.forEach(text => { if (typeof text === 'string' && text.trim()) { const trimmed = text.trim(); if (!list.some(item => item.text === trimmed)) { list.push({ id: Date.now().toString() + Math.random().toString(36).slice(2, 6), text: trimmed, source: 'auto', isNew: true }); addedCount++; } } });
+                if (addedCount > 0) {
+                    saveSpecList(list); renderSpecCards();
+                    const sysMsg = { id: Date.now().toString(), role: 'ai system-msg', text: `📋 仕様リスト更新（+${addedCount}件）`, html: false };
+                    chatHistory.push(sysMsg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(sysMsg);
+                }
             }
         } catch(e) {}
     }
@@ -686,7 +703,19 @@
             btn.style.background = 'var(--color-bg-elevated)';
             btn.style.border = '1px solid var(--primary)';
             btn.innerText = opt.trim();
-            btn.onclick = () => { closeAIQuestionModal(); document.getElementById('user-prompt').value = opt.trim(); autoGrow(document.getElementById('user-prompt')); askAI(); };
+            btn.onclick = () => { 
+                closeAIQuestionModal(); 
+                const choice = opt.trim();
+                if (choice === "⚡️修正を依頼") {
+                    document.getElementById('user-prompt').value = "未実装の要件を全て実装してください。";
+                } else if (choice === "✨要件をおまかせ" || choice === "✨ 要件をおまかせ") {
+                    document.getElementById('user-prompt').value = document.getElementById('prompt-suggest').value.trim() || getPrompt('suggest');
+                } else {
+                    document.getElementById('user-prompt').value = choice; 
+                }
+                autoGrow(document.getElementById('user-prompt')); 
+                askAI(); 
+            };
             container.appendChild(btn);
         });
         document.getElementById('ai-question-modal').classList.add('show');
@@ -700,8 +729,15 @@
             const result = await callLLM({ prompt, stream: false, model: document.getElementById('code-model').value });
             const missing = JSON.parse(result.text.replace(/```json|```/g, '').trim());
             let sysMsg;
-            if (Array.isArray(missing) && missing.length > 0) { sysMsg = { id: Date.now().toString(), role: 'ai system-msg', text: `⚠️ 仕様の漏れ検出:\n${missing.map((m,i) => `  ${i+1}. ${m}`).join('\n')}`, html: false }; } 
-            else { sysMsg = { id: Date.now().toString(), role: 'ai system-msg', text: '✅ 全仕様を網羅しています', html: false }; saveSpecBackup(list); saveSpecList([]); document.getElementById('spec-restore-btn').style.display = ''; }
+            if (Array.isArray(missing) && missing.length > 0) { 
+                sysMsg = { id: Date.now().toString(), role: 'ai system-msg', text: `⚠️ 未実装の要件があります:\n${missing.map((m,i) => `  ${i+1}. ${m}`).join('\n')}`, html: false }; 
+                const newList = missing.map(m => ({ id: Date.now().toString() + Math.random().toString(36).slice(2, 6), text: m, source: 'auto', isNew: true }));
+                saveSpecBackup(list); saveSpecList(newList); renderSpecCards();
+                setTimeout(() => showAIQuestionModal("未実装の要件が残っています。これらの修正を依頼しますか？", ["⚡️修正を依頼", "✨要件をおまかせ"]), 1000);
+            } else { 
+                sysMsg = { id: Date.now().toString(), role: 'ai system-msg', text: '✅ 全仕様を網羅しました', html: false }; 
+                saveSpecBackup(list); saveSpecList([]); document.getElementById('spec-restore-btn').style.display = ''; renderSpecCards();
+            }
             chatHistory.push(sysMsg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(sysMsg);
         } catch(e) {}
     }
@@ -789,8 +825,8 @@
         return d;
     }
     function rebuildConversationContext() { conversationContext = ""; chatHistory.forEach(msg => { if (msg.role === 'user') { conversationContext += `\nユーザー: ${msg.text}`; if(msg.attachment) conversationContext += ` (添付: ${msg.attachment})`; } else if (msg.role === 'ai') { conversationContext += `\nアシスタント: ${msg.text}`; } }); }
-    function confirmReset() { if (confirm("リセットしますか？")) { chatHistory = []; document.getElementById('chat-log').innerHTML = ''; window.setCode(""); updatePreview(); removeAttachment(); const initMsg = { id: Date.now().toString(), role: 'ai system-msg', text: 'リセットしました。\n要件を教えてください。', html: false }; chatHistory.push(initMsg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(initMsg); rebuildConversationContext(); } }
-    function resetChatForNewCode(source) { chatHistory = []; document.getElementById('chat-log').innerHTML = ''; const msg = { id: Date.now().toString(), role: 'ai system-msg', text: source + ' からコードを読み込みました。\n修正したい点があれば教えてください。', html: false }; chatHistory.push(msg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(msg); rebuildConversationContext(); }
+    function confirmReset() { if (confirm("リセットしますか？")) { chatHistory = []; document.getElementById('chat-log').innerHTML = ''; window.setCode(""); updatePreview(); removeAttachment(); const initMsg = { id: Date.now().toString(), role: 'ai system-msg', text: 'リセットしました。\n要件を教えてください。', html: false }; chatHistory.push(initMsg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(initMsg); rebuildConversationContext(); clearSpecList(); } }
+    function resetChatForNewCode(source) { chatHistory = []; document.getElementById('chat-log').innerHTML = ''; const msg = { id: Date.now().toString(), role: 'ai system-msg', text: source + ' からコードを読み込みました。\n修正したい点があれば教えてください。', html: false }; chatHistory.push(msg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(msg); rebuildConversationContext(); clearSpecList(); }
 
     /* --- チャット・コード生成実行 --- */
     function askForPlan() { document.getElementById('user-prompt').value = document.getElementById('prompt-suggest').value.trim() || getPrompt('suggest'); askAI(); }
@@ -826,11 +862,12 @@
             }
 
             const aiMsgToUpdate = chatHistory.find(m => m.id === aiMsgId); if(aiMsgToUpdate) { aiMsgToUpdate.text = aiText; aiMsgToUpdate.html = false; saveToDB('chatHistory', chatHistory); aiMsgElement.replaceWith(createMessageElement(aiMsgToUpdate)); log.scrollTop = log.scrollHeight; }
-            if (aiText) { extractSpecsFromChat(promptText, aiText); extractUserProfileFromChat(promptText, aiText); }
-        } catch (e) { contentDiv.textContent = 'エラー: ' + e.message; }
+            if (aiText) { await extractSpecsFromChat(promptText, aiText); extractUserProfileFromChat(promptText, aiText); }
+        } catch (e) { contentDiv.textContent = 'エラー: ' + e.message; } finally { clearNewSpecFlags(); }
     }
 
     async function generateCode() {
+        clearNewSpecFlags();
         const prof = document.getElementById('user-profile').value; const model = document.getElementById('code-model').value;
         const currentCode = window.getCode();
         const sysMsgObj = { id: Date.now().toString(), role: 'ai system-msg', text: '<div style="display:flex;align-items:center;"><div class="spinner"></div><span>構築中...</span></div>', html: true };
@@ -862,7 +899,8 @@
                 else updateKeyExpiryStatus(null);
                 ['user-profile','system-prompt','code-principles','prompt-plan','prompt-suggest','prompt-debug'].forEach(k => {
                     const camel = k.replace(/-([a-z])/g, g => g[1].toUpperCase());
-                    document.getElementById(k).value = settings[camel] || getFieldDefaults()[k];
+                    const savedValue = settings[camel];
+                    document.getElementById(k).value = (savedValue !== undefined && savedValue !== "") ? savedValue : getFieldDefaults()[k];
                 });
                 if (settings.chatModel) document.getElementById('chat-model').value = settings.chatModel;
                 if (settings.codeModel) document.getElementById('code-model').value = settings.codeModel;
