@@ -570,6 +570,29 @@
                 extractProfile: '以下の会話から、ユーザーの好みや開発におけるペルソナ（使用技術、デザインの好み等）に関する新しい情報があれば抽出してください。\n現在のペルソナ:\n{currentProfile}\nユーザーの発言:\n{userText}\nAIの応答:\n{aiText}\n\n【ルール】\n- 既存と重複しない新情報のみを抽出し、ペルソナを充実させた「更新後の文章全体」を生成してください。\n- 新情報がなければ空のJSON `{}` を返してください。\n- 更新がある場合は `{ "newProfile": "更新後の文章全体" }` 形式のJSONのみ出力すること。'
             }
         };
+
+        try {
+            const res = await fetch('/prompts.json');
+            if (res.ok) {
+                const loadedPrompts = await res.json();
+                if (loadedPrompts.defaults) {
+                    Object.assign(PROMPTS_DATA.defaults, loadedPrompts.defaults);
+                }
+                if (loadedPrompts.prompts) {
+                    for (const [key, value] of Object.entries(loadedPrompts.prompts)) {
+                        if (value && value.template) {
+                            PROMPTS_DATA.prompts[key] = value.template;
+                        } else if (typeof value === 'string') {
+                            PROMPTS_DATA.prompts[key] = value;
+                        }
+                    }
+                }
+            } else {
+                console.warn('prompts.json could not be loaded. Using hardcoded defaults.');
+            }
+        } catch (e) {
+            console.warn('Error fetching prompts.json. Using hardcoded defaults.', e);
+        }
     }
     function getPrompt(name) { return PROMPTS_DATA?.prompts?.[name] || ''; }
     function getDefault(fieldId) { return PROMPTS_DATA?.defaults?.[fieldId] || ''; }
@@ -684,11 +707,11 @@
     }
 
     /* === APIキー暗号化 === */
-    const KEY_EXPIRY_DAYS = 14; const CRYPTO_SALT = 'AIWebStudio-salt';
+    const KEY_EXPIRYDAYS = 14; const CRYPTO_SALT = 'AIWebStudio-salt';
     async function getCryptoKey() { const enc = new TextEncoder(); const km = await crypto.subtle.importKey('raw', enc.encode(CRYPTO_SALT + navigator.userAgent.slice(0, 50)), 'PBKDF2', false, ['deriveKey']); return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: enc.encode(CRYPTO_SALT), iterations: 100000, hash: 'SHA-256' }, km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']); }
     async function saveEncryptedKeys(keys) { const key = await getCryptoKey(); const enc = new TextEncoder(); const iv = crypto.getRandomValues(new Uint8Array(12)); const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(keys))); await saveToDB('encryptedApiKeys', { iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)), ts: Date.now() }); }
-    async function loadEncryptedKeys() { try { const obj = await getFromDB('encryptedApiKeys'); if (!obj) return null; if (Date.now() - obj.ts > KEY_EXPIRY_DAYS * 24 * 60 * 60 * 1000) { await deleteFromDB('encryptedApiKeys'); return null; } const key = await getCryptoKey(); const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(obj.iv) }, key, new Uint8Array(obj.data)); return JSON.parse(new TextDecoder().decode(decrypted)); } catch(e) { return null; } }
-    function updateKeyExpiryStatus(keys) { const el = document.getElementById('key-expiry-status'); if (!el) return; if (!keys) { el.innerHTML = 'キー未保存。設定から入力してください。'; return; } getFromDB('encryptedApiKeys').then(obj => { if (!obj || !obj.ts) { el.textContent = ''; return; } const remaining = Math.ceil((new Date(obj.ts + KEY_EXPIRY_DAYS * 24 * 60 * 60 * 1000) - Date.now()) / (24 * 60 * 60 * 1000)); el.textContent = remaining > 0 ? `残り${remaining}日で自動消去されます` : '期限切れです'; }); }
+    async function loadEncryptedKeys() { try { const obj = await getFromDB('encryptedApiKeys'); if (!obj) return null; if (Date.now() - obj.ts > KEY_EXPIRYDAYS * 24 * 60 * 60 * 1000) { await deleteFromDB('encryptedApiKeys'); return null; } const key = await getCryptoKey(); const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(obj.iv) }, key, new Uint8Array(obj.data)); return JSON.parse(new TextDecoder().decode(decrypted)); } catch(e) { return null; } }
+    function updateKeyExpiryStatus(keys) { const el = document.getElementById('key-expiry-status'); if (!el) return; if (!keys) { el.innerHTML = 'キー未保存。設定から入力してください。'; return; } getFromDB('encryptedApiKeys').then(obj => { if (!obj || !obj.ts) { el.textContent = ''; return; } const remaining = Math.ceil((new Date(obj.ts + KEY_EXPIRYDAYS * 24 * 60 * 60 * 1000) - Date.now()) / (24 * 60 * 60 * 1000)); el.textContent = remaining > 0 ? `残り${remaining}日で自動消去されます` : '期限切れです'; }); }
     function getCurrentApiKey() { const provider = document.getElementById('ai-provider').value; const el = document.getElementById('api-key-' + provider); return el ? el.value.trim() : ''; }
     function onProviderChange() { const provider = document.getElementById('ai-provider').value; updateModelOptions('chat-model', PROVIDER_MODELS[provider].chat); updateModelOptions('code-model', PROVIDER_MODELS[provider].code); document.querySelectorAll('.api-key-field').forEach(el => el.style.display = el.dataset.provider === provider ? '' : 'none'); toggleModelSelects(); }
     function updateModelOptions(selectId, models) { document.getElementById(selectId).innerHTML = models.map(([v, l]) => `<option value="${v}">${l}</option>`).join(''); }
@@ -839,12 +862,12 @@
                 else updateKeyExpiryStatus(null);
                 ['user-profile','system-prompt','code-principles','prompt-plan','prompt-suggest','prompt-debug'].forEach(k => {
                     const camel = k.replace(/-([a-z])/g, g => g[1].toUpperCase());
-                    document.getElementById(k).value = settings[camel] || getDefault(k);
+                    document.getElementById(k).value = settings[camel] || getFieldDefaults()[k];
                 });
                 if (settings.chatModel) document.getElementById('chat-model').value = settings.chatModel;
                 if (settings.codeModel) document.getElementById('code-model').value = settings.codeModel;
             } else {
-                onProviderChange(); ['user-profile','system-prompt','code-principles','prompt-plan','prompt-suggest','prompt-debug'].forEach(k => document.getElementById(k).value = getDefault(k)); updateKeyExpiryStatus(null);
+                onProviderChange(); ['user-profile','system-prompt','code-principles','prompt-plan','prompt-suggest','prompt-debug'].forEach(k => document.getElementById(k).value = getFieldDefaults()[k]); updateKeyExpiryStatus(null);
             }
             toggleModelSelects(); const ghToken = await getFromDB('gh_token'); if (ghToken) { document.getElementById('setting-gh-token').value = ghToken; document.getElementById('deploy-token-input').value = ghToken; }
         } catch(e) {}
