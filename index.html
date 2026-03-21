@@ -337,7 +337,7 @@
         <div class="field">
             <div class="field-header"><label></label><button class="reset-default-btn" onclick="resetFieldDefault('code-principles')"></button></div>
             <textarea id="code-principles" class="setting-input" rows="3" onchange="autoSaveSettings()"></textarea>
-        </details>
+        </div>
         <details class="field prompt-details">
             <summary></summary>
             <div class="field-header"><label style="font-size:10px;"></label><button class="reset-default-btn" onclick="resetFieldDefault('prompt-plan')"></button></div>
@@ -836,7 +836,7 @@
     const KEY_EXPIRYDAYS = 14; const CRYPTO_SALT = 'AIWebStudio-salt';
     async function getCryptoKey() { const enc = new TextEncoder(); const km = await crypto.subtle.importKey('raw', enc.encode(CRYPTO_SALT + navigator.userAgent.slice(0, 50)), 'PBKDF2', false, ['deriveKey']); return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: enc.encode(CRYPTO_SALT), iterations: 100000, hash: 'SHA-256' }, km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']); }
     async function saveEncryptedKeys(keys) { const key = await getCryptoKey(); const enc = new TextEncoder(); const iv = crypto.getRandomValues(new Uint8Array(12)); const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(keys))); await saveToDB('encryptedApiKeys', { iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)), ts: Date.now() }); }
-    async function loadEncryptedKeys() { try { const obj = await getFromDB('encryptedApiKeys'); if (!obj) return null; if (Date.now() - obj.ts > KEY_EXPIRYDAYS * 24 * 60 * 60 * 1000) { await deleteFromDB('encryptedApiKeys'); return null; } const key = await getCryptoKey(); const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(obj.iv) }, key, new Uint8Array(decrypted)); return JSON.parse(new TextDecoder().decode(decrypted)); } catch(e) { return null; } }
+    async function loadEncryptedKeys() { try { const obj = await getFromDB('encryptedApiKeys'); if (!obj) return null; if (Date.now() - obj.ts > KEY_EXPIRYDAYS * 24 * 60 * 60 * 1000) { await deleteFromDB('encryptedApiKeys'); return null; } const key = await getCryptoKey(); const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(obj.iv) }, key, new Uint8Array(obj.data)); return JSON.parse(new TextDecoder().decode(decrypted)); } catch(e) { return null; } }
     function updateKeyExpiryStatus(keys) { const el = document.getElementById('key-expiry-status'); if (!el) return; if (!keys) { el.innerHTML = getLabel('keyExpiryStatusNotSaved'); return; } getFromDB('encryptedApiKeys').then(obj => { if (!obj || !obj.ts) { el.textContent = ''; return; } const remaining = Math.ceil((new Date(obj.ts + KEY_EXPIRYDAYS * 24 * 60 * 60 * 1000) - Date.now()) / (24 * 60 * 60 * 1000)); el.textContent = remaining > 0 ? getLabel('keyExpiryStatusRemaining').replace('{remaining}', remaining) : getLabel('keyExpiryStatusExpired'); }); }
     function getCurrentApiKey() { const provider = document.getElementById('ai-provider').value; const el = document.getElementById('api-key-' + provider); return el ? el.value.trim() : ''; }
     function onProviderChange() { const provider = document.getElementById('ai-provider').value; updateModelOptions('chat-model', PROVIDER_MODELS[provider].chat); updateModelOptions('code-model', PROVIDER_MODELS[provider].code); document.querySelectorAll('.api-key-field').forEach(el => el.style.display = el.dataset.provider === provider ? '' : 'none'); toggleModelSelects(); }
@@ -986,6 +986,9 @@
     }
 
     /* --- UIテキストの適用 --- */
+    function safeText(selector, text) { const el = document.querySelector(selector); if (el) el.textContent = text; }
+    function safeHTML(selector, html) { const el = document.querySelector(selector); if (el) el.innerHTML = html; }
+    function safePlaceholder(id, text) { const el = document.getElementById(id); if (el) el.placeholder = text; }
     function applyUITexts() {
         // Tabs
         document.getElementById('tab-chat').textContent = getLabel('tabChat');
@@ -994,139 +997,134 @@
         document.getElementById('tab-settings').textContent = getLabel('tabSettings');
 
         // Chat Header
-        document.querySelector('.chat-header .header-title').textContent = getLabel('headerConversation');
-        document.querySelector('.chat-header .spec-btn').innerHTML = `${getLabel('specButton')} <span id="spec-badge" class="tab-badge empty">0</span>`;
-        document.querySelector('.chat-header .reset-btn').textContent = getLabel('newButton');
+        safeText('.chat-header .header-title', getLabel('headerConversation'));
+        safeHTML('.chat-header .spec-btn', `${getLabel('specButton')} <span id="spec-badge" class="tab-badge empty">0</span>`);
+        safeText('.chat-header .reset-btn', getLabel('newButton'));
 
         // Floating Generate Container
-        document.getElementById('floating-generate-container').querySelector('.generate-btn').innerHTML = getLabel('generateCodeButton');
+        safeHTML('#floating-generate-container .generate-btn', getLabel('generateCodeButton'));
 
         // Input Container
-        document.querySelector('#attach-menu .menu-item:nth-child(1)').textContent = getLabel('cameraOption');
-        document.querySelector('#attach-menu .menu-item:nth-child(2)').textContent = getLabel('galleryOption');
-        document.querySelector('#attach-menu .menu-item:nth-child(3)').textContent = getLabel('filesOption');
-        document.getElementById('user-prompt').placeholder = getLabel('userPromptPlaceholder');
+        safeText('#attach-menu .menu-item:nth-child(1)', getLabel('cameraOption'));
+        safeText('#attach-menu .menu-item:nth-child(2)', getLabel('galleryOption'));
+        safeText('#attach-menu .menu-item:nth-child(3)', getLabel('filesOption'));
+        safePlaceholder('user-prompt', getLabel('userPromptPlaceholder'));
         document.getElementById('send-btn').textContent = getLabel('sendButton');
 
         // Editor Actions
-        document.querySelector('.action-btn.import-btn').textContent = getLabel('importButton');
-        document.querySelector('.action-btn.upload-btn').textContent = getLabel('uploadButton');
-        document.querySelector('.action-btn.search-btn').textContent = getLabel('searchButton');
-        document.querySelector('.action-btn.download-btn').textContent = getLabel('downloadButton');
-        document.querySelector('.action-btn.deploy-btn').textContent = getLabel('deployButton');
+        safeText('.action-btn.import-btn', getLabel('importButton'));
+        safeText('.action-btn.upload-btn', getLabel('uploadButton'));
+        safeText('.action-btn.search-btn', getLabel('searchButton'));
+        safeText('.action-btn.download-btn', getLabel('downloadButton'));
+        safeText('.action-btn.deploy-btn', getLabel('deployButton'));
 
         // Debug Panel
-        document.getElementById('debug-memo').placeholder = getLabel('debugMemoPlaceholder');
-        document.querySelector('.debug-panel .debug-btn').textContent = getLabel('debugRequestButton');
+        safePlaceholder('debug-memo', getLabel('debugMemoPlaceholder'));
+        safeText('.debug-panel .debug-btn', getLabel('debugRequestButton'));
 
         // Settings Page
-        document.querySelector('#p-settings .field:nth-child(1) label').textContent = getLabel('aiProviderLabel');
-        document.querySelector('#p-settings .field:nth-child(2) label').textContent = getLabel('chatModelLabel');
-        document.querySelector('#p-settings .field:nth-child(3) label').textContent = getLabel('codeModelLabel');
-        document.querySelector('.api-key-field[data-provider="gemini"] label').textContent = getLabel('apiKeyGeminiLabel');
-        document.querySelector('.api-key-field[data-provider="openai"] label').textContent = getLabel('apiKeyOpenAILabel');
-        document.querySelector('.api-key-field[data-provider="claude"] label').textContent = getLabel('apiKeyClaudeLabel');
-        document.querySelector('.api-key-field[data-provider="xai"] label').textContent = getLabel('apiKeyXaiLabel');
-        document.querySelector('.api-key-field[data-provider="groq"] label').textContent = getLabel('apiKeyGroqLabel');
-        document.querySelector('#api-keys-section + .field label').textContent = getLabel('apiKeySecurityLabel');
-        document.querySelector('#api-keys-section + .field + .field label').textContent = getLabel('ghTokenLabel');
-        document.querySelector('#api-keys-section + .field + .field + .field label').textContent = getLabel('userPersonaLabel');
-        document.querySelector('#api-keys-section + .field + .field + .field .reset-default-btn').textContent = getLabel('resetDefaultButton');
-        document.getElementById('user-profile').placeholder = getLabel('userPersonaPlaceholder'); // Placeholder for user-profile
-        document.querySelector('.field:nth-of-type(6) .field-header label').textContent = getLabel('systemPromptLabel');
-        document.querySelector('.field:nth-of-type(6) .reset-default-btn').textContent = getLabel('resetDefaultButton');
-        document.querySelector('.field:nth-of-type(7) .field-header label').textContent = getLabel('codePrinciplesLabel');
-        document.querySelector('.field:nth-of-type(7) .reset-default-btn').textContent = getLabel('resetDefaultButton');
-        document.querySelector('.prompt-details summary').textContent = getLabel('promptTemplatesSummary');
-        document.querySelector('.prompt-details .field-header:nth-of-type(1) label').textContent = getLabel('planPromptLabel');
-        document.querySelector('.prompt-details .field-header:nth-of-type(1) .reset-default-btn').textContent = getLabel('resetDefaultButton');
-        document.querySelector('.prompt-details .field-header:nth-of-type(2) label').textContent = getLabel('suggestPromptLabel');
-        document.querySelector('.prompt-details .field-header:nth-of-type(2) .reset-default-btn').textContent = getLabel('resetDefaultButton');
-        document.querySelector('.prompt-details .field-header:nth-of-type(3) label').textContent = getLabel('debugPromptLabel');
-        document.querySelector('.prompt-details .field-header:nth-of-type(3) .reset-default-btn').textContent = getLabel('resetDefaultButton');
-        document.querySelector('.theme-section label').textContent = getLabel('codeThemeLabel');
-        document.querySelector('.template-section label').textContent = getLabel('templatesLabel');
+        safeText('#p-settings .field:nth-child(1) label', getLabel('aiProviderLabel'));
+        safeText('#p-settings .field:nth-child(2) label', getLabel('chatModelLabel'));
+        safeText('#p-settings .field:nth-child(3) label', getLabel('codeModelLabel'));
+        safeText('.api-key-field[data-provider="gemini"] label', getLabel('apiKeyGeminiLabel'));
+        safeText('.api-key-field[data-provider="openai"] label', getLabel('apiKeyOpenAILabel'));
+        safeText('.api-key-field[data-provider="claude"] label', getLabel('apiKeyClaudeLabel'));
+        safeText('.api-key-field[data-provider="xai"] label', getLabel('apiKeyXaiLabel'));
+        safeText('.api-key-field[data-provider="groq"] label', getLabel('apiKeyGroqLabel'));
+        safeText('#api-keys-section + .field label', getLabel('apiKeySecurityLabel'));
+        safeText('#api-keys-section + .field + .field label', getLabel('ghTokenLabel'));
+        safeText('#api-keys-section + .field + .field + .field label', getLabel('userPersonaLabel'));
+        safeText('#api-keys-section + .field + .field + .field .reset-default-btn', getLabel('resetDefaultButton'));
+        safePlaceholder('user-profile', getLabel('userPersonaPlaceholder'));
+        safeText('.field:nth-of-type(6) .field-header label', getLabel('systemPromptLabel'));
+        safeText('.field:nth-of-type(6) .reset-default-btn', getLabel('resetDefaultButton'));
+        safeText('.field:nth-of-type(7) .field-header label', getLabel('codePrinciplesLabel'));
+        safeText('.field:nth-of-type(7) .reset-default-btn', getLabel('resetDefaultButton'));
+        safeText('.prompt-details summary', getLabel('promptTemplatesSummary'));
+        safeText('.prompt-details .field-header:nth-of-type(1) label', getLabel('planPromptLabel'));
+        safeText('.prompt-details .field-header:nth-of-type(1) .reset-default-btn', getLabel('resetDefaultButton'));
+        safeText('.prompt-details .field-header:nth-of-type(2) label', getLabel('suggestPromptLabel'));
+        safeText('.prompt-details .field-header:nth-of-type(2) .reset-default-btn', getLabel('resetDefaultButton'));
+        safeText('.prompt-details .field-header:nth-of-type(3) label', getLabel('debugPromptLabel'));
+        safeText('.prompt-details .field-header:nth-of-type(3) .reset-default-btn', getLabel('resetDefaultButton'));
+        safeText('.theme-section label', getLabel('codeThemeLabel'));
+        safeText('.template-section label', getLabel('templatesLabel'));
 
         // Spec Modal
-        document.querySelector('#spec-modal .modal-header h3').textContent = getLabel('specModalTitle');
-        document.querySelector('#spec-modal .modal-close').textContent = '✕'; // Icon
-        document.querySelector('#spec-modal .modal-body p').textContent = getLabel('specModalDescription');
-        document.getElementById('spec-add-input').placeholder = getLabel('specAddPlaceholder');
-        document.querySelector('#spec-modal .spec-add-btn').textContent = getLabel('specAddButton');
+        safeText('#spec-modal .modal-header h3', getLabel('specModalTitle'));
+        safeText('#spec-modal .modal-body p', getLabel('specModalDescription'));
+        safePlaceholder('spec-add-input', getLabel('specAddPlaceholder'));
+        safeText('#spec-modal .spec-add-btn', getLabel('specAddButton'));
         document.getElementById('spec-restore-btn').textContent = getLabel('specRestoreButton');
-        document.querySelector('#spec-modal .spec-footer-btn.danger').textContent = getLabel('specClearButton');
+        safeText('#spec-modal .spec-footer-btn.danger', getLabel('specClearButton'));
 
         // Profile Proposal Modal
-        document.querySelector('#profile-proposal-modal .modal-header h3').textContent = getLabel('profileProposalModalTitle');
-        document.querySelector('#profile-proposal-modal .modal-close').textContent = '✕';
-        document.querySelector('#profile-proposal-modal .modal-body p').textContent = getLabel('profileProposalDescription');
-        document.querySelector('#profile-proposal-modal .modal-body div:nth-child(2) label').textContent = getLabel('currentPersonaLabel');
-        document.querySelector('#profile-proposal-modal .modal-body div:nth-child(3) label').textContent = getLabel('proposedPersonaLabel');
-        document.querySelector('#profile-proposal-modal .modal-body .modal-btn:nth-child(1)').textContent = getLabel('discardButton');
-        document.querySelector('#profile-proposal-modal .modal-body .modal-btn:nth-child(2)').textContent = getLabel('applyButton');
+        safeText('#profile-proposal-modal .modal-header h3', getLabel('profileProposalModalTitle'));
+        safeText('#profile-proposal-modal .modal-body p', getLabel('profileProposalDescription'));
+        safeText('#profile-proposal-modal .modal-body div:nth-child(2) label', getLabel('currentPersonaLabel'));
+        safeText('#profile-proposal-modal .modal-body div:nth-child(3) label', getLabel('proposedPersonaLabel'));
+        safeText('#profile-proposal-modal .modal-body .modal-btn:nth-child(1)', getLabel('discardButton'));
+        safeText('#profile-proposal-modal .modal-body .modal-btn:nth-child(2)', getLabel('applyButton'));
 
         // AI Question Modal
-        document.querySelector('#ai-question-modal .modal-header h3').textContent = getLabel('aiQuestionModalTitle');
-        document.querySelector('#ai-question-modal .modal-close').textContent = '✕';
+        safeText('#ai-question-modal .modal-header h3', getLabel('aiQuestionModalTitle'));
 
         // Search Modal
-        document.querySelector('#search-modal .modal-header h3').textContent = getLabel('searchModalTitle');
-        document.querySelector('#search-modal .modal-close').textContent = '✕';
-        document.getElementById('code-search-input').placeholder = getLabel('searchInputPlaceholder');
+        safeText('#search-modal .modal-header h3', getLabel('searchModalTitle'));
+        safePlaceholder('code-search-input', getLabel('searchInputPlaceholder'));
 
         // GitHub Import Modal
-        document.querySelector('#gh-import-modal .modal-header h3').textContent = getLabel('ghImportModalTitle');
-        document.querySelector('#gh-import-modal .modal-close').textContent = '✕';
-        document.getElementById('gh-repo-search').placeholder = getLabel('ghRepoSearchPlaceholder');
-        document.querySelector('#gh-step-file .modal-btn').textContent = getLabel('ghBackToRepos');
+        safeText('#gh-import-modal .modal-header h3', getLabel('ghImportModalTitle'));
+        safePlaceholder('gh-repo-search', getLabel('ghRepoSearchPlaceholder'));
+        safeText('#gh-step-file .modal-btn', getLabel('ghBackToRepos'));
 
         // GitHub Deploy Modal
-        document.querySelector('#gh-deploy-modal .modal-header h3').textContent = getLabel('ghDeployModalTitle');
-        document.querySelector('#gh-deploy-modal .modal-close').textContent = '✕';
-        document.getElementById('deploy-token-input').placeholder = getLabel('deployTokenInputPlaceholder');
-        document.querySelector('#deploy-step-token .modal-btn').textContent = getLabel('deploySaveAndAuth');
-        document.querySelector('#deploy-step-repo .modal-btn').textContent = getLabel('deployNewRepoButton');
-        document.getElementById('deploy-repo-search').placeholder = getLabel('deploySearchPlaceholder');
-        document.querySelector('#deploy-step-new-repo .modal-btn:nth-child(1)').textContent = getLabel('deployNewRepoBack');
-        document.getElementById('new-repo-name').placeholder = getLabel('newRepoNamePlaceholder');
-        document.querySelector('#new-repo-private option[value="false"]').textContent = getLabel('newRepoPublicOption');
-        document.querySelector('#new-repo-private option[value="true"]').textContent = getLabel('newRepoPrivateOption');
-        document.querySelector('#deploy-step-new-repo .modal-btn:nth-child(5)').textContent = getLabel('newRepoCreateButton');
-        document.querySelector('#deploy-step-details .modal-btn').textContent = getLabel('deployNewRepoBack');
-        document.querySelector('#deploy-step-details div:nth-child(2)').childNodes[0].nodeValue = getLabel('deployTargetRepoPrefix'); // Text node access for prefix
-        document.getElementById('deploy-branch').placeholder = getLabel('deployBranchPlaceholder');
-        document.getElementById('deploy-filepath').placeholder = getLabel('deployFilePlaceholder');
-        document.getElementById('deploy-readme-content').placeholder = getLabel('deployReadmePlaceholder');
-        document.querySelector('#deploy-gh-pages + span').textContent = getLabel('deployGhPagesCheckbox'); // Label text for checkbox
+        safeText('#gh-deploy-modal .modal-header h3', getLabel('ghDeployModalTitle'));
+        safePlaceholder('deploy-token-input', getLabel('deployTokenInputPlaceholder'));
+        safeText('#deploy-step-token .modal-btn', getLabel('deploySaveAndAuth'));
+        safeText('#deploy-step-repo .modal-btn', getLabel('deployNewRepoButton'));
+        safePlaceholder('deploy-repo-search', getLabel('deploySearchPlaceholder'));
+        safeText('#deploy-step-new-repo .modal-btn:nth-child(1)', getLabel('deployNewRepoBack'));
+        safePlaceholder('new-repo-name', getLabel('newRepoNamePlaceholder'));
+        safeText('#new-repo-private option[value="false"]', getLabel('newRepoPublicOption'));
+        safeText('#new-repo-private option[value="true"]', getLabel('newRepoPrivateOption'));
+        safeText('#deploy-step-new-repo .modal-btn:nth-child(5)', getLabel('newRepoCreateButton'));
+        safeText('#deploy-step-details .modal-btn', getLabel('deployNewRepoBack'));
+        const deployTargetDiv = document.querySelector('#deploy-step-details div:nth-child(2)');
+        if (deployTargetDiv && deployTargetDiv.childNodes[0]) deployTargetDiv.childNodes[0].nodeValue = getLabel('deployTargetRepoPrefix');
+        safePlaceholder('deploy-branch', getLabel('deployBranchPlaceholder'));
+        safePlaceholder('deploy-filepath', getLabel('deployFilePlaceholder'));
+        safePlaceholder('deploy-readme-content', getLabel('deployReadmePlaceholder'));
+        safeText('#deploy-gh-pages + span', getLabel('deployGhPagesCheckbox'));
         document.getElementById('deploy-exec-btn').textContent = getLabel('deployExecButton');
-        document.querySelector('#deploy-step-success h4').textContent = getLabel('deploySuccessTitle');
+        safeText('#deploy-step-success h4', getLabel('deploySuccessTitle'));
         document.getElementById('view-site-btn').textContent = getLabel('viewSiteButton');
 
         // Background Notify
-        document.querySelector('#bg-notify span').textContent = getLabel('bgNotifyText');
+        safeText('#bg-notify span', getLabel('bgNotifyText'));
 
         // Theme Editor Modal
         document.getElementById('theme-editor-title').textContent = getLabel('themeEditorModalTitleCreate');
-        document.getElementById('te-name').placeholder = getLabel('themeEditorNamePlaceholder');
-        document.getElementById('te-icon').placeholder = getLabel('themeEditorIconPlaceholder');
-        document.getElementById('te-desc').placeholder = getLabel('themeEditorDescPlaceholder');
-        document.querySelector('#theme-editor-modal .modal-btn:nth-of-type(1)').textContent = getLabel('themeEditorSaveButton');
-        document.querySelector('#theme-editor-modal .modal-btn:nth-of-type(2)').textContent = getLabel('themeEditorApplyButton');
+        safePlaceholder('te-name', getLabel('themeEditorNamePlaceholder'));
+        safePlaceholder('te-icon', getLabel('themeEditorIconPlaceholder'));
+        safePlaceholder('te-desc', getLabel('themeEditorDescPlaceholder'));
+        safeText('#theme-editor-modal .modal-btn:nth-of-type(1)', getLabel('themeEditorSaveButton'));
+        safeText('#theme-editor-modal .modal-btn:nth-of-type(2)', getLabel('themeEditorApplyButton'));
 
         // Template Editor Modal
         document.getElementById('tpl-editor-title').textContent = getLabel('templateEditorModalTitleAdd');
-        document.getElementById('tple-name').placeholder = getLabel('templateEditorNamePlaceholder');
-        document.getElementById('tple-icon').placeholder = getLabel('templateEditorIconPlaceholder');
-        document.getElementById('tple-desc').placeholder = getLabel('templateEditorDescPlaceholder');
-        document.getElementById('tple-code').placeholder = getLabel('templateEditorCodePlaceholder');
-        document.querySelector('#tpl-editor-modal .modal-btn:nth-of-type(1)').textContent = getLabel('templateEditorLoadButton');
-        document.querySelector('#tpl-editor-modal .modal-btn:nth-of-type(2)').textContent = getLabel('templateEditorSaveButton');
+        safePlaceholder('tple-name', getLabel('templateEditorNamePlaceholder'));
+        safePlaceholder('tple-icon', getLabel('templateEditorIconPlaceholder'));
+        safePlaceholder('tple-desc', getLabel('templateEditorDescPlaceholder'));
+        safePlaceholder('tple-code', getLabel('templateEditorCodePlaceholder'));
+        safeText('#tpl-editor-modal .modal-btn:nth-of-type(1)', getLabel('templateEditorLoadButton'));
+        safeText('#tpl-editor-modal .modal-btn:nth-of-type(2)', getLabel('templateEditorSaveButton'));
     }
 
     /* --- Init --- */
     window.onload = async () => {
         await loadPrompts(); // Load prompts first
-        applyUITexts(); // Apply UI texts after loading prompts
+        try { applyUITexts(); } catch(e) { console.warn('applyUITexts error:', e); } // Apply UI texts after loading prompts
         try {
             const settings = await getFromDB('settings');
             if (settings) {
