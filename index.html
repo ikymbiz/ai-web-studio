@@ -586,7 +586,7 @@
                 headerConversation: "CONVERSATION", specButton: "📋 仕様", newButton: "＋ New",
                 generateCodeButton: "⚡️ コードを作成 (BUILD)",
                 cameraOption: "📸 カメラ", galleryOption: "🖼️ ギャラリー", filesOption: "📁 ファイル",
-                userPromptPlaceholder: "例：ダークモードのTodoアプリを作りたい...", sendButton: "↑",
+                userPromptPlaceholder: "例：Todoアプリを作りたい...", sendButton: "↑",
                 importButton: "📥 Import", uploadButton: "Upload", searchButton: "🔍 Search",
                 downloadButton: "Download", deployButton: "🚀 Deploy",
                 debugMemoPlaceholder: "修正したい点を入力...", debugRequestButton: "修正を依頼",
@@ -1197,7 +1197,7 @@
             if (document.getElementById('deploy-gh-pages').checked) { try { await fetch(`https://api.github.com/repos/${repoFullName}/pages`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' }, body: JSON.stringify({ source: { branch, path: '/' } }) }); } catch(e){} }
             status.innerHTML = `<span style="color:var(--success)">${getLabel('deployStatusSuccess')}</span>`; await deleteFromDB('pending_deploy');
             showDeployStep('success'); document.getElementById('deploy-success-url').href = ghPagesUrl; document.getElementById('deploy-success-url').textContent = ghPagesUrl;
-            let count = 10; const interval = setInterval(() => { count--; document.getElementById('gh-pages-countdown-display').innerHTML = `${getLabel('ghPagesCountdownPreparing')}...残り ${count}秒`; if(count <= 0){ clearInterval(interval); document.getElementById('gh-pages-countdown-display').innerHTML = getLabel('ghPagesReady'); document.getElementById('view-site-btn').disabled = false; } }, 1000);
+            let count = 60; const interval = setInterval(() => { count--; document.getElementById('gh-pages-countdown-display').innerHTML = `${getLabel('ghPagesCountdownPreparing')}...残り ${count}秒`; if(count <= 0){ clearInterval(interval); document.getElementById('gh-pages-countdown-display').innerHTML = getLabel('ghPagesReady'); document.getElementById('view-site-btn').disabled = false; } }, 1000);
         } catch(e) { status.innerHTML = `<span style="color:var(--danger)">${getLabel('deployStatusError')}</span>`; btn.disabled = false; }
     }
     function openDeployedSite() { window.open(ghPagesUrl, '_blank'); closeGitHubDeploy(); }
