@@ -2,8 +2,17 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 既存のviewportにviewport-fit=coverを追加し、セーフエリアを考慮 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>AI Web Studio Pro 2026</title>
+    <!-- PWA / モバイル最適化メタタグの追加 -->
+    <meta name="theme-color" content="var(--color-bg-deep)">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         /* ============================================
@@ -43,7 +52,23 @@
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: var(--font-body); margin: 0; height: 100dvh; display: flex; flex-direction: column; background: var(--bg); color: var(--text); overflow: hidden; }
+        body {
+            font-family: var(--font-body);
+            margin: 0;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+
+            /* PWA Safe Area Support */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+            min-height: 100vh; /* 確実に全画面になるように */
+        }
 
         /* ナビゲーション */
         .tabs { display: flex; background: var(--sidebar); border-bottom: 1px solid var(--color-border); flex-shrink: 0; }
@@ -234,9 +259,38 @@
         .template-card-actions { position: absolute; top: 4px; right: 4px; display: none; gap: 2px; }
         .template-card:hover .template-card-actions { display: flex; }
         .template-card { position: relative; }
+
+        /* 全画面広告モーダル */
+        #fullscreen-ad-modal {
+            position: fixed;
+            inset: 0; /* top, right, bottom, left を 0 に */
+            background: var(--color-bg-deep); /* 背景を完全に覆う */
+            z-index: 9999; /* 最前面に表示 */
+            display: none; /* 初期は非表示 */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #fullscreen-ad-modal.show {
+            display: flex;
+        }
     </style>
 </head>
 <body>
+<!-- 全画面広告モーダル (body直下に配置) -->
+<div id="fullscreen-ad-modal" class="modal-overlay" style="z-index:9999; display:none;">
+    <div style="background:var(--color-bg-deep); width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative;">
+        <div id="ad-video-container" style="width:90%; max-width:800px; height:auto; aspect-ratio:16/9; background:black; display:flex; align-items:center; justify-content:center; color:white; font-size:24px; border-radius:12px; overflow:hidden;">
+            <p>動画広告コンテンツ</p>
+            <video id="mock-ad-video" style="width:100%; height:100%; object-fit:cover; display:none;" controls autoplay muted playsinline>
+                <source src="https://assets.mixkit.co/videos/preview/mixkit-waving-tree-in-the-wind-1191-large.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+        <button id="ad-skip-btn" class="modal-btn" style="position:absolute; bottom:20px; right:20px; background:#4b5563; width:auto; padding:10px 20px; margin-top:0;" disabled>スキップ (XX)</button>
+    </div>
+</div>
+
 <div class="toast-container" id="toast-container"></div>
 
 <div class="tabs">
@@ -504,6 +558,18 @@
                 <div id="deploy-execute-status" class="modal-status" style="text-align:left; color:#ccc;"></div>
                 <button class="modal-btn" id="deploy-exec-btn" onclick="executeDeploy()" style="background:var(--accent);">🚀 デプロイ実行</button>
             </div>
+            <!-- デプロイ成功後の表示ステップを新規追加 -->
+            <div id="deploy-step-success" style="display:none; flex-direction:column; gap:12px;">
+                <h4 style="font-size:16px; color:var(--success); margin:0;">🎉 デプロイ成功！</h4>
+                <div id="gh-pages-countdown-display" style="font-size:14px; color:var(--color-text-secondary);">公開準備中...</div>
+                <div style="font-size:13px; color:#fff;">サイトURL: <a id="deploy-success-url" href="#" target="_blank" style="color:var(--primary); word-break:break-all;"></a></div>
+                <div id="ad-container" style="background:var(--color-bg-elevated); padding:16px; border-radius:8px; text-align:center; color:var(--color-text-secondary); min-height:100px; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:10px; margin-top:10px;">
+                    <p style="margin:0;">（将来的な動画広告スペース）</p>
+                    <small>※広告が再生されるとこのセクションが置き換わります。</small>
+                </div>
+                <button class="modal-btn" id="view-site-btn" onclick="openDeployedSite()" style="background:var(--primary); margin-top:10px;" disabled>🌐 サイトを見る</button>
+                <button class="modal-btn" onclick="closeGitHubDeploy()" style="background:var(--color-bg-elevated);">閉じる</button>
+            </div>
         </div>
     </div>
 </div>
@@ -526,7 +592,7 @@
                     <label style="font-size:10px; color:var(--color-text-secondary); margin-bottom:4px; display:block;">テーマ名</label>
                     <input id="te-name" class="modal-input" placeholder="My Theme" style="margin:0;">
                 </div>
-                <div style="flex:1;">
+                <div style="width:70px;">
                     <label style="font-size:10px; color:var(--color-text-secondary); margin-bottom:4px; display:block;">アイコン</label>
                     <input id="te-icon" class="modal-input" placeholder="🎨" maxlength="4" style="margin:0;">
                 </div>
@@ -595,6 +661,7 @@
     let ghImportRepos = [];
     let swRegistration = null;
     const PROXY_WORKER_URL = 'https://green-credit-a6fb.ikymbiz.workers.dev';
+    let ghPagesUrl = ''; // デプロイされたGitHub PagesのURLを保持するグローバル変数
 
     /* --- プロバイダー設定 --- */
     const PROVIDER_MODELS = {
@@ -1129,6 +1196,77 @@
 
     /* --- Service Worker 登録 --- */
     const swCode = `
+        const CACHE_NAME = 'webstudio-cache-v1';
+        const urlsToCache = [
+            '/',
+            '/index.html',
+            '/manifest.json',
+            '/favicon.svg',
+            '/apple-touch-icon.png',
+            '/icon-192x192.png',
+            '/icon-512x512.png',
+            // CDNアセットもキャッシュ対象に含める
+            'https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap',
+            'https://esm.sh/codemirror',
+            'https://esm.sh/@codemirror/view',
+            'https://esm.sh/@codemirror/state',
+            'https://esm.sh/@codemirror/lang-html',
+            'https://esm.sh/@codemirror/theme-one-dark',
+            'https://esm.sh/@codemirror/search'
+        ];
+
+        self.addEventListener('install', (event) => {
+            event.waitUntil(
+                caches.open(CACHE_NAME)
+                    .then((cache) => {
+                        console.log('Service Worker: Opened cache');
+                        return cache.addAll(urlsToCache);
+                    })
+            );
+        });
+
+        self.addEventListener('fetch', (event) => {
+            event.respondWith(
+                caches.match(event.request)
+                    .then((response) => {
+                        // キャッシュにあればそれを使用
+                        if (response) {
+                            return response;
+                        }
+                        // キャッシュになければネットワークから取得し、キャッシュに追加
+                        return fetch(event.request)
+                            .then((response) => {
+                                // レスポンスが不正な場合（例: 404）はキャッシュしない
+                                if (!response || response.status !== 200 || response.type !== 'basic') {
+                                    return response;
+                                }
+                                const responseToCache = response.clone();
+                                caches.open(CACHE_NAME)
+                                    .then((cache) => {
+                                        cache.put(event.request, responseToCache);
+                                    });
+                                return response;
+                            });
+                    })
+            );
+        });
+
+        self.addEventListener('activate', (event) => {
+            const cacheWhitelist = [CACHE_NAME];
+            event.waitUntil(
+                caches.keys().then((cacheNames) => {
+                    return Promise.all(
+                        cacheNames.map((cacheName) => {
+                            if (cacheWhitelist.indexOf(cacheName) === -1) {
+                                console.log('Service Worker: Deleting old cache:', cacheName);
+                                return caches.delete(cacheName);
+                            }
+                        })
+                    );
+                })
+            );
+        });
+
         self.addEventListener('message', async (e) => {
             if (e.data.type === 'generate') {
                 try {
@@ -1257,7 +1395,11 @@
     }
     function closeGitHubDeploy() { document.getElementById('gh-deploy-modal').classList.remove('show'); }
     function showDeployStep(step) {
-        ['token','repo','new-repo','details'].forEach(s => document.getElementById('deploy-step-'+s).style.display = (s===step ? (s==='repo'||s==='token'?'block':'flex') : 'none'));
+        // 'token','repo','new-repo','details','success' の各ステップを管理
+        ['token','repo','new-repo','details','success'].forEach(s => {
+            const el = document.getElementById('deploy-step-'+s);
+            if (el) el.style.display = (s===step ? ((s==='repo' || s==='token' || s==='success') ? 'block' : 'flex') : 'none');
+        });
     }
     async function saveDeployToken() {
         const input = document.getElementById('deploy-token-input').value.trim();
@@ -1292,13 +1434,21 @@
     async function createNewRepo() {
         const name = document.getElementById('new-repo-name').value.trim(); const token = await getFromDB('gh_token');
         if (!name) return;
-        const res = await fetch('https://api.github.com/user/repos', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name, auto_init: true }) });
-        selectDeployRepo(await res.json());
+        document.getElementById('new-repo-status').textContent = '作成中...';
+        try {
+            const res = await fetch('https://api.github.com/user/repos', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name, description: document.getElementById('new-repo-desc').value.trim(), private: document.getElementById('new-repo-private').value === 'true', auto_init: true }) });
+            if (!res.ok) throw new Error((await res.json()).message || 'リポジトリ作成に失敗しました');
+            document.getElementById('new-repo-status').textContent = '';
+            selectDeployRepo(await res.json());
+        } catch (e) {
+            document.getElementById('new-repo-status').innerHTML = `<span style="color:var(--danger)">❌ ${e.message}</span>`;
+        }
     }
     function encodeBase64Unicode(str) { return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1))); }
+    
     async function executeDeploy() {
         const btn = document.getElementById('deploy-exec-btn'); const status = document.getElementById('deploy-execute-status');
-        btn.disabled = true; status.innerHTML = 'デプロイ中...';
+        btn.disabled = true; status.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 6px 0 0;"></div>デプロイ中...';
         const branch = document.getElementById('deploy-branch').value || 'main'; const filepath = document.getElementById('deploy-filepath').value || 'index.html';
         const token = await getFromDB('gh_token'); const repoFullName = selectedDeployRepo.full_name;
         const pendingDeploy = await getFromDB('pending_deploy'); const codeContent = pendingDeploy ? pendingDeploy.code : window.getCode();
@@ -1307,19 +1457,149 @@
             let sha = null; const url = `https://api.github.com/repos/${repoFullName}/contents/${path}`;
             try { const getRes = await fetch(url + '?ref=' + branch, { headers: { 'Authorization': 'Bearer ' + token } }); if(getRes.ok) sha = (await getRes.json()).sha; } catch(e){}
             const body = { message: msg, content: encodeBase64Unicode(content), branch: branch }; if (sha) body.sha = sha;
-            await fetch(url, { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            const res = await fetch(url, { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            if (!res.ok) throw new Error((await res.json()).message || `ファイル ${path} のプッシュに失敗`);
         };
         try {
-            await pushFile(filepath, codeContent, 'Deploy via App');
-            if (document.getElementById('deploy-readme-content').value) await pushFile('README.md', document.getElementById('deploy-readme-content').value, 'Update README');
+            await pushFile(filepath, codeContent, 'Deploy via AI Web Studio Pro 2026');
+            if (document.getElementById('deploy-readme-content').value) await pushFile('README.md', document.getElementById('deploy-readme-content').value, 'Update README via AI Web Studio Pro 2026');
+            
+            // GitHub Pages URLを生成 (ユーザー名.github.io/リポジトリ名/ファイルパス)
+            const username = selectedDeployRepo.owner.login;
+            const repoName = selectedDeployRepo.name;
+            ghPagesUrl = `https://${username}.github.io/${repoName}/${filepath}`;
+
             if (document.getElementById('deploy-gh-pages').checked) {
-                try { await fetch(`https://api.github.com/repos/${repoFullName}/pages`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' }, body: JSON.stringify({ source: { branch: branch, path: '/' } }) }); } catch(e){}
+                // GitHub Pages有効化API (既に有効な場合はエラーになるが無視)
+                try { 
+                    const pagesRes = await fetch(`https://api.github.com/repos/${repoFullName}/pages`, { 
+                        method: 'POST', 
+                        headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify({ source: { branch: branch, path: '/' } }) 
+                    });
+                    if (!pagesRes.ok && pagesRes.status !== 409) { // 409は既に設定済みのエラーなので無視
+                        console.warn('GitHub Pages activation failed but ignoring (possibly already enabled):', await pagesRes.text());
+                    }
+                } catch(e){ console.error('GitHub Pages activation API call error:', e); }
             }
-            status.innerHTML = `<span style="color:var(--success)">✅ 成功！</span>`;
+            status.innerHTML = `<span style="color:var(--success)">✅ デプロイ成功！GitHub Pages公開準備中...</span>`;
             await deleteFromDB('pending_deploy');
-        } catch (e) { status.innerHTML = `<span style="color:var(--danger)">❌ エラー</span>`; }
-        btn.disabled = false;
+
+            startPagesCountdown(); // GitHub Pages反映待ちカウントダウン開始
+        } catch (e) { 
+            status.innerHTML = `<span style="color:var(--danger)">❌ エラー: ${e.message}</span>`;
+            btn.disabled = false;
+        }
     }
+
+    // GitHub Pages反映待ちカウントダウン
+    function startPagesCountdown() {
+        showDeployStep('success'); // 新しいデプロイ成功ステップを表示
+        const countdownDisplay = document.getElementById('gh-pages-countdown-display');
+        const siteUrlLink = document.getElementById('deploy-success-url');
+        const viewSiteBtn = document.getElementById('view-site-btn');
+
+        siteUrlLink.href = ghPagesUrl;
+        siteUrlLink.textContent = ghPagesUrl;
+        viewSiteBtn.disabled = true; // カウントダウン中は無効化
+
+        let count = 60; // 60秒カウントダウン (GitHub Pagesの反映には少し時間がかかるため)
+
+        const interval = setInterval(() => {
+            count--;
+            countdownDisplay.innerHTML = `<div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 6px 0 0;"></div>公開準備中...残り ${count}秒`;
+
+            if (count <= 0) {
+                clearInterval(interval);
+                countdownDisplay.innerHTML = '✨ 公開されました！';
+                
+                // カウントダウン終了後、全画面広告を表示
+                showFullscreenAd();
+            }
+        }, 1000);
+    }
+    
+    function openDeployedSite() {
+        window.open(ghPagesUrl, '_blank');
+        closeGitHubDeploy(); // サイトを開いたらデプロイモーダルを閉じる
+    }
+
+    // 全画面広告表示
+    function showFullscreenAd() {
+        const adModal = document.getElementById('fullscreen-ad-modal');
+        const deployModal = document.getElementById('gh-deploy-modal');
+        const skipBtn = document.getElementById('ad-skip-btn');
+        const videoPlayer = document.getElementById('mock-ad-video');
+        const adContainer = document.getElementById('ad-video-container');
+
+        // デプロイモーダルを一時的に非表示
+        deployModal.classList.remove('show');
+
+        // 広告モーダルを表示
+        adModal.classList.add('show');
+        adContainer.innerHTML = ''; // プレースホルダテキストをクリア
+        videoPlayer.style.display = 'block'; // video要素を表示
+        if (!adContainer.contains(videoPlayer)) { // 重複追加防止
+            adContainer.appendChild(videoPlayer);
+        }
+
+        let adDuration = 15; // 広告の長さ（秒）
+        let skipDelay = 5; // スキップ可能になるまでの時間（秒）
+        let currentAdTime = 0;
+
+        skipBtn.disabled = true;
+        skipBtn.textContent = `スキップ (${skipDelay})`;
+
+        const adInterval = setInterval(() => {
+            currentAdTime++;
+            if (currentAdTime >= skipDelay) {
+                skipBtn.disabled = false;
+                skipBtn.textContent = 'スキップ';
+            } else {
+                skipBtn.textContent = `スキップ (${skipDelay - currentAdTime})`;
+            }
+
+            if (currentAdTime >= adDuration) {
+                clearInterval(adInterval);
+                videoPlayer.pause();
+                videoPlayer.currentTime = 0;
+                hideFullscreenAd();
+            }
+        }, 1000);
+
+        skipBtn.onclick = () => {
+            if (!skipBtn.disabled) {
+                clearInterval(adInterval);
+                videoPlayer.pause();
+                videoPlayer.currentTime = 0;
+                hideFullscreenAd();
+            }
+        };
+
+        // 動画の読み込みと再生を開始
+        videoPlayer.load();
+        videoPlayer.play().catch(e => console.error("Video playback failed:", e));
+    }
+
+    // 全画面広告非表示
+    function hideFullscreenAd() {
+        const adModal = document.getElementById('fullscreen-ad-modal');
+        const deployModal = document.getElementById('gh-deploy-modal');
+        const viewSiteBtn = document.getElementById('view-site-btn'); // 広告後に有効化
+        const videoPlayer = document.getElementById('mock-ad-video');
+
+        adModal.classList.remove('show');
+        videoPlayer.style.display = 'none'; // video要素を非表示
+        if (videoPlayer.parentElement) {
+            videoPlayer.parentElement.removeChild(videoPlayer); // DOMから削除してリセット
+        }
+
+        // デプロイモーダルを再表示し、成功ステップへ
+        deployModal.classList.add('show');
+        showDeployStep('success');
+        viewSiteBtn.disabled = false; // 広告終了後、「サイトを見る」ボタンを有効化
+    }
+
 
     /* --- メイン初期化 --- */
     window.onload = async () => {
@@ -1551,7 +1831,7 @@
         const themeRule = themeCSS ? `\n【デザインテーマ】以下のCSS変数をデザインシステムとして使用してください。:rootに含め、各要素のcolor/background等にvar()で参照してください。\n${themeCSS}` : '';
         const principlesRule = principles ? `\n【コードプリンシプル】${principles}` : '';
         const sysRule = sysPrompt ? `\n${sysPrompt}` : '';
-        const system = `Expert Full-stack Web Developerとして、完全なHTML/CSS/JSコードを1つのファイルで出力してください。${sysRule}\nプロファイル: ${prof}\nルール: Markdownのコードブロック不要。<!DOCTYPE html>から開始。外部ライブラリはCDN使用。${principlesRule}${themeRule}\n${codeRule}\n会話履歴: ${conversationContext}`;
+        const system = `Expert Full-stack Web Developerとして、完全なHTML/CSS/JSコードを1つのファイルで出力してください。${sysRule}\nプロファイル: ${prof}\n出力のルール: Markdownのコードブロックは不要。<!DOCTYPE html>から出力を開始し、</html>で終わること。外部ライブラリはCDN使用。${principlesRule}${themeRule}\n${codeRule}\n会話履歴: ${conversationContext}`;
 
         try {
             const result = await callLLM({ prompt: system, stream: false, model });
@@ -1575,7 +1855,7 @@
         const deployBtn = document.querySelector('.deploy-btn'); const originalText = deployBtn.innerHTML;
         deployBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;margin:0 6px 0 0;"></div>README...'; deployBtn.disabled = true;
 
-        const readmePrompt = `以下のHTMLコードを分析し、高品質なREADME.mdを日本語で作成してください。\nコード:\n${code}`;
+        const readmePrompt = `以下のHTMLコードを分析し、高品質なREADME.mdを日本語で作成してください。README.mdに記載する内容のみ出力すること\nコード:\n${code}`;
         try {
             const result = await callLLM({ prompt: readmePrompt, stream: false, model });
             let readme = result.text || '';
