@@ -260,6 +260,42 @@
         .template-card:hover .template-card-actions { display: flex; }
         .template-card { position: relative; }
 
+        /* 仕様タブバッジ */
+        .tab-badge { display:inline-block; background:var(--primary); color:#fff; font-size:10px; min-width:18px; height:18px; line-height:18px; text-align:center; border-radius:9px; margin-left:4px; padding:0 5px; }
+        .tab-badge.empty { background:var(--color-text-muted); }
+
+        /* 仕様ページ */
+        .spec-page { padding:15px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; }
+        .spec-toolbar { display:flex; justify-content:space-between; align-items:center; flex-shrink:0; }
+        .spec-toggle { display:flex; gap:0; border:1px solid var(--color-border); border-radius:8px; overflow:hidden; }
+        .spec-toggle-btn { background:var(--color-bg-elevated); color:var(--color-text-secondary); border:none; padding:6px 14px; font-size:12px; cursor:pointer; font-family:var(--font-body); transition:0.2s; }
+        .spec-toggle-btn.active { background:var(--primary); color:#fff; }
+
+        .spec-card-list { display:flex; flex-direction:column; gap:8px; flex:1; overflow-y:auto; }
+        .spec-card { display:flex; align-items:flex-start; gap:10px; background:var(--color-bg-elevated); border:1px solid var(--color-border); border-radius:10px; padding:10px 12px; transition:0.15s; }
+        .spec-card:hover { border-color:var(--color-border-focus); }
+        .spec-card-text { flex:1; font-size:13px; color:var(--color-text-primary); line-height:1.5; word-break:break-word; }
+        .spec-card-source { font-size:9px; padding:2px 6px; border-radius:4px; white-space:nowrap; flex-shrink:0; margin-top:2px; }
+        .spec-card-source.auto { background:rgba(59,130,246,0.15); color:var(--primary); }
+        .spec-card-source.user { background:rgba(139,92,246,0.15); color:var(--accent); }
+        .spec-card-del { background:none; border:none; color:var(--color-text-muted); cursor:pointer; font-size:14px; padding:2px; transition:0.2s; flex-shrink:0; }
+        .spec-card-del:hover { color:var(--danger); }
+
+        .spec-add-row { display:flex; gap:8px; flex-shrink:0; }
+        .spec-add-input { flex:1; background:var(--color-bg-elevated); border:1px solid var(--color-border-focus); border-radius:20px; padding:8px 16px; color:#fff; font-size:13px; outline:none; font-family:var(--font-body); }
+        .spec-add-btn { background:var(--primary); color:#fff; border:none; width:36px; height:36px; border-radius:50%; cursor:pointer; font-size:18px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+        .spec-bulk-area { flex:1; background:var(--color-bg-elevated); border:1px solid var(--color-border-focus); border-radius:10px; padding:12px; color:#fff; font-size:13px; font-family:var(--font-body); outline:none; resize:none; line-height:1.7; }
+        .spec-bulk-save { background:var(--primary); color:#fff; border:none; padding:10px 24px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:13px; align-self:flex-end; font-family:var(--font-body); }
+
+        .spec-footer { display:flex; gap:8px; justify-content:flex-end; flex-shrink:0; padding-top:8px; border-top:1px solid var(--color-border); }
+        .spec-footer-btn { background:var(--color-bg-elevated); color:var(--color-text-secondary); border:1px solid var(--color-border); padding:6px 14px; border-radius:6px; font-size:11px; cursor:pointer; font-family:var(--font-body); transition:0.2s; }
+        .spec-footer-btn:hover { color:#fff; border-color:var(--color-border-focus); }
+        .spec-footer-btn.danger:hover { color:var(--danger); border-color:var(--danger); }
+
+        .key-status { font-size:10px; color:var(--color-text-secondary); margin-top:4px; }
+        .key-status a { color:var(--primary); cursor:pointer; text-decoration:underline; }
+
         /* 全画面広告モーダル */
         #fullscreen-ad-modal {
             position: fixed;
@@ -298,6 +334,7 @@
     <button class="tab-btn" id="tab-editor" onclick="showPage('editor', this)">CODE</button>
     <button class="tab-btn" id="tab-preview" onclick="showPage('preview', this)">PREVIEW</button>
     <button class="tab-btn" id="tab-settings" onclick="showPage('settings', this)">SET</button>
+    <button class="tab-btn" id="tab-spec" onclick="showPage('spec', this)">仕様<span id="spec-badge" class="tab-badge empty">0</span></button>
 </div>
 
 <div class="content">
@@ -353,7 +390,7 @@
     </div>
 
     <div id="p-preview" class="page">
-        <iframe id="preview-frame"></iframe>
+        <iframe id="preview-frame" sandbox="allow-scripts"></iframe>
         <div class="debug-panel">
             <textarea id="debug-memo" placeholder="修正したい点を入力..." rows="1" oninput="autoGrow(this)"></textarea>
             <button class="debug-btn" onclick="sendDebugRequest()">修正を依頼</button>
@@ -403,6 +440,11 @@
                 <input type="password" id="api-key-groq" class="api-key-input" placeholder="gsk_... (Groq APIキー)" oninput="toggleModelSelects()">
             </div>
         </div>
+        <div class="field" style="margin-top:-10px;">
+            <label>API KEY SECURITY</label>
+            <div style="font-size:12px; color:var(--color-text-secondary);">🔒 自動暗号化 + 2週間で自動消去</div>
+            <div class="key-status" id="key-expiry-status"></div>
+        </div>
         <div class="field">
             <label>GITHUB TOKEN</label>
             <input type="password" id="setting-gh-token" placeholder="ghp_... (GitHub Deploy用)">
@@ -448,9 +490,31 @@
             </div>
         </div>
     </div>
-</div>
 
-<!-- Code Search Modal -->
+    <div id="p-spec" class="page spec-page">
+        <div class="spec-toolbar">
+            <span style="font-size:12px; font-weight:700; color:var(--color-text-secondary); font-family:var(--font-display); letter-spacing:0.05em;">仕様・修正リスト</span>
+            <div class="spec-toggle">
+                <button class="spec-toggle-btn active" id="spec-mode-card" onclick="setSpecMode('card')">📋 カード</button>
+                <button class="spec-toggle-btn" id="spec-mode-bulk" onclick="setSpecMode('bulk')">📝 一括編集</button>
+            </div>
+        </div>
+
+        <div id="spec-card-view" class="spec-card-list"></div>
+        <div id="spec-add-row" class="spec-add-row">
+            <input type="text" id="spec-add-input" class="spec-add-input" placeholder="仕様・修正点を追加..." onkeydown="if(event.key==='Enter')addSpecManual()">
+            <button class="spec-add-btn" onclick="addSpecManual()">＋</button>
+        </div>
+
+        <textarea id="spec-bulk-area" class="spec-bulk-area" style="display:none;" placeholder="1行につき1項目を記述..."></textarea>
+        <button id="spec-bulk-save" class="spec-bulk-save" style="display:none;" onclick="saveSpecBulk()">💾 保存</button>
+
+        <div class="spec-footer">
+            <button class="spec-footer-btn" id="spec-restore-btn" onclick="restoreSpecList()" style="display:none;">↩ 前回のリストに戻す</button>
+            <button class="spec-footer-btn danger" onclick="clearSpecList()">🗑 リストをクリア</button>
+        </div>
+    </div>
+</div>
 <div id="search-modal" class="modal-overlay" style="background: transparent; pointer-events: none;" onclick="if(event.target===this)closeSearchModal()">
     <div class="modal" style="pointer-events: auto; position: absolute; top: 60px; right: 15px; width: 300px; margin: 0;">
         <div class="modal-header" style="padding: 10px 12px;">
@@ -657,7 +721,7 @@
     let currentFileName = null;
     let conversationContext = "";
     let chatHistory = []; // 構造化されたチャット履歴
-    const pagesList = ['chat', 'editor', 'preview', 'settings'];
+    const pagesList = ['chat', 'editor', 'preview', 'settings', 'spec'];
     let ghImportRepos = [];
     let swRegistration = null;
     const PROXY_WORKER_URL = 'https://green-credit-a6fb.ikymbiz.workers.dev';
@@ -687,24 +751,273 @@
         }
     };
 
-    const DEFAULT_PROMPT_PLAN = `あなたはプロのWeb開発ディレクターです。ユーザーのアイディアを具体化し、実装（BUILD）に向けた設計図を作成します。\n{systemPrompt}\nプロファイル: {prof}\nガイドライン: 1. アプリ名、ターゲット、機能をヒアリング。2. 簡潔に箇条書きで返答。3. コードは書かず、仕様合意に徹する。4. 仕様が固まったら「素晴らしいプランです。⚡️コードを作成 ボタンから実装を開始しましょう」と促す。5. ユーザーの要望がまだ曖昧な場合や、次のステップを提案したい場合は、会話の最後に「次に進むための要件を提案しましょうか？✨ 要件をおまかせ ボタンから次のステップを提案できます。」と応答する。{codeContext}`;
-    const DEFAULT_PROMPT_SUGGEST = `現在の会話履歴とコードを元に、次に開発すべき最適な要件やアイデアを具体的に提案してください。もし要件が不足していれば、自律的に補完して完全なプランを提示してください。`;
-    const DEFAULT_PROMPT_DEBUG = `あなたはプロのWeb開発ディレクターです。次の修整依頼に対して、バグの報告かどうか判断してください。バグの場合は要因を確認してください。要因が判明したら改善策を検討してください。要因が判明しない場合は、要因切分けのためのログや反応を取得するためのコードを検討してください。最後に、前回のコード生成から現在までで修整する要件を整理してください。【修正依頼】\n{memoText}`;
-    const DEFAULT_SYSTEM_PROMPT = `日本語で応答してください。セキュリティとパフォーマンスを重視し、レスポンシブデザインを必須とします。`;
-    const DEFAULT_USER_PROFILE = `モダンなUI/UXを重視。Tailwind CSSやCDNライブラリの活用OK。日本語コメントでコードを記述。ダークモード対応を推奨。`;
-    const DEFAULT_CODE_PRINCIPLES = `セマンティックHTML。アクセシビリティ（ARIA）対応。モバイルファースト設計。パフォーマンス最適化（lazy load等）。`;
+    /* === プロンプト管理（外部JSONから読込） === */
+    let PROMPTS_DATA = null;
+    async function loadPrompts() {
+        try {
+            const res = await fetch('./prompts.json');
+            if (res.ok) { PROMPTS_DATA = await res.json(); return; }
+        } catch(e) { console.warn('prompts.json fetch failed, using fallback:', e); }
+        // フォールバック（JSONが読めない場合の最低限）
+        PROMPTS_DATA = {
+            defaults: {
+                'system-prompt': '日本語で応答してください。セキュリティとパフォーマンスを重視し、レスポンシブデザインを必須とします。',
+                'user-profile': 'モダンなUI/UXを重視。Tailwind CSSやCDNライブラリの活用OK。日本語コメントでコードを記述。ダークモード対応を推奨。',
+                'code-principles': '日本語で答えること！\n1. Analyze First\n2. Minimal Intervention\n3. Plan-Act-Verify'
+            },
+            prompts: {
+                plan: { template: 'あなたはプロのWeb開発ディレクターです。ユーザーのアイディアを具体化し、実装（BUILD）に向けた設計図を作成します。\n{systemPrompt}\nプロファイル: {prof}\nガイドライン:\n1. アプリ名、ターゲット、機能をヒアリング。\n2. 簡潔に箇条書きで返答。\n3. コードは書かず、仕様合意に徹する。\n4. 仕様が固まったら「素晴らしいプランです。⚡️コードを作成 ボタンから実装を開始しましょう」と促す。\n5. ユーザーの要望がまだ曖昧な場合は、「次に進むための要件を提案しましょうか？✨ 要件をおまかせ ボタンから次のステップを提案できます。」と応答する。\n\n【現在の仕様リスト】\n{specList}\n\n【直近の会話】\n{recentChat}\n{codeContext}' },
+                suggest: { template: '現在の会話履歴とコードを元に、次に開発すべき最適な要件やアイデアを具体的に提案してください。もし要件が不足していれば、自律的に補完して完全なプランを提示してください。' },
+                debug: { template: 'あなたはプロのWeb開発ディレクターです。次の修整依頼に対して、バグの報告かどうか判断してください。バグの場合は要因を確認してください。要因が判明したら改善策を検討してください。要因が判明しない場合は、要因切分けのためのログや反応を取得するためのコードを検討してください。最後に、前回のコード生成から現在までで修整する要件を整理してください。\n【修正依頼】\n{memoText}' },
+                extract: { template: '以下のユーザーとAIの直近のやり取りから、実装すべき要件・修正点・仕様変更を抽出してください。\n\n【ユーザーの発言】\n{userMessage}\n\n【AIの応答】\n{aiResponse}\n\n【既存の仕様リスト】\n{existingSpecs}\n\n【ルール】\n- 既存リストと重複する項目は除外\n- 新規の項目のみJSON配列で出力（例: [\"項目1\"]）\n- 新規項目がなければ空配列 [] を返すこと\n- JSON以外のテキストは一切出力しないこと' },
+                verify: { template: '以下の仕様リストと生成されたコードを照合し、取り込まれていない要件を特定してください。\n\n【仕様リスト】\n{specList}\n\n【生成されたコード】\n{generatedCode}\n\n【ルール】\n- 漏れている項目のみJSON配列で返すこと\n- 全て網羅されていれば空配列 [] を返すこと\n- JSON以外のテキストは一切出力しないこと' }
+            }
+        };
+    }
+    function getPrompt(name) { return PROMPTS_DATA?.prompts?.[name]?.template || ''; }
+    function getDefault(fieldId) { return PROMPTS_DATA?.defaults?.[fieldId] || ''; }
 
-    const FIELD_DEFAULTS = {
-        'system-prompt': DEFAULT_SYSTEM_PROMPT,
-        'user-profile': DEFAULT_USER_PROFILE,
-        'code-principles': DEFAULT_CODE_PRINCIPLES,
-        'prompt-plan': DEFAULT_PROMPT_PLAN,
-        'prompt-suggest': DEFAULT_PROMPT_SUGGEST,
-        'prompt-debug': DEFAULT_PROMPT_DEBUG
-    };
+    // 互換用マッピング
+    function getFieldDefaults() {
+        return {
+            'system-prompt': getDefault('system-prompt'),
+            'user-profile': getDefault('user-profile'),
+            'code-principles': getDefault('code-principles'),
+            'prompt-plan': getPrompt('plan'),
+            'prompt-suggest': getPrompt('suggest'),
+            'prompt-debug': getPrompt('debug')
+        };
+    }
+
+    /* === 仕様・修正リスト（localStorage） === */
+    function getSpecList() {
+        try { return JSON.parse(localStorage.getItem('specList') || '[]'); } catch(e) { return []; }
+    }
+    function saveSpecList(list) {
+        localStorage.setItem('specList', JSON.stringify(list));
+        updateSpecBadge();
+    }
+    function getSpecBackup() {
+        try { return JSON.parse(localStorage.getItem('specListBackup') || '[]'); } catch(e) { return []; }
+    }
+    function saveSpecBackup(list) { localStorage.setItem('specListBackup', JSON.stringify(list)); }
+
+    function updateSpecBadge() {
+        const count = getSpecList().length;
+        const badge = document.getElementById('spec-badge');
+        if (badge) { badge.textContent = count; badge.className = 'tab-badge' + (count === 0 ? ' empty' : ''); }
+    }
+    function renderSpecCards() {
+        const list = getSpecList();
+        const container = document.getElementById('spec-card-view');
+        if (!container) return;
+        if (list.length === 0) {
+            container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--color-text-muted);font-size:13px;">仕様・修正項目はまだありません</div>';
+        } else {
+            container.innerHTML = list.map(item => `
+                <div class="spec-card" data-id="${item.id}">
+                    <span class="spec-card-source ${item.source}">${item.source === 'auto' ? 'AI' : 'USER'}</span>
+                    <span class="spec-card-text">${escapeHtml(item.text)}</span>
+                    <button class="spec-card-del" onclick="deleteSpecItem('${item.id}')" title="削除">✕</button>
+                </div>
+            `).join('');
+        }
+        updateSpecBadge();
+    }
+    function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+    function addSpecManual() {
+        const input = document.getElementById('spec-add-input');
+        const text = input.value.trim();
+        if (!text) return;
+        const list = getSpecList();
+        list.push({ id: Date.now().toString(), text, source: 'user' });
+        saveSpecList(list);
+        input.value = '';
+        renderSpecCards();
+        showToast('仕様を追加しました');
+    }
+    function deleteSpecItem(id) {
+        const list = getSpecList().filter(item => item.id !== id);
+        saveSpecList(list);
+        renderSpecCards();
+    }
+    function clearSpecList() {
+        const list = getSpecList();
+        if (list.length === 0) return showToast('リストは空です');
+        if (!confirm('仕様リストをクリアしますか？')) return;
+        saveSpecBackup(list);
+        saveSpecList([]);
+        renderSpecCards();
+        document.getElementById('spec-restore-btn').style.display = '';
+        showToast('リストをクリアしました');
+    }
+    function restoreSpecList() {
+        const backup = getSpecBackup();
+        if (backup.length === 0) return showToast('復元データがありません');
+        saveSpecList(backup);
+        renderSpecCards();
+        document.getElementById('spec-restore-btn').style.display = 'none';
+        showToast('前回のリストを復元しました');
+    }
+
+    function setSpecMode(mode) {
+        const cardView = document.getElementById('spec-card-view');
+        const addRow = document.getElementById('spec-add-row');
+        const bulkArea = document.getElementById('spec-bulk-area');
+        const bulkSave = document.getElementById('spec-bulk-save');
+        document.getElementById('spec-mode-card').classList.toggle('active', mode === 'card');
+        document.getElementById('spec-mode-bulk').classList.toggle('active', mode === 'bulk');
+        if (mode === 'card') {
+            cardView.style.display = ''; addRow.style.display = '';
+            bulkArea.style.display = 'none'; bulkSave.style.display = 'none';
+            renderSpecCards();
+        } else {
+            cardView.style.display = 'none'; addRow.style.display = 'none';
+            bulkArea.style.display = ''; bulkSave.style.display = '';
+            bulkArea.value = getSpecList().map(i => i.text).join('\n');
+        }
+    }
+    function saveSpecBulk() {
+        const lines = document.getElementById('spec-bulk-area').value.split('\n').map(l => l.trim()).filter(Boolean);
+        const list = lines.map(text => ({ id: Date.now().toString() + Math.random().toString(36).slice(2, 6), text, source: 'user' }));
+        saveSpecList(list);
+        showToast(`${list.length}件の仕様を保存しました`);
+    }
+
+    // 仕様リストを番号付き文字列に変換
+    function specListToString() {
+        const list = getSpecList();
+        if (list.length === 0) return '（なし）';
+        return list.map((item, i) => `${i + 1}. ${item.text}`).join('\n');
+    }
+
+    // 直近N往復の会話を取得
+    function getRecentChat(n = 3) {
+        const msgs = chatHistory.filter(m => m.role === 'user' || m.role === 'ai');
+        const recent = msgs.slice(-(n * 2));
+        return recent.map(m => {
+            const role = m.role === 'user' ? 'ユーザー' : 'アシスタント';
+            return `${role}: ${m.text}`;
+        }).join('\n');
+    }
+
+    /* === 仕様自動抽出（AI応答後に呼出） === */
+    async function extractSpecsFromChat(userText, aiText) {
+        try {
+            const existing = specListToString();
+            const tpl = getPrompt('extract');
+            const prompt = tpl
+                .replace('{userMessage}', userText)
+                .replace('{aiResponse}', aiText)
+                .replace('{existingSpecs}', existing);
+            const result = await callLLM({ prompt, stream: false, model: document.getElementById('chat-model').value });
+            const cleaned = result.text.replace(/```json|```/g, '').trim();
+            const items = JSON.parse(cleaned);
+            if (Array.isArray(items) && items.length > 0) {
+                const list = getSpecList();
+                items.forEach(text => {
+                    if (typeof text === 'string' && text.trim()) {
+                        list.push({ id: Date.now().toString() + Math.random().toString(36).slice(2, 6), text: text.trim(), source: 'auto' });
+                    }
+                });
+                saveSpecList(list);
+                renderSpecCards();
+                const sysMsg = { id: Date.now().toString(), role: 'ai system-msg', text: `📋 仕様リスト更新（${list.length}件 / +${items.length}件）`, html: false };
+                chatHistory.push(sysMsg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(sysMsg);
+            }
+        } catch(e) { console.warn('仕様抽出エラー:', e); }
+    }
+
+    /* === 漏れ検証（コード生成後に呼出） === */
+    async function verifySpecCoverage(code) {
+        const list = getSpecList();
+        if (list.length === 0) return;
+        try {
+            const tpl = getPrompt('verify');
+            const prompt = tpl
+                .replace('{specList}', specListToString())
+                .replace('{generatedCode}', code.slice(0, 30000)); // コードが巨大な場合に備えて上限
+            const result = await callLLM({ prompt, stream: false, model: document.getElementById('code-model').value });
+            const cleaned = result.text.replace(/```json|```/g, '').trim();
+            const missing = JSON.parse(cleaned);
+            let sysMsg;
+            if (Array.isArray(missing) && missing.length > 0) {
+                sysMsg = { id: Date.now().toString(), role: 'ai system-msg', text: `⚠️ 仕様の漏れ検出（${missing.length}件）:\n${missing.map((m,i) => `  ${i+1}. ${m}`).join('\n')}`, html: false };
+            } else {
+                sysMsg = { id: Date.now().toString(), role: 'ai system-msg', text: '✅ 全仕様を網羅しています', html: false };
+                // 検証OK → メモリ初期化
+                saveSpecBackup(list);
+                saveSpecList([]);
+                renderSpecCards();
+                document.getElementById('spec-restore-btn').style.display = '';
+            }
+            chatHistory.push(sysMsg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(sysMsg);
+        } catch(e) { console.warn('検証エラー:', e); }
+    }
+
+    /* === APIキー暗号化（Web Crypto API） === */
+    const KEY_EXPIRY_DAYS = 14;
+    const CRYPTO_SALT = 'WebStudio2026-salt';
+
+    async function getCryptoKey() {
+        const enc = new TextEncoder();
+        const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(CRYPTO_SALT + navigator.userAgent.slice(0, 50)), 'PBKDF2', false, ['deriveKey']);
+        return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: enc.encode(CRYPTO_SALT), iterations: 100000, hash: 'SHA-256' }, keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+    }
+    async function encryptText(text) {
+        const key = await getCryptoKey();
+        const enc = new TextEncoder();
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(text));
+        return { iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)), ts: Date.now() };
+    }
+    async function decryptText(obj) {
+        // 期限チェック
+        if (Date.now() - obj.ts > KEY_EXPIRY_DAYS * 24 * 60 * 60 * 1000) return null;
+        try {
+            const key = await getCryptoKey();
+            const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(obj.iv) }, key, new Uint8Array(obj.data));
+            return new TextDecoder().decode(decrypted);
+        } catch(e) { return null; }
+    }
+
+    async function saveEncryptedKeys(keys) {
+        const encrypted = await encryptText(JSON.stringify(keys));
+        await saveToDB('encryptedApiKeys', encrypted);
+    }
+    async function loadEncryptedKeys() {
+        try {
+            const obj = await getFromDB('encryptedApiKeys');
+            if (!obj) return null;
+            const text = await decryptText(obj);
+            if (!text) {
+                await deleteFromDB('encryptedApiKeys');
+                return null; // 期限切れ or 復号失敗
+            }
+            return JSON.parse(text);
+        } catch(e) { return null; }
+    }
+    function updateKeyExpiryStatus(keys) {
+        const el = document.getElementById('key-expiry-status');
+        if (!el) return;
+        if (!keys) {
+            el.innerHTML = 'キーは未保存です。<a onclick="showPage(\'settings\', document.getElementById(\'tab-settings\'))">設定画面</a>で入力してください。';
+            return;
+        }
+        try {
+            // 保存された暗号データからタイムスタンプを読む
+            getFromDB('encryptedApiKeys').then(obj => {
+                if (!obj || !obj.ts) { el.textContent = ''; return; }
+                const expiry = new Date(obj.ts + KEY_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+                const remaining = Math.ceil((expiry - Date.now()) / (24 * 60 * 60 * 1000));
+                el.textContent = remaining > 0 ? `残り${remaining}日で自動消去されます` : '期限切れです。再入力してください。';
+            });
+        } catch(e) { el.textContent = ''; }
+    }
 
     function resetFieldDefault(fieldId) {
-        const def = FIELD_DEFAULTS[fieldId];
+        const def = getFieldDefaults()[fieldId];
         if (def !== undefined) {
             document.getElementById(fieldId).value = def;
             showToast('デフォルト値に戻しました');
@@ -1603,63 +1916,76 @@
 
     /* --- メイン初期化 --- */
     window.onload = async () => {
+        // プロンプトJSON読込（最優先）
+        await loadPrompts();
+
         try {
             const settings = await getFromDB('settings');
             if (settings) {
                 if (settings.aiProvider) { document.getElementById('ai-provider').value = settings.aiProvider; }
-                onProviderChange(); // モデルセレクト再構築 + APIキー欄表示切替
+                onProviderChange();
 
-                // プロバイダー別APIキーの読み込み（旧形式マイグレーション対応）
-                if (settings.apiKeys) {
+                // 暗号化APIキーの復号を試みる
+                const decryptedKeys = await loadEncryptedKeys();
+                if (decryptedKeys) {
+                    document.getElementById('api-key-gemini').value = decryptedKeys.gemini || '';
+                    document.getElementById('api-key-openai').value = decryptedKeys.openai || '';
+                    document.getElementById('api-key-claude').value = decryptedKeys.claude || '';
+                    document.getElementById('api-key-xai').value = decryptedKeys.xai || '';
+                    document.getElementById('api-key-groq').value = decryptedKeys.groq || '';
+                    updateKeyExpiryStatus(decryptedKeys);
+                } else if (settings.apiKeys) {
+                    // 旧形式（平文）からの移行: 読み込んで暗号化保存
                     document.getElementById('api-key-gemini').value = settings.apiKeys.gemini || '';
                     document.getElementById('api-key-openai').value = settings.apiKeys.openai || '';
                     document.getElementById('api-key-claude').value = settings.apiKeys.claude || '';
                     document.getElementById('api-key-xai').value = settings.apiKeys.xai || '';
                     document.getElementById('api-key-groq').value = settings.apiKeys.groq || '';
+                    await saveEncryptedKeys(settings.apiKeys); // 暗号化して保存
+                    updateKeyExpiryStatus(settings.apiKeys);
                 } else if (settings.apiKey) {
-                    // 旧形式: 単一キーを現在のプロバイダーに割り当てる
                     const provider = settings.aiProvider || 'gemini';
                     const el = document.getElementById('api-key-' + provider);
                     if (el) el.value = settings.apiKey;
+                } else {
+                    updateKeyExpiryStatus(null);
                 }
 
-                document.getElementById('user-profile').value = settings.userProfile || DEFAULT_USER_PROFILE;
-                document.getElementById('system-prompt').value = settings.systemPrompt || DEFAULT_SYSTEM_PROMPT;
-                document.getElementById('code-principles').value = settings.codePrinciples || DEFAULT_CODE_PRINCIPLES;
-                document.getElementById('prompt-plan').value = settings.promptPlan || DEFAULT_PROMPT_PLAN;
-                document.getElementById('prompt-suggest').value = settings.promptSuggest || DEFAULT_PROMPT_SUGGEST;
-                document.getElementById('prompt-debug').value = settings.promptDebug || DEFAULT_PROMPT_DEBUG;
+                document.getElementById('user-profile').value = settings.userProfile || getDefault('user-profile');
+                document.getElementById('system-prompt').value = settings.systemPrompt || getDefault('system-prompt');
+                document.getElementById('code-principles').value = settings.codePrinciples || getDefault('code-principles');
+                document.getElementById('prompt-plan').value = settings.promptPlan || getPrompt('plan');
+                document.getElementById('prompt-suggest').value = settings.promptSuggest || getPrompt('suggest');
+                document.getElementById('prompt-debug').value = settings.promptDebug || getPrompt('debug');
                 if (settings.chatModel) document.getElementById('chat-model').value = settings.chatModel;
                 if (settings.codeModel) document.getElementById('code-model').value = settings.codeModel;
             } else {
-                onProviderChange(); // デフォルトのモデルリスト構築
-                // 初回起動: デフォルト値をプリセット
-                document.getElementById('system-prompt').value = DEFAULT_SYSTEM_PROMPT;
-                document.getElementById('user-profile').value = DEFAULT_USER_PROFILE;
-                document.getElementById('code-principles').value = DEFAULT_CODE_PRINCIPLES;
-                document.getElementById('prompt-plan').value = DEFAULT_PROMPT_PLAN;
-                document.getElementById('prompt-suggest').value = DEFAULT_PROMPT_SUGGEST;
-                document.getElementById('prompt-debug').value = DEFAULT_PROMPT_DEBUG;
+                onProviderChange();
+                document.getElementById('system-prompt').value = getDefault('system-prompt');
+                document.getElementById('user-profile').value = getDefault('user-profile');
+                document.getElementById('code-principles').value = getDefault('code-principles');
+                document.getElementById('prompt-plan').value = getPrompt('plan');
+                document.getElementById('prompt-suggest').value = getPrompt('suggest');
+                document.getElementById('prompt-debug').value = getPrompt('debug');
+                updateKeyExpiryStatus(null);
             }
             toggleModelSelects();
             const ghToken = await getFromDB('gh_token');
             if (ghToken) { document.getElementById('setting-gh-token').value = ghToken; document.getElementById('deploy-token-input').value = ghToken; }
-        } catch(e) {}
+        } catch(e) { console.error('Init error:', e); }
 
         await registerSW();
         
-        // CodeMirror初期化
         const savedCode = await getFromDB('currentCode');
         await initCodeMirror(savedCode);
-
-        // チャット履歴ロード
         await loadChatHistory();
-
-        // テンプレート一覧ロード
         loadTemplateList();
-
-        // テーママネージャーロード
         loadThemeManager();
+
+        // 仕様バッジ・復元ボタン初期化
+        updateSpecBadge();
+        renderSpecCards();
+        if (getSpecBackup().length > 0) document.getElementById('spec-restore-btn').style.display = '';
 
         // BG復帰チェック
         try {
@@ -1684,6 +2010,7 @@
         document.getElementById('p-' + id).classList.add('active');
         if (btn) btn.classList.add('active');
         if(id === 'preview') updatePreview();
+        if(id === 'spec') renderSpecCards();
     }
 
     function autoGrow(element) { element.style.height = "5px"; element.style.height = (element.scrollHeight) + "px"; }
@@ -1726,15 +2053,25 @@
     });
 
     async function saveSettings() {
+        // APIキーは暗号化して別途保存（settingsには含めない）
+        const apiKeys = {
+            gemini: document.getElementById('api-key-gemini').value,
+            openai: document.getElementById('api-key-openai').value,
+            claude: document.getElementById('api-key-claude').value,
+            xai: document.getElementById('api-key-xai').value,
+            groq: document.getElementById('api-key-groq').value,
+        };
+        const hasAnyKey = Object.values(apiKeys).some(v => v.trim());
+        if (hasAnyKey) {
+            await saveEncryptedKeys(apiKeys);
+        } else {
+            await deleteFromDB('encryptedApiKeys');
+        }
+        updateKeyExpiryStatus(hasAnyKey ? apiKeys : null);
+
         const settings = {
             aiProvider: document.getElementById('ai-provider').value,
-            apiKeys: {
-                gemini: document.getElementById('api-key-gemini').value,
-                openai: document.getElementById('api-key-openai').value,
-                claude: document.getElementById('api-key-claude').value,
-                xai: document.getElementById('api-key-xai').value,
-                groq: document.getElementById('api-key-groq').value,
-            },
+            // apiKeys は暗号化済みなのでsettingsには保存しない
             userProfile: document.getElementById('user-profile').value,
             chatModel: document.getElementById('chat-model').value,
             codeModel: document.getElementById('code-model').value,
@@ -1756,7 +2093,7 @@
 
     function askForPlan() {
         const input = document.getElementById('user-prompt');
-        const tpl = document.getElementById('prompt-suggest').value.trim() || DEFAULT_PROMPT_SUGGEST;
+        const tpl = document.getElementById('prompt-suggest').value.trim() || getPrompt('suggest');
         input.value = tpl;
         askAI();
     }
@@ -1780,13 +2117,18 @@
         log.appendChild(aiMsgElement); log.scrollTop = log.scrollHeight;
         const contentDiv = aiMsgElement.querySelector('.msg-content');
         
-        input.value = ''; input.style.height = "44px"; rebuildConversationContext();
+        input.value = ''; input.style.height = "44px";
 
         const currentCode = window.getCode();
         const codeContext = currentCode ? `\n\n【現在のコード】\n\`\`\`html\n${currentCode}\n\`\`\`\n※上記コードを踏まえて、内容を大きく変更せずに修正案や設計の提案を行ってください。` : "";
         const sysPrompt = document.getElementById('system-prompt').value.trim();
-        const tpl = document.getElementById('prompt-plan').value.trim() || DEFAULT_PROMPT_PLAN;
-        const system = tpl.replace('{prof}', prof).replace('{codeContext}', codeContext).replace('{systemPrompt}', sysPrompt);
+        const tpl = document.getElementById('prompt-plan').value.trim() || getPrompt('plan');
+        const system = tpl
+            .replace('{prof}', prof)
+            .replace('{codeContext}', codeContext)
+            .replace('{systemPrompt}', sysPrompt)
+            .replace('{specList}', specListToString())
+            .replace('{recentChat}', getRecentChat(3));
         
         const images = [];
         if (currentImageBase64 && currentMimeType) { images.push({ mime: currentMimeType, base64: currentImageBase64 }); removeAttachment(); }
@@ -1795,7 +2137,7 @@
         try {
             const key = getCurrentApiKey();
             if (key) {
-                const result = await callLLM({ prompt: system + "\n\n会話履歴:\n" + conversationContext, stream: true, model, images });
+                const result = await callLLM({ prompt: system, stream: true, model, images });
                 const reader = result.reader; const decoder = new TextDecoder("utf-8"); let buffer = ""; contentDiv.innerHTML = "";
                 while (true) {
                     const { value, done } = await reader.read(); if (done) break;
@@ -1803,17 +2145,20 @@
                     for (const line of lines) { if (line.startsWith(result.prefix || 'data: ')) { const chunk = result.parseChunk(line); if (chunk) { aiText += chunk; contentDiv.innerText = aiText; log.scrollTop = log.scrollHeight; } } }
                 }
             } else {
-                const result = await callLLM({ prompt: system + "\n\n会話履歴:\n" + conversationContext, stream: false, model, images });
+                const result = await callLLM({ prompt: system, stream: false, model, images });
                 aiText = result.text; contentDiv.innerText = aiText;
             }
 
             const aiMsgToUpdate = chatHistory.find(m => m.id === aiMsgId);
             if(aiMsgToUpdate) {
                 aiMsgToUpdate.text = aiText; aiMsgToUpdate.html = false;
-                saveToDB('chatHistory', chatHistory); rebuildConversationContext();
+                saveToDB('chatHistory', chatHistory);
                 aiMsgElement.replaceWith(createMessageElement(aiMsgToUpdate));
                 log.scrollTop = log.scrollHeight;
             }
+
+            // 仕様自動抽出
+            if (aiText) extractSpecsFromChat(promptText, aiText);
         } catch (e) { contentDiv.textContent = 'エラー: ' + e.message; }
     }
 
@@ -1831,7 +2176,8 @@
         const themeRule = themeCSS ? `\n【デザインテーマ】以下のCSS変数をデザインシステムとして使用してください。:rootに含め、各要素のcolor/background等にvar()で参照してください。\n${themeCSS}` : '';
         const principlesRule = principles ? `\n【コードプリンシプル】${principles}` : '';
         const sysRule = sysPrompt ? `\n${sysPrompt}` : '';
-        const system = `Expert Full-stack Web Developerとして、完全なHTML/CSS/JSコードを1つのファイルで出力してください。${sysRule}\nプロファイル: ${prof}\n出力のルール: Markdownのコードブロックは不要。<!DOCTYPE html>から出力を開始し、</html>で終わること。外部ライブラリはCDN使用。${principlesRule}${themeRule}\n${codeRule}\n会話履歴: ${conversationContext}`;
+        const specSection = `\n【実装要件リスト】\n${specListToString()}`;
+        const system = `Expert Full-stack Web Developerとして、完全なHTML/CSS/JSコードを1つのファイルで出力してください。${sysRule}\nプロファイル: ${prof}\n出力のルール: Markdownのコードブロックは不要。<!DOCTYPE html>から出力を開始し、</html>で終わること。外部ライブラリはCDN使用。${principlesRule}${themeRule}\n${codeRule}${specSection}`;
 
         try {
             const result = await callLLM({ prompt: system, stream: false, model });
@@ -1841,6 +2187,9 @@
             sysMsgObj.text = '✨ 構築完了。PREVIEWを確認してください。'; sysMsgObj.html = false;
             document.querySelector(`[data-id="${sysMsgObj.id}"] .msg-content`).textContent = sysMsgObj.text;
             saveToDB('chatHistory', chatHistory);
+
+            // 仕様リスト漏れ検証
+            verifySpecCoverage(code);
         } catch (e) {
             sysMsgObj.text = '<span style="color:var(--danger)">エラー: ' + e.message + '</span>';
             document.querySelector(`[data-id="${sysMsgObj.id}"] .msg-content`).innerHTML = sysMsgObj.text;
@@ -1868,15 +2217,28 @@
         const memoText = document.getElementById('debug-memo').value.trim(); if (!memoText) return;
         showPage('chat', document.getElementById('tab-chat'));
         const chatInput = document.getElementById('user-prompt');
-        const tpl = document.getElementById('prompt-debug').value.trim() || DEFAULT_PROMPT_DEBUG;
+        const tpl = document.getElementById('prompt-debug').value.trim() || getPrompt('debug');
         chatInput.value = tpl.replace('{memoText}', memoText);
         autoGrow(chatInput); document.getElementById('debug-memo').value = ''; askAI();
     }
 
     function downloadCode() {
-        const code = window.getCode(); if (!code) return showToast("コードがありません。");
-        const blob = new Blob([code], { type: 'text/html' }); const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = 'index.html'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+        const code = window.getCode();
+        if (!code) return showToast("コードがありません。");
+        const blob = new Blob([code], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if (isIOS) {
+            const w = window.open(url, '_blank');
+            if (!w) window.location.href = url;
+            showToast('新しいタブに表示しました。長押しで保存してください。');
+            setTimeout(() => URL.revokeObjectURL(url), 60000);
+        } else {
+            const a = document.createElement('a'); a.href = url; a.download = 'index.html';
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
+            showToast('ダウンロードを開始しました');
+        }
     }
 
     /* --- テンプレート機能 --- */
