@@ -158,7 +158,17 @@ jobs:
         if: github.event.inputs.app_icon_base64 != ''
         run: |
           mkdir -p temp_icon
-          echo "${{ github.event.inputs.app_icon_base64 }}" | base64 -d > temp_icon/icon.png
+          ICON_B64="${{ github.event.inputs.app_icon_base64 }}"
+          if [ "$ICON_B64" = "__FROM_REPO__" ]; then
+            if [ -f "app-icon.png.b64" ]; then
+              base64 -d app-icon.png.b64 > temp_icon/icon.png
+            else
+              echo "⚠️ app-icon.png.b64 not found, skipping icon"
+              exit 0
+            fi
+          else
+            echo "$ICON_B64" | base64 -d > temp_icon/icon.png
+          fi
           RES_DIR="android/app/src/main/res"
           if [ -d "$RES_DIR" ]; then
             for dpi in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
