@@ -669,7 +669,7 @@
         };
 
         try {
-            const res = await fetch('/prompts.json');
+            const res = await fetch('./prompts.json');
             if (res.ok) {
                 const loadedPrompts = await res.json();
                 if (loadedPrompts.defaults) {
