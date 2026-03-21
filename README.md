@@ -1,85 +1,88 @@
-# 🌌 AI Web Studio Pro 2026
 
-![Version](https://img.shields.io/badge/version-2.0-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Platform](https://img.shields.io/badge/platform-Web-lightgrey.svg)
+# ⚡ Native App Packager
 
-**AI Web Studio Pro 2026** は、ブラウザ上で完全に動作するAI駆動型のオールインワンWeb開発環境（IDE）です。
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#)
+[![PWA](https://img.shields.io/badge/PWA-Ready-blueviolet.svg)](#)
 
-たった1つのHTMLファイルの中に、**「AIによる要件定義・設計（PLAN）」**、**「自律的なコード生成（BUILD）」**、**「本格的なコード編集（CODE）」**、**「リアルタイムプレビュー（PREVIEW）」**、そして**「GitHubへの直接デプロイ（DEPLOY）」**までの全プロセスを統合しました。
+ブラウザ上でWebアプリ（HTML/CSS/JS）を選択するだけで、GitHub Actionsを利用して自動的にAndroidネイティブアプリ（APK）をビルド・生成できるフロントエンド完結型のWebツールです。
 
-## ✨ 主な機能 (Features)
+ローカル環境の構築（Node.js, Android Studio等のインストール）は一切不要。すべてクラウド上で完結します。
 
-### 🤖 AIアシスタントによる設計と実装 (PLAN & BUILD)
-*   **マルチモーダルチャット**: Google Gemini APIを利用し、テキストだけでなく画像（カメラ・ギャラリー）を添付してUIの模写や設計の壁打ちが可能です。
-*   **自動コンテキスト管理**: チャットのやり取りと現在のコード状態をAIが把握し、的確な差分修正や提案を行います。
-*   **バックグラウンド生成 (Service Worker)**: コードの生成処理はバックグラウンドで実行されます。生成中にブラウザのタブを閉じても処理は中断されません。
+## ✨ 特徴 (Features)
 
-### 📝 本格的なコードエディタ (CODE)
-*   **CodeMirror 6 統合**: シンタックスハイライト、オートインデント、検索機能（Find in Code）を備えた軽量かつ強力なエディタを内蔵。
-*   **ファイルのインポート/エクスポート**: ローカルファイルの読み込みや、作成したコードの即時ダウンロード（HTML形式）に対応。
+- 🌐 **完全ブラウザ完結**: バックエンドサーバーは不要。静的ファイル（HTML）をブラウザで開くだけで動作します。
+- ☁️ **クラウドネイティブビルド**: GitHub APIと連携し、対象リポジトリへファイルをプッシュして GitHub Actions (Capacitor利用) を自動トリガーします。
+- 📁 **2つのソース方式に対応**:
+  - **Local**: PC内のフォルダ（HTML群）をドラッグ＆ドロップでまとめて選択・ZIP化して転送。
+  - **GitHub**: 既存のリポジトリ内の指定パスからアセットを直接取得。
+- 🎨 **ダイナミックアイコン**: アプリ名からデフォルトのアプリ用アイコンを自動生成（カスタム画像のアップロードも可能）。
+- 📊 **リアルタイムコンソール**: Actionsのビルド進行状況やエラーログをブラウザ上でリアルタイムに監視。
+- 💾 **設定の永続化**: GitHubトークンなどの設定はIndexedDBを使用してブラウザに安全に保存されます。
 
-### 🚀 シームレスなGitHub連携 (DEPLOY & IMPORT)
-*   **GitHub Import**: あなたのGitHubリポジトリを検索し、ファイルツリーを辿って既存のコードをエディタに直接読み込むことができます。
-*   **1-Click GitHub Deploy**: アプリ内から新しいリポジトリを作成し、コードをPush。さらに**AIが現在のコードを読み取って高品質なREADME.mdを自動生成**し、**GitHub Pagesの有効化**までワンストップで行います。
+## 🏗️ 仕組み (Architecture)
 
-### 💾 ローカルファースト・アーキテクチャ
-*   **IndexedDBによる自動保存**: チャット履歴、現在のコード、設定情報などはすべてブラウザのローカルデータベースに自動保存されます。次回アクセス時も前回の状態から即座に再開できます。
-
----
-
-## 🛠️ 技術スタック (Tech Stack)
-
-*   **Frontend**: HTML5, CSS3 (Custom Properties), Vanilla JavaScript
-*   **Code Editor**: [CodeMirror 6](https://codemirror.net/) (ES Modules via esm.sh)
-*   **AI API**: Google Gemini API (`gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-3-flash`, etc.)
-*   **Version Control**: GitHub REST API
-*   **Storage & Background**: IndexedDB, Service Worker
+1. 本ツール（フロントエンド）が、ユーザーの入力情報と選択されたWebアセットを取得。
+2. GitHub APIを叩き、指定されたリポジトリへアセットとビルド用のワークフローファイル (`build-apk.yml`) を自動コミット。
+3. GitHub Actions `workflow_dispatch` を呼び出し、ビルドジョブを開始。
+4. GitHub Actions上で **Capacitor** がセットアップされ、Webアセットを内包したAndroid APKがビルドされる。
+5. 本ツールがActionsのステータスをポーリングし、成功時にAPKのダウンロードリンクを提供。
 
 ---
 
 ## 🚀 使い方 (Usage)
 
-### 1. セットアップ（インストール不要）
-このツールは単一のHTMLファイルで構成されています。`index.html` をお好みのモダンブラウザ（Chrome, Edge, Safari推奨）で開くだけですぐに使い始めることができます。
+### 1. 事前準備 (Prerequisites)
+- **GitHubアカウント**
+- **Personal Access Token (PAT)**
+  - 必要なスコープ: `repo` (または `Contents: Read & Write`, `Actions: Read & Write`, `Workflows: Write`)
+- **空のGitHubリポジトリ**（ビルドとファイルの一時保存先として使用します）
 
-### 2. 初期設定 (SETタブ)
-高度な機能を利用するために、画面上部の「SET」タブから以下の設定を行ってください。
-*   **API KEY**: Google AI Studioで取得したGemini APIキーを入力します。（※未設定の場合、デモ用のProxy Workerを介して動作しますが制限があります）
-*   **GITHUB TOKEN**: GitHub Deploy / Import機能を使用する場合、`repo` スコープを持った Personal Access Token (`ghp_...`) を入力してください。
-*   **DEVELOPER PROFILE**: AIに守らせたいコーディング規約（例：「Tailwind CSSを使用」「コメントは日本語」など）を指定できます。
+### 2. 初期設定
+1. 右上の歯車アイコン（⚙️）をクリックして設定を開きます。
+2. 取得した GitHub PAT を入力し、「トークンを保存して接続」をクリックします。
+3. 連携が成功すると自動的にユーザー名が取得されます。
 
-### 3. アプリの開発フロー
-1.  **CHAT (要件定義)**:
-    チャット画面で「ダークモードのTodoアプリを作りたい」などAIに要望を伝えます。AIが要件を整理し、プランが固まると「⚡️ コードを作成」ボタンが出現します。
-2.  **PREVIEW (確認)**:
-    生成が完了すると、自動的にプレビュー画面に遷移し、実際のアプリの動作を確認できます。修正したい場合は下のデバッグ入力欄から指示を出せます。
-3.  **CODE (微調整)**:
-    生成されたコードをCodeMirrorエディタで直接編集できます。
-4.  **DEPLOY (公開)**:
-    CODEタブの右上にある「🚀 GitHub Deploy」ボタンをクリックします。リポジトリ名を入力するだけで、コードのPushとWebへの公開が完了します。
-
----
-
-## ⚙️ モデルのカスタマイズ
-
-SETタブでは、用途に合わせてAIモデルを切り替えることができます。
-
-*   **CHAT MODEL (PLAN)**: 要件定義や会話用のモデル（推論能力の高いモデルを推奨）。
-*   **CODE MODEL (BUILD)**: コード生成用のモデル（コーディングに特化したモデルや高速なモデルを推奨）。
-
-*対応モデル例: `gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-3.1-pro-preview`, `deep-research-pro` など*
+### 3. アプリのパッケージング
+1. **App Configuration (アプリ設定)**
+   - アプリの表示名、パッケージID（例: `com.example.app`）、アプリアイコンを設定します。
+2. **Web Assets (アセット選択)**
+   - **ローカルから**: デプロイしたい `index.html` を含むフォルダをドラッグ＆ドロップで選択します。
+   - **GitHubから**: トークン設定後に表示されるプルダウンからリポジトリとパスを選択し、「ファイル一覧を取得」で対象ファイルを選びます。
+3. **ビルドの実行**
+   - 「🚀 パッケージ & デプロイ」ボタンをクリックします。
+   - コンソールに進行状況が表示されます。ブラウザは閉じずにお待ちください（スリープ防止機能が働きます）。
+4. **ダウンロード**
+   - ビルドが完了（Success）すると、自動的に「📥 APKをダウンロード」ボタンが表示されます。
 
 ---
 
-## ⚠️ 免責事項 (Disclaimer)
+## 🛠 技術スタック (Tech Stack)
 
-*   本ツールで入力されたAPIキーおよびGitHubトークンは、お使いのブラウザのローカル（IndexedDB）にのみ保存され、外部のサーバーに送信されることはありません（Google APIおよびGitHub APIへの直接通信を除く）。
-*   本ツールによって生成されたコードの動作性やセキュリティについて、開発者は一切の責任を負いません。本番環境にデプロイする前に必ずコードの内容をご自身で確認してください。
-*   APIキー未設定時のProxy Workerへのフォールバック動作は、サーバー側の仕様変更により利用できなくなる場合があります。
+### Frontend
+- HTML5 / CSS3 (Native CSS Variables)
+- Vanilla JavaScript (ES6+)
+- [JSZip](https://stuk.github.io/jszip/) (ローカルファイルのZIP圧縮)
+- IndexedDB (データ永続化)
+- Wake Lock API (ビルド待機中の画面スリープ防止)
+
+### Backend / CI・CD
+- GitHub REST API
+- GitHub Actions
+- [Capacitor](https://capacitorjs.com/) (Webアプリのネイティブコンテナ化)
+- Android SDK (Gradle build)
 
 ---
 
-## 📄 ライセンス (License)
+## ⚠️ 注意事項と制限事項 (Notes & Limitations)
 
-This project is licensed under the MIT License.
+- **トークンの取り扱いについて**: GitHub PATはブラウザのローカルデータベース(IndexedDB)に保存されます。共有のPCやパブリックな端末で利用する場合は、使用後に必ず設定画面から「🗑️ 設定を初期化」を実行してください。
+- **iOSビルドについて**: 現在はAndroid (APK) のビルドのみサポートしています（iOSアプリのビルドにはApple Developer ProgramとmacOS環境のプロビジョニング設定が必要なため）。
+- **ファイルのサイズ制限**: GitHub APIを経由するため、極端に巨大な動画ファイル等を含むWebアプリのローカルアップロードは失敗する可能性があります。
+
+## 📜 ライセンス (License)
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+*Created with ❤️ for Web Developers.*
