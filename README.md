@@ -1,88 +1,114 @@
+# 🚀 AI Web Studio
 
-# ⚡ Native App Packager
+![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
+![Platform](https://img.shields.io/badge/platform-Web%20%7C%20PWA-success.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#)
-[![PWA](https://img.shields.io/badge/PWA-Ready-blueviolet.svg)](#)
+**AI Web Studio Pro 2026** は、ブラウザ上で完結する単一ファイル（Single-file）のAI駆動型フルスタックWeb開発環境です。
+自然言語による要件定義から、コード生成、ライブプレビュー、そしてGitHub Pagesへのデプロイまで、すべてを1つの画面でシームレスに行うことができます。
 
-ブラウザ上でWebアプリ（HTML/CSS/JS）を選択するだけで、GitHub Actionsを利用して自動的にAndroidネイティブアプリ（APK）をビルド・生成できるフロントエンド完結型のWebツールです。
+## ✨ 主な機能 (Features)
 
-ローカル環境の構築（Node.js, Android Studio等のインストール）は一切不要。すべてクラウド上で完結します。
+### 🤖 マルチLLM対応
+主要な最新AIモデルを切り替えて使用可能。APIキーを設定することで強力な推論能力を活用できます（未設定時はプロキシ経由のデフォルトモデルを使用）。
+- **Google Gemini** (2.5 Flash, 2.5 Pro, 3.1 Pro etc.)
+- **OpenAI** (GPT-4o, o3-mini)
+- **Anthropic Claude** (Sonnet 3.5, Opus)
+- **xAI Grok** (Grok 3, Grok 3 Mini)
+- **Groq** (Llama 3.3, Mixtral)
 
-## ✨ 特徴 (Features)
+### 💬 インタラクティブなチャット＆要件定義
+- テキストベースの対話だけでなく、**カメラ・ギャラリー・ファイルからの画像添付（マルチモーダル）**に対応。
+- 要件が固まると自動で「⚡️コードを作成 (BUILD)」ボタンが出現。
+- AIからの逆提案「✨要件をおまかせ」機能。
 
-- 🌐 **完全ブラウザ完結**: バックエンドサーバーは不要。静的ファイル（HTML）をブラウザで開くだけで動作します。
-- ☁️ **クラウドネイティブビルド**: GitHub APIと連携し、対象リポジトリへファイルをプッシュして GitHub Actions (Capacitor利用) を自動トリガーします。
-- 📁 **2つのソース方式に対応**:
-  - **Local**: PC内のフォルダ（HTML群）をドラッグ＆ドロップでまとめて選択・ZIP化して転送。
-  - **GitHub**: 既存のリポジトリ内の指定パスからアセットを直接取得。
-- 🎨 **ダイナミックアイコン**: アプリ名からデフォルトのアプリ用アイコンを自動生成（カスタム画像のアップロードも可能）。
-- 📊 **リアルタイムコンソール**: Actionsのビルド進行状況やエラーログをブラウザ上でリアルタイムに監視。
-- 💾 **設定の永続化**: GitHubトークンなどの設定はIndexedDBを使用してブラウザに安全に保存されます。
+### 💻 本格的なコードエディタ (CodeMirror)
+- シンタックスハイライト、コード内検索機能（🔍 Find in Code）。
+- リアルタイムでの状態保存（IndexedDBによるローカル自動バックアップ）。
 
-## 🏗️ 仕組み (Architecture)
+### 📱 ライブプレビュー＆デバッグ
+- iframeを使用した安全なリアルタイムプレビュー。
+- プレビューを見ながら「ここを修正して」と指示できる**デバッグ依頼パネル**を搭載。
 
-1. 本ツール（フロントエンド）が、ユーザーの入力情報と選択されたWebアセットを取得。
-2. GitHub APIを叩き、指定されたリポジトリへアセットとビルド用のワークフローファイル (`build-apk.yml`) を自動コミット。
-3. GitHub Actions `workflow_dispatch` を呼び出し、ビルドジョブを開始。
-4. GitHub Actions上で **Capacitor** がセットアップされ、Webアセットを内包したAndroid APKがビルドされる。
-5. 本ツールがActionsのステータスをポーリングし、成功時にAPKのダウンロードリンクを提供。
+### 🚀 GitHubへの直接デプロイ
+- GitHub Personal Access Token (PAT) を使用し、アプリ内からリポジトリの新規作成・直接コミットが可能。
+- 1クリックで **GitHub Pages を有効化**し、作成したアプリを即座に全世界へ公開。
 
----
+### 🎨 テンプレート＆テーママネージャー
+- カスタムHTMLテンプレートの保存・読み込み。
+- CSS変数を活用した独自の**デザインテーマ作成機能**。エディタ内でテーマカラーを視覚的に調整し、生成コードに自動注入（Inject）可能。
 
-## 🚀 使い方 (Usage)
-
-### 1. 事前準備 (Prerequisites)
-- **GitHubアカウント**
-- **Personal Access Token (PAT)**
-  - 必要なスコープ: `repo` (または `Contents: Read & Write`, `Actions: Read & Write`, `Workflows: Write`)
-- **空のGitHubリポジトリ**（ビルドとファイルの一時保存先として使用します）
-
-### 2. 初期設定
-1. 右上の歯車アイコン（⚙️）をクリックして設定を開きます。
-2. 取得した GitHub PAT を入力し、「トークンを保存して接続」をクリックします。
-3. 連携が成功すると自動的にユーザー名が取得されます。
-
-### 3. アプリのパッケージング
-1. **App Configuration (アプリ設定)**
-   - アプリの表示名、パッケージID（例: `com.example.app`）、アプリアイコンを設定します。
-2. **Web Assets (アセット選択)**
-   - **ローカルから**: デプロイしたい `index.html` を含むフォルダをドラッグ＆ドロップで選択します。
-   - **GitHubから**: トークン設定後に表示されるプルダウンからリポジトリとパスを選択し、「ファイル一覧を取得」で対象ファイルを選びます。
-3. **ビルドの実行**
-   - 「🚀 パッケージ & デプロイ」ボタンをクリックします。
-   - コンソールに進行状況が表示されます。ブラウザは閉じずにお待ちください（スリープ防止機能が働きます）。
-4. **ダウンロード**
-   - ビルドが完了（Success）すると、自動的に「📥 APKをダウンロード」ボタンが表示されます。
+### ⚡ PWA & バックグラウンド処理
+- Service Workerによるオフラインキャッシュと、バックグラウンドでのAIコード生成タスク管理。
+- モバイル端末のセーフエリア（Notch）を考慮したレスポンシブなUI設計。
 
 ---
 
-## 🛠 技術スタック (Tech Stack)
+## 🛠️ クイックスタート (Usage)
 
-### Frontend
-- HTML5 / CSS3 (Native CSS Variables)
-- Vanilla JavaScript (ES6+)
-- [JSZip](https://stuk.github.io/jszip/) (ローカルファイルのZIP圧縮)
-- IndexedDB (データ永続化)
-- Wake Lock API (ビルド待機中の画面スリープ防止)
+本プロジェクトはビルドプロセスを必要としない **No-Build** アーキテクチャです。
 
-### Backend / CI・CD
-- GitHub REST API
-- GitHub Actions
-- [Capacitor](https://capacitorjs.com/) (Webアプリのネイティブコンテナ化)
-- Android SDK (Gradle build)
+1. `index.html` をダウンロード、またはホスティングサーバーに配置します。
+2. ブラウザで `index.html` を開きます。
+3. **[SET] (設定)** タブを開き、使用したいAIの **API KEY** を入力します。
+4. **[CHAT]** タブに戻り、作りたいWebアプリのアイデアを送信してください！
+
+> **Note:** APIキーを入力しない場合でも、組み込みのプロキシワーカー（Cloudflare Workers）を経由して基本的なAI機能をお試しいただけます。
 
 ---
 
-## ⚠️ 注意事項と制限事項 (Notes & Limitations)
+## 🔄 開発ワークフロー (Workflow)
 
-- **トークンの取り扱いについて**: GitHub PATはブラウザのローカルデータベース(IndexedDB)に保存されます。共有のPCやパブリックな端末で利用する場合は、使用後に必ず設定画面から「🗑️ 設定を初期化」を実行してください。
-- **iOSビルドについて**: 現在はAndroid (APK) のビルドのみサポートしています（iOSアプリのビルドにはApple Developer ProgramとmacOS環境のプロビジョニング設定が必要なため）。
-- **ファイルのサイズ制限**: GitHub APIを経由するため、極端に巨大な動画ファイル等を含むWebアプリのローカルアップロードは失敗する可能性があります。
+UIは下部（または上部）のタブで直感的に切り替えられます。
+
+1. **CHAT (要件定義)**
+   - AIと対話し、アプリの仕様やデザインを固めます。手書きのワイヤーフレーム画像を添付することも可能です。
+2. **CODE (実装・編集)**
+   - AIが生成したコード（HTML/CSS/JSの統合ファイル）を確認します。手動での微調整も可能です。
+3. **PREVIEW (動作確認)**
+   - 生成されたアプリの実際の動作を確認します。バグがあればデバッグパネルからAIに修正を依頼します。
+4. **DEPLOY (公開)**
+   - `CODE` タブの 「🚀 GitHub Deploy」 をクリックし、自身のリポジトリへ直接プッシュ＆GitHub Pagesで公開します。
+
+---
+
+## ⚙️ アーキテクチャと技術スタック
+
+- **フロントエンド**: Vanilla HTML / CSS / JavaScript
+- **エディタ**: [CodeMirror 6](https://codemirror.net/) (ESM経由での動的インポート)
+- **データストア**: IndexedDB (設定、チャット履歴、コード状態の完全なローカル永続化)
+- **PWA**: Service Worker (`manifest.json`対応)
+- **外部API**: 
+  - 各種AIプロバイダー REST API / SSE (Server-Sent Events) ストリーミング
+  - GitHub REST API (リポジトリ取得、ファイル操作、Pages設定)
+
+---
+
+## 📝 カスタマイズ (Configuration)
+
+**[SET]** タブから以下のプロンプトや設定を自由にカスタマイズし、あなた専用のAIアシスタントにチューニングできます。
+
+- **SYSTEM PROMPT**: アプリ全体の基本となるAIの振る舞い（言語、セキュリティ意識など）。
+- **DEVELOPER PROFILE**: 優先して使用するライブラリ（Tailwind, Vue, React(CDN)等）やコーディングスタイル。
+- **CODE PRINCIPLES**: モバイルファースト、アクセシビリティ対応などの基本原則。
+- **PROMPT TEMPLATES**: プランニング時やデバッグ時にAIへ送信されるプロンプトのテンプレート。
+
+---
+
+## 🔒 セキュリティとプライバシー
+
+- **ローカルファースト**: 入力したAPIキー、GitHubトークン、ソースコード、チャット履歴はすべてブラウザのローカル（IndexedDB）に保存され、外部サーバーには送信されません（AI APIへの直接通信を除く）。
+- **直接通信**: 設定されたAPIキーを使用して、ブラウザから各AIプロバイダーのAPIエンドポイントへ直接リクエストを行います。
+
+---
 
 ## 📜 ライセンス (License)
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+このプロジェクトは [MIT License](LICENSE) の元で公開されています。ご自由に改変・再配布してご活用ください。
+```
 
----
-*Created with ❤️ for Web Developers.*
+### アピールポイントと工夫した点
+1. **特徴の構造化**: 巨大な単一ファイルの中に詰め込まれた高度な機能（Vibe Coding、GitHub連携、PWA対応、テーマエディタ等）を、カテゴリ別に分かりやすく箇条書きにしました。
+2. **アーキテクチャの明記**: このプロジェクトの最大の強みである「ビルド不要（No-Build）」「完全なローカルファースト（IndexedDBによる保存）」であることを強調しています。
+3. **ワークフローの可視化**: ユーザーがどう使えばよいか（Chat → Code → Preview → Deploy）のストーリーを明確に記載しました。
+4. **セキュリティへの言及**: ソースコードを分析し、APIキーやトークンがIndexedDBに保存され、直接APIを叩く仕様であることを確認したため、ユーザーを安心させるセキュリティ項目を追加しました。
