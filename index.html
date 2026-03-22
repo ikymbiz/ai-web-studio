@@ -197,6 +197,13 @@
         .spec-card-source.user { background:rgba(139,92,246,0.15); color:var(--accent); }
         .spec-card-text { flex: 1; font-size: 13px; color: var(--color-text-primary); line-height: 1.5; word-break: break-word; outline: none; }
         .spec-card-text[contenteditable="true"]:focus { background: rgba(255,255,255,0.05); border-radius: 4px; padding: 2px 4px; margin: -2px -4px; border: 1px dashed var(--color-border-focus); }
+        .spec-card-text.done { text-decoration: line-through; opacity: 0.5; }
+        .spec-checkbox { appearance: none; width: 20px; height: 20px; border: 2px solid var(--color-border-focus); border-radius: 5px; background: transparent; cursor: pointer; flex-shrink: 0; margin-top: 1px; position: relative; transition: all 0.2s; }
+        .spec-checkbox:checked { background: var(--success); border-color: var(--success); }
+        .spec-checkbox:checked::after { content: '✓'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 12px; font-weight: bold; }
+        .spec-progress { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 11px; color: var(--color-text-secondary); }
+        .spec-progress-bar { flex: 1; height: 4px; background: var(--color-border); border-radius: 2px; overflow: hidden; }
+        .spec-progress-fill { height: 100%; background: var(--success); border-radius: 2px; transition: width 0.3s ease; }
         
         @keyframes highlightNew { 0% { box-shadow: 0 0 0 2px var(--primary); background: rgba(59,130,246,0.15); } 100% { box-shadow: 0 0 0 0 transparent; background: var(--color-bg-elevated); } }
         .is-new-card { animation: highlightNew 2.5s ease-out forwards; border-color: var(--primary); }
@@ -337,15 +344,21 @@
         <div class="field">
             <div class="field-header"><label></label><button class="reset-default-btn" onclick="resetFieldDefault('code-principles')"></button></div>
             <textarea id="code-principles" class="setting-input" rows="3" onchange="autoSaveSettings()"></textarea>
-        </details>
+        </div>
         <details class="field prompt-details">
             <summary></summary>
             <div class="field-header"><label style="font-size:10px;"></label><button class="reset-default-btn" onclick="resetFieldDefault('prompt-plan')"></button></div>
-            <textarea id="prompt-plan" rows="3" onchange="autoSaveSettings()"></textarea>
+            <textarea id="prompt-plan" class="setting-input" rows="3" onchange="autoSaveSettings()"></textarea>
             <div class="field-header"><label style="font-size:10px;"></label><button class="reset-default-btn" onclick="resetFieldDefault('prompt-suggest')"></button></div>
-            <textarea id="prompt-suggest" rows="2" onchange="autoSaveSettings()"></textarea>
+            <textarea id="prompt-suggest" class="setting-input" rows="2" onchange="autoSaveSettings()"></textarea>
             <div class="field-header"><label style="font-size:10px;"></label><button class="reset-default-btn" onclick="resetFieldDefault('prompt-debug')"></button></div>
-            <textarea id="prompt-debug" rows="3" onchange="autoSaveSettings()"></textarea>
+            <textarea id="prompt-debug" class="setting-input" rows="3" onchange="autoSaveSettings()"></textarea>
+            <div class="field-header"><label style="font-size:10px;"></label><button class="reset-default-btn" onclick="resetFieldDefault('prompt-extract')"></button></div>
+            <textarea id="prompt-extract" class="setting-input" rows="3" onchange="autoSaveSettings()"></textarea>
+            <div class="field-header"><label style="font-size:10px;"></label><button class="reset-default-btn" onclick="resetFieldDefault('prompt-verify')"></button></div>
+            <textarea id="prompt-verify" class="setting-input" rows="3" onchange="autoSaveSettings()"></textarea>
+            <div class="field-header"><label style="font-size:10px;"></label><button class="reset-default-btn" onclick="resetFieldDefault('prompt-extractProfile')"></button></div>
+            <textarea id="prompt-extractProfile" class="setting-input" rows="3" onchange="autoSaveSettings()"></textarea>
         </details>
 
         <div class="theme-section">
@@ -369,6 +382,10 @@
         </div>
         <div class="modal-body spec-page" style="padding: 12px; display:flex; flex-direction:column; height: 60vh;">
             <p style="font-size:11px; color:var(--color-text-secondary); margin:0 0 10px 0;"></p>
+            <div id="spec-progress" class="spec-progress" style="display:none;">
+                <span id="spec-progress-text">0/0</span>
+                <div class="spec-progress-bar"><div id="spec-progress-fill" class="spec-progress-fill" style="width:0%"></div></div>
+            </div>
             <div id="spec-card-view" class="spec-card-list" style="flex:1; overflow-y:auto; overflow-x:hidden; padding-right:4px;"></div>
             <div id="spec-add-row" class="spec-add-row" style="margin-top:10px;">
                 <input type="text" id="spec-add-input" class="spec-add-input" onkeydown="if(event.key==='Enter')addSpecManual()">
@@ -566,19 +583,19 @@
     /* === プロンプト管理 === */
     let PROMPTS_DATA = null;
     async function loadPrompts() {
-        // ハードコードされたデフォルトのプロンプトとUIテキスト
+        // ハードコードされたデフォルトのプロンプトとUIテキスト（prompts.jsonの初期値）
         PROMPTS_DATA = {
             defaults: {
-                'system-prompt': 'あなたは優秀なAIアシスタントです。簡潔に答えてください。\nユーザーに選択させたい場合は、文末に必ず [OPTIONS: 選択肢A | 選択肢B] と記載してください。',
-                'user-profile': '28歳の女性フリーランス。Instagram運用代行',
-                'code-principles': '1. Analyze First\n2. Minimal Intervention\n3. Plan-Act-Verify'
+                'system-prompt': "# Role: Senior Full-Stack & Mobile App Engineer (Android/PWA Expert)\n\n## 🛠 Coding Principles (Mandatory)\n1. **Analyze First:** Deeply understand the current code, data structure, and logic before proposing changes.\n2. **Minimal Intervention:** Do NOT refactor or delete existing code unless explicitly requested. Preserve the user's UI and logic.\n3. **Plan-Act-Verify:** - [Plan] Provide a brief modification plan.\n   - [Act] Execute the code changes accurately.\n   - [Verify] Self-check: \"Is the goal met?\" & \"Are unintended areas unchanged?\"\n\n## 📱 Tech Stack & Mobile Optimization\n- **Core:** HTML5, Tailwind CSS (CDN), Vanilla JavaScript. Single-file (SFC) preferred.\n- **Android/PWA Ready:** - Implementation of manifest.json, Service Worker (offline-ready), and SVG-based Favicon.\n  - Safe-area support (env(safe-area-inset-*)), theme-color meta, and 48x48dp touch targets.\n  - History API for Android back-button handling.\n- **Design:** Modern UI, Dark Mode (auto/toggle), Ripple effects, and full responsiveness.\n\n## 🔋 Advanced Features & UX\n- **Data:** Secure **IndexedDB** for local persistence. JSON **Import/Export** with validation.\n- **AI Integration:** Support Gemini (Default: gemini-2.5-flash), Claude, GPT, xAI.\n- **Settings UI:** Implement screens for API Key management (No hardcoding!) and Dynamic System Prompt editing.\n- **Visibility:** Real-time status indicators (Spinners/\"Thinking...\"). Use **Page Visibility API** to maintain async tasks in background/multitasking.\n\n## ⚖️ Compliance & Security\n- **Google Play Policy:** Ensure \"Minimum Functionality\" (not a web mirror). Include a Privacy Policy UI section.\n- **Security:** Zero hardcoded keys. Sanitize inputs to prevent XSS.\n\n## 📝 Output Rules\n- **Response Language:** Japanese.\n- **Code Comments:** Japanese.\n- **Quality:** High-performance, clean, and ready-to-install code.",
+                'user-profile': "28歳の女性フリーランス。Instagram運用代行と小規模事業者向けの発信支援をしており、顧客向けに使える予約フォーム、診断ページ、簡易会員ページなどのWebアプリをAIで素早く作りたいと考えている。デザインにはこだわりがある一方、JavaScriptやバックエンドの知識は浅く、HTML・CSSベースで見た目が整った画面をまず作り、必要な機能はAIに聞きながら足していくタイプ。外注コストを抑えつつ、自分でプロトタイプを作ってすぐ提案できることを重視している。",
+                'code-principles': "日本語で答えること！\n\n1. Analyze First: Deeply understand current code/context before proposing changes.\n2. Minimal Intervention: Do NOT refactor or delete existing code unless requested. Preserve UI/logic.\n3. Plan-Act-Verify: Provide a brief plan -> Execute code -> Verify no unintended changes or omissions."
             },
             prompts: {
-                plan: '要望を要件として整理してください。\nシステム: {systemPrompt}\nペルソナ: {prof}\n仕様: {specList}\n履歴: {recentChat}',
-                suggest: '現在の履歴とコードから、次に開発すべき最適な要件を提案してください。',
-                debug: '以下の修正依頼に対し、原因と修正案を提示してください。\n依頼: {memoText}',
-                extract: '以下のやり取りから、実装すべき要件を抽出しJSONの文字列配列で出力してください。\n【ユーザー】{userMessage}\n【AI】{aiResponse}\n【既存】{existingSpecs}',
-                verify: '仕様とコードを照合し、未実装の要件をJSONの文字列配列で返してください。\n【仕様】{specList}\n【コード】{generatedCode}',
+                plan: "あなたはプロのWeb開発ディレクターです。ユーザーのアイディアを具体化し、実装（BUILD）に向けた設計図を作成します。\n{systemPrompt}\nプロファイル: {prof}\nガイドライン:\n1. アプリ名、ターゲット、機能をヒアリング。\n2. 簡潔に箇条書きで返答。\n3. コードは書かず、仕様合意に徹する。\n4. 仕様が固まったら「素晴らしいプランです。⚡️コードを作成 ボタンから実装を開始しましょう」と促す。\n5. ユーザーの要望がまだ曖昧な場合や、次のステップを提案したい場合は、会話の最後に「次に進むための要件を提案しましょうか？✨ 要件をおまかせ ボタンから次のステップを提案できます。」と応答する。\n\n【現在の仕様リスト】\n{specList}\n\n【直近の会話】\n{recentChat}\n{codeContext}",
+                suggest: "現在の会話履歴とコードを元に、次に開発すべき最適な要件やアイデアを具体的に提案してください。もし要件が不足していれば、自律的に補完して完全なプランを提示してください。",
+                debug: "あなたはプロのWeb開発ディレクターです。次の修整依頼に対して、バグの報告かどうか判断してください。バグの場合は要因を確認してください。要因が判明したら改善策を検討してください。要因が判明しない場合は、要因切分けのためのログや反応を取得するためのコードを検討してください。最後に、前回のコード生成から現在までで修整する要件を整理してください。\n【修正依頼】\n{memoText}",
+                extract: "以下のユーザーとAIの直近のやり取りから、実装すべき要件・修正点・仕様変更を抽出してください。\n\n【ユーザーの発言】\n{userMessage}\n\n【AIの応答】\n{aiResponse}\n\n【既存の仕様リスト】\n{existingSpecs}\n\n【ルール】\n- 既存リストと重複する項目は除外すること\n- 新規の項目のみ出力すること\n- 出力はJSON配列のみ（例: [\"項目1\", \"項目2\"]）\n- 抽出すべき新規項目がなければ空配列 [] を返すこと\n- JSON以外のテキストは一切出力しないこと",
+                verify: "以下の仕様リストと生成されたコードを照合し、取り込まれていない（漏れている）要件を特定してください。\n\n【仕様リスト】\n{specList}\n\n【生成されたコード】\n{generatedCode}\n\n【ルール】\n- 各仕様がコード内に実装されているか1つずつ確認すること\n- 漏れている項目のみJSON配列で返すこと（例: [\"漏れ項目1\", \"漏れ項目2\"]）\n- 全て網羅されている場合は空配列 [] を返すこと\n- JSON以外のテキストは一切出力しないこと",
                 extractProfile: '以下の会話から、ユーザーの好みや開発におけるペルソナ（使用技術、デザインの好み等）に関する新しい情報があれば抽出してください。\n現在のペルソナ:\n{currentProfile}\nユーザーの発言:\n{userText}\nAIの応答:\n{aiText}\n\n【ルール】\n- 既存と重複しない新情報のみを抽出し、ペルソナを充実させた「更新後の文章全体」を生成してください。\n- ユーザーの好みや開発スタイルに関する情報のみ抽出し、システムの機能要件や具体的な仕様に関する記述は絶対に含めないでください。\n- 新情報がなければ空のJSON `{}` を返してください。\n- 更新がある場合は `{ "newProfile": "更新後の文章全体" }` 形式のJSONのみ出力すること。'
             },
             ui: { // 新しいUIラベルセクション
@@ -598,6 +615,7 @@
                 systemPromptLabel: "SYSTEM PROMPT", codePrinciplesLabel: "CODE PRINCIPLES",
                 promptTemplatesSummary: "PROMPT TEMPLATES（詳細設定）", planPromptLabel: "PLANプロンプト",
                 suggestPromptLabel: "要件おまかせ", debugPromptLabel: "修正依頼",
+                extractPromptLabel: "仕様抽出", verifyPromptLabel: "漏れ検証", extractProfilePromptLabel: "ペルソナ抽出",
                 codeThemeLabel: "CODE THEME（コードに反映）", templatesLabel: "TEMPLATES",
                 specModalTitle: "📋 仕様・修正リスト", specModalDescription: "※項目を左にスワイプして編集・削除ができます",
                 specAddPlaceholder: "仕様・修正点を追加...", specAddButton: "＋",
@@ -652,6 +670,12 @@
                 templateEditorCodePlaceholder: "<!DOCTYPE html>...",
                 templateEditorLoadButton: "📁 読込", templateEditorSaveButton: "💾 保存",
                 templateDeleteConfirm: "削除しますか？",
+                templateAddButton: "追加",
+                specClearConfirm: "仕様リストをクリアしますか？",
+                specDeleteConfirm: "この仕様を削除しますか？",
+                userPersonaPlaceholder: "ペルソナを入力...",
+                aiQuestionOptionFixAlt: "⚡️修正を依頼",
+                aiQuestionOptionFixPrompt: "未実装の要件を修正してください",
                 chatSpinnerThinking: "考案中...", chatSpinnerBuilding: "構築中...",
                 chatSpinnerInterrupted: "⚠️ 中断されました。",
                 chatMsgEdit: "✏️", chatMsgSave: "💾", chatMsgDelete: "🗑️",
@@ -697,7 +721,7 @@
     function getPrompt(name) { return PROMPTS_DATA?.prompts?.[name] || ''; }
     function getDefault(fieldId) { return PROMPTS_DATA?.defaults?.[fieldId] || ''; }
     function getLabel(key) { return PROMPTS_DATA?.ui?.[key] || ''; } // 新しいヘルパー関数
-    function getFieldDefaults() { return { 'system-prompt': getDefault('system-prompt'), 'user-profile': getDefault('user-profile'), 'code-principles': getDefault('code-principles'), 'prompt-plan': getPrompt('plan'), 'prompt-suggest': getPrompt('suggest'), 'prompt-debug': getPrompt('debug') }; }
+    function getFieldDefaults() { return { 'system-prompt': getDefault('system-prompt'), 'user-profile': getDefault('user-profile'), 'code-principles': getDefault('code-principles'), 'prompt-plan': getPrompt('plan'), 'prompt-suggest': getPrompt('suggest'), 'prompt-debug': getPrompt('debug'), 'prompt-extract': getPrompt('extract'), 'prompt-verify': getPrompt('verify'), 'prompt-extractProfile': getPrompt('extractProfile') }; }
     function resetFieldDefault(fieldId) { const def = getFieldDefaults()[fieldId]; if (def !== undefined) { document.getElementById(fieldId).value = def; autoSaveSettings(); showToast(getLabel('toastDefaultRestored')); } }
 
     /* === 仕様・修正リスト === */
@@ -707,8 +731,9 @@
     function saveSpecList(list) { localStorage.setItem('specList', JSON.stringify(list)); updateSpecBadge(); }
     function getSpecBackup() { try { return JSON.parse(localStorage.getItem('specListBackup') || '[]'); } catch(e) { return []; } }
     function saveSpecBackup(list) { localStorage.setItem('specListBackup', JSON.stringify(list)); }
-    function updateSpecBadge() { const c = getSpecList().length; const b = document.getElementById('spec-badge'); if (b) { b.textContent = c; b.className = 'tab-badge' + (c === 0 ? ' empty' : ''); } updateFloatingGenerateBtn(); }
-    function updateFloatingGenerateBtn() { const container = document.getElementById('floating-generate-container'); if (!container) return; if (getSpecList().length > 0) container.classList.add('show'); else container.classList.remove('show'); }
+    function updateSpecBadge() { const list = getSpecList(); const total = list.length; const done = list.filter(i => i.done).length; const b = document.getElementById('spec-badge'); if (b) { b.textContent = total > 0 ? `${done}/${total}` : '0'; b.className = 'tab-badge' + (total === 0 ? ' empty' : (done === total && total > 0 ? ' done' : '')); } updateFloatingGenerateBtn(); updateSpecProgress(); }
+    function updateFloatingGenerateBtn() { const container = document.getElementById('floating-generate-container'); if (!container) return; const list = getSpecList(); const undone = list.filter(i => !i.done); if (undone.length > 0) container.classList.add('show'); else container.classList.remove('show'); }
+    function updateSpecProgress() { const list = getSpecList(); const pg = document.getElementById('spec-progress'); if (!pg) return; if (list.length === 0) { pg.style.display = 'none'; return; } pg.style.display = 'flex'; const done = list.filter(i => i.done).length; const pct = Math.round(done / list.length * 100); document.getElementById('spec-progress-text').textContent = `${done}/${list.length} (${pct}%)`; document.getElementById('spec-progress-fill').style.width = pct + '%'; }
     function clearNewSpecFlags() { const list = getSpecList(); let changed = false; list.forEach(i => { if(i.isNew) { i.isNew = false; changed = true; } }); if(changed) { saveSpecList(list); renderSpecCards(); } }
 
     // スワイプ操作変数
@@ -729,8 +754,9 @@
                         <button class="swipe-btn delete" onclick="deleteSpecItem('${item.id}')">${getLabel('chatMsgDelete')}</button>
                     </div>
                     <div class="swipe-content" ontouchstart="handleTouchStart(event, this)" ontouchmove="handleTouchMove(event, this)" ontouchend="handleTouchEnd(event, this)">
+                        <input type="checkbox" class="spec-checkbox" ${item.done ? 'checked' : ''} onchange="toggleSpecDone('${item.id}', this.checked)">
                         <span class="spec-card-source ${item.source}">${item.source === 'auto' ? 'AI' : 'USER'}</span>
-                        <div id="spec-text-${item.id}" class="spec-card-text" contenteditable="true" onblur="updateSpecText('${item.id}', this.innerText)">${escapeHtml(item.text)}</div>
+                        <div id="spec-text-${item.id}" class="spec-card-text ${item.done ? 'done' : ''}" contenteditable="true" onblur="updateSpecText('${item.id}', this.innerText)">${escapeHtml(item.text)}</div>
                     </div>
                 </div>
             `).join('');
@@ -738,8 +764,9 @@
         updateSpecBadge();
     }
     function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
-    function addSpecManual() { const input = document.getElementById('spec-add-input'); const text = input.value.trim(); if (!text) return; const list = getSpecList(); if (list.some(item => item.text === text)) { showToast(getLabel('toastSpecExists')); return; } list.push({ id: Date.now().toString(), text, source: 'user', isNew: true }); saveSpecList(list); input.value = ''; renderSpecCards(); showToast(getLabel('toastSpecAdded')); }
-    function deleteSpecItem(id) { const list = getSpecList().filter(item => item.id !== id); saveSpecList(list); renderSpecCards(); }
+    function toggleSpecDone(id, checked) { const list = getSpecList(); const item = list.find(i => i.id === id); if (item) { item.done = checked; saveSpecList(list); renderSpecCards(); } }
+    function addSpecManual() { const input = document.getElementById('spec-add-input'); const text = input.value.trim(); if (!text) return; const list = getSpecList(); if (list.some(item => item.text === text)) { showToast(getLabel('toastSpecExists')); return; } list.push({ id: Date.now().toString(), text, source: 'user', isNew: true, done: false }); saveSpecList(list); input.value = ''; renderSpecCards(); showToast(getLabel('toastSpecAdded')); }
+    function deleteSpecItem(id) { if (!confirm(getLabel('specDeleteConfirm'))) return; const list = getSpecList().filter(item => item.id !== id); saveSpecList(list); renderSpecCards(); }
     function editSpecText(id) { const el = document.getElementById('spec-text-' + id); if (el) { if (activeSwipeElement) { activeSwipeElement.style.transform = 'translateX(0)'; activeSwipeElement = null; } el.focus(); } }
     function updateSpecText(id, newText) { const text = newText.trim(); if (!text) { deleteSpecItem(id); return; } const list = getSpecList(); const item = list.find(i => i.id === id); if (item && item.text !== text) { item.text = text; saveSpecList(list); showToast(getLabel('toastSpecUpdated')); } }
     function clearSpecList() { const list = getSpecList(); if (list.length === 0) return showToast(getLabel('toastEmptySpecs')); if (!confirm(getLabel('specClearConfirm'))) return; saveSpecBackup(list); saveSpecList([]); renderSpecCards(); document.getElementById('spec-restore-btn').style.display = ''; showToast(getLabel('toastSpecCleared')); }
@@ -751,12 +778,12 @@
     
     async function extractSpecsFromChat(userText, aiText) {
         try {
-            const prompt = getPrompt('extract').replace('{userMessage}', userText).replace('{aiResponse}', aiText).replace('{existingSpecs}', specListToString());
+            const prompt = (document.getElementById('prompt-extract').value.trim() || getPrompt('extract')).replace('{userMessage}', userText).replace('{aiResponse}', aiText).replace('{existingSpecs}', specListToString());
             const result = await callLLM({ prompt, stream: false, model: document.getElementById('chat-model').value });
             const items = JSON.parse(result.text.replace(/```json|```/g, '').trim());
             if (Array.isArray(items) && items.length > 0) {
                 const list = getSpecList(); let addedCount = 0;
-                items.forEach(text => { if (typeof text === 'string' && text.trim()) { const trimmed = text.trim(); if (!list.some(item => item.text === trimmed)) { list.push({ id: Date.now().toString() + Math.random().toString(36).slice(2, 6), text: trimmed, source: 'auto', isNew: true }); addedCount++; } } });
+                items.forEach(text => { if (typeof text === 'string' && text.trim()) { const trimmed = text.trim(); if (!list.some(item => item.text === trimmed)) { list.push({ id: Date.now().toString() + Math.random().toString(36).slice(2, 6), text: trimmed, source: 'auto', isNew: true, done: false }); addedCount++; } } });
                 if (addedCount > 0) {
                     saveSpecList(list); renderSpecCards();
                     const sysMsg = { id: Date.now().toString(), role: 'ai system-msg', text: getLabel('aiSystemMsgSpecsUpdated').replace('{count}', addedCount), html: false };
@@ -769,7 +796,7 @@
     // ユーザーペルソナ抽出・更新提案
     async function extractUserProfileFromChat(userText, aiText) {
         const currentProfile = document.getElementById('user-profile').value;
-        const prompt = getPrompt('extractProfile').replace('{currentProfile}', currentProfile).replace('{userText}', userText).replace('{aiText}', aiText);
+        const prompt = (document.getElementById('prompt-extractProfile').value.trim() || getPrompt('extractProfile')).replace('{currentProfile}', currentProfile).replace('{userText}', userText).replace('{aiText}', aiText);
         try {
             const result = await callLLM({ prompt, stream: false, model: document.getElementById('chat-model').value });
             const cleaned = result.text.replace(/```json|```/g, '').trim();
@@ -815,13 +842,13 @@
     async function verifySpecCoverage(code) {
         const list = getSpecList(); if (list.length === 0) return;
         try {
-            const prompt = getPrompt('verify').replace('{specList}', specListToString()).replace('{generatedCode}', code.slice(0, 30000));
+            const prompt = (document.getElementById('prompt-verify').value.trim() || getPrompt('verify')).replace('{specList}', specListToString()).replace('{generatedCode}', code.slice(0, 30000));
             const result = await callLLM({ prompt, stream: false, model: document.getElementById('code-model').value });
             const missing = JSON.parse(result.text.replace(/```json|```/g, '').trim());
             let sysMsg;
             if (Array.isArray(missing) && missing.length > 0) { 
                 sysMsg = { id: Date.now().toString(), role: 'ai system-msg', text: `${getLabel('aiSystemMsgMissingReqs')}${missing.map((m,i) => `  ${i+1}. ${m}`).join('\n')}`, html: false }; 
-                const newList = missing.map(m => ({ id: Date.now().toString() + Math.random().toString(36).slice(2, 6), text: m, source: 'auto', isNew: true }));
+                const newList = missing.map(m => ({ id: Date.now().toString() + Math.random().toString(36).slice(2, 6), text: m, source: 'auto', isNew: true, done: false }));
                 saveSpecBackup(list); saveSpecList(newList); renderSpecCards();
                 setTimeout(() => showAIQuestionModal(getLabel('aiQuestionPromptMissingReqs'), [getLabel('aiQuestionOptionFix'), getLabel('aiQuestionOptionSuggest')]), 1000);
             } else { 
@@ -836,7 +863,7 @@
     const KEY_EXPIRYDAYS = 14; const CRYPTO_SALT = 'AIWebStudio-salt';
     async function getCryptoKey() { const enc = new TextEncoder(); const km = await crypto.subtle.importKey('raw', enc.encode(CRYPTO_SALT + navigator.userAgent.slice(0, 50)), 'PBKDF2', false, ['deriveKey']); return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: enc.encode(CRYPTO_SALT), iterations: 100000, hash: 'SHA-256' }, km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']); }
     async function saveEncryptedKeys(keys) { const key = await getCryptoKey(); const enc = new TextEncoder(); const iv = crypto.getRandomValues(new Uint8Array(12)); const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(keys))); await saveToDB('encryptedApiKeys', { iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)), ts: Date.now() }); }
-    async function loadEncryptedKeys() { try { const obj = await getFromDB('encryptedApiKeys'); if (!obj) return null; if (Date.now() - obj.ts > KEY_EXPIRYDAYS * 24 * 60 * 60 * 1000) { await deleteFromDB('encryptedApiKeys'); return null; } const key = await getCryptoKey(); const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(obj.iv) }, key, new Uint8Array(decrypted)); return JSON.parse(new TextDecoder().decode(decrypted)); } catch(e) { return null; } }
+    async function loadEncryptedKeys() { try { const obj = await getFromDB('encryptedApiKeys'); if (!obj) return null; if (Date.now() - obj.ts > KEY_EXPIRYDAYS * 24 * 60 * 60 * 1000) { await deleteFromDB('encryptedApiKeys'); return null; } const key = await getCryptoKey(); const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(obj.iv) }, key, new Uint8Array(obj.data)); return JSON.parse(new TextDecoder().decode(decrypted)); } catch(e) { return null; } }
     function updateKeyExpiryStatus(keys) { const el = document.getElementById('key-expiry-status'); if (!el) return; if (!keys) { el.innerHTML = getLabel('keyExpiryStatusNotSaved'); return; } getFromDB('encryptedApiKeys').then(obj => { if (!obj || !obj.ts) { el.textContent = ''; return; } const remaining = Math.ceil((new Date(obj.ts + KEY_EXPIRYDAYS * 24 * 60 * 60 * 1000) - Date.now()) / (24 * 60 * 60 * 1000)); el.textContent = remaining > 0 ? getLabel('keyExpiryStatusRemaining').replace('{remaining}', remaining) : getLabel('keyExpiryStatusExpired'); }); }
     function getCurrentApiKey() { const provider = document.getElementById('ai-provider').value; const el = document.getElementById('api-key-' + provider); return el ? el.value.trim() : ''; }
     function onProviderChange() { const provider = document.getElementById('ai-provider').value; updateModelOptions('chat-model', PROVIDER_MODELS[provider].chat); updateModelOptions('code-model', PROVIDER_MODELS[provider].code); document.querySelectorAll('.api-key-field').forEach(el => el.style.display = el.dataset.provider === provider ? '' : 'none'); toggleModelSelects(); }
@@ -855,7 +882,8 @@
             const settings = {
                 aiProvider: document.getElementById('ai-provider').value, chatModel: document.getElementById('chat-model').value, codeModel: document.getElementById('code-model').value,
                 userProfile: document.getElementById('user-profile').value, systemPrompt: document.getElementById('system-prompt').value, codePrinciples: document.getElementById('code-principles').value,
-                promptPlan: document.getElementById('prompt-plan').value, promptSuggest: document.getElementById('prompt-suggest').value, promptDebug: document.getElementById('prompt-debug').value
+                promptPlan: document.getElementById('prompt-plan').value, promptSuggest: document.getElementById('prompt-suggest').value, promptDebug: document.getElementById('prompt-debug').value,
+                promptExtract: document.getElementById('prompt-extract').value, promptVerify: document.getElementById('prompt-verify').value, promptExtractProfile: document.getElementById('prompt-extractProfile').value
             };
             await saveToDB('settings', settings);
             const ghToken = document.getElementById('setting-gh-token').value.trim();
@@ -1044,6 +1072,12 @@
         document.querySelector('.prompt-details .field-header:nth-of-type(2) .reset-default-btn').textContent = getLabel('resetDefaultButton');
         document.querySelector('.prompt-details .field-header:nth-of-type(3) label').textContent = getLabel('debugPromptLabel');
         document.querySelector('.prompt-details .field-header:nth-of-type(3) .reset-default-btn').textContent = getLabel('resetDefaultButton');
+        document.querySelector('.prompt-details .field-header:nth-of-type(4) label').textContent = getLabel('extractPromptLabel');
+        document.querySelector('.prompt-details .field-header:nth-of-type(4) .reset-default-btn').textContent = getLabel('resetDefaultButton');
+        document.querySelector('.prompt-details .field-header:nth-of-type(5) label').textContent = getLabel('verifyPromptLabel');
+        document.querySelector('.prompt-details .field-header:nth-of-type(5) .reset-default-btn').textContent = getLabel('resetDefaultButton');
+        document.querySelector('.prompt-details .field-header:nth-of-type(6) label').textContent = getLabel('extractProfilePromptLabel');
+        document.querySelector('.prompt-details .field-header:nth-of-type(6) .reset-default-btn').textContent = getLabel('resetDefaultButton');
         document.querySelector('.theme-section label').textContent = getLabel('codeThemeLabel');
         document.querySelector('.template-section label').textContent = getLabel('templatesLabel');
 
@@ -1126,7 +1160,7 @@
     /* --- Init --- */
     window.onload = async () => {
         await loadPrompts(); // Load prompts first
-        applyUITexts(); // Apply UI texts after loading prompts
+        try { applyUITexts(); } catch(e) { console.warn('applyUITexts error:', e); }
         try {
             const settings = await getFromDB('settings');
             if (settings) {
@@ -1136,7 +1170,7 @@
                 if (decryptedKeys) { ['gemini','openai','claude','xai','groq'].forEach(k => document.getElementById('api-key-'+k).value = decryptedKeys[k] || ''); updateKeyExpiryStatus(decryptedKeys); }
                 else if (settings.apiKeys) { ['gemini','openai','claude','xai','groq'].forEach(k => document.getElementById('api-key-'+k).value = settings.apiKeys[k] || ''); await saveEncryptedKeys(settings.apiKeys); updateKeyExpiryStatus(settings.apiKeys); }
                 else updateKeyExpiryStatus(null);
-                ['user-profile','system-prompt','code-principles','prompt-plan','prompt-suggest','prompt-debug'].forEach(k => {
+                ['user-profile','system-prompt','code-principles','prompt-plan','prompt-suggest','prompt-debug','prompt-extract','prompt-verify','prompt-extractProfile'].forEach(k => {
                     const camel = k.replace(/-([a-z])/g, g => g[1].toUpperCase());
                     const savedValue = settings[camel];
                     document.getElementById(k).value = (savedValue !== undefined && savedValue !== "") ? savedValue : getFieldDefaults()[k];
@@ -1144,7 +1178,7 @@
                 if (settings.chatModel) document.getElementById('chat-model').value = settings.chatModel;
                 if (settings.codeModel) document.getElementById('code-model').value = settings.codeModel;
             } else {
-                onProviderChange(); ['user-profile','system-prompt','code-principles','prompt-plan','prompt-suggest','prompt-debug'].forEach(k => document.getElementById(k).value = getFieldDefaults()[k]); updateKeyExpiryStatus(null);
+                onProviderChange(); ['user-profile','system-prompt','code-principles','prompt-plan','prompt-suggest','prompt-debug','prompt-extract','prompt-verify','prompt-extractProfile'].forEach(k => document.getElementById(k).value = getFieldDefaults()[k]); updateKeyExpiryStatus(null);
             }
             toggleModelSelects(); const ghToken = await getFromDB('gh_token'); if (ghToken) { document.getElementById('setting-gh-token').value = ghToken; document.getElementById('deploy-token-input').value = ghToken; }
         } catch(e) { /* silent error */ }
