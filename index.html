@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -13,6 +14,11 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Markdown パース & サニタイズ用ライブラリ -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+
     <style>
         /* ============================================
            DESIGN SYSTEM - Obsidian Terminal
@@ -67,7 +73,21 @@
         .user { align-self: flex-end; background: var(--user-msg); color: #fff; }
         .ai { align-self: flex-start; background: var(--ai-msg); border: 1px solid var(--color-border); width: 100%; }
 
-        .msg-content { outline: none; white-space: pre-wrap; word-wrap: break-word; transition: 0.2s; border-radius: 4px; }
+        .msg-content { outline: none; white-space: normal; word-wrap: break-word; transition: 0.2s; border-radius: 4px; }
+        /* Markdown 描画用スタイル */
+        .msg-content p { margin: 0 0 0.6em 0; }
+        .msg-content p:last-child { margin-bottom: 0; }
+        .msg-content code { background: rgba(255,255,255,0.1); padding: 2px 5px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.85em; }
+        .msg-content pre { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.85em; margin: 0.8em 0; border: 1px solid var(--color-border); }
+        .msg-content pre code { background: transparent; padding: 0; }
+        .msg-content ul, .msg-content ol { margin: 0 0 0.6em 0; padding-left: 20px; }
+        .msg-content li { margin-bottom: 0.2em; }
+        .msg-content a { color: var(--primary); text-decoration: underline; }
+        .msg-content table { border-collapse: collapse; width: 100%; margin: 0.8em 0; font-size: 0.9em; }
+        .msg-content th, .msg-content td { border: 1px solid var(--color-border); padding: 6px 10px; text-align: left; }
+        .msg-content th { background: var(--color-bg-elevated); }
+        .user .msg-content { white-space: pre-wrap; }
+
         .msg-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; opacity: 0.5; transition: opacity 0.2s; }
         .msg:hover .msg-actions { opacity: 1; }
         .msg-action-btn { background: transparent; border: none; color: #aaa; cursor: pointer; font-size: 14px; padding: 4px; border-radius: 4px; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
@@ -91,11 +111,12 @@
         .menu-item:hover { background: var(--color-bg-elevated); }
         #file-preview { display: none; width: 60px; height: 60px; border-radius: 8px; object-fit: cover; border: 1px solid var(--primary); }
         #file-name-display { display: none; font-size: 12px; color: #ccc; background: var(--color-bg-elevated); padding: 4px 8px; border-radius: 4px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .send-btn { background: var(--primary); color: white; border: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+        .send-btn { background: var(--primary); color: white; border: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: 0.2s; }
+        .send-btn:active { transform: scale(0.9); }
         .generate-btn-wrapper { margin-top: 15px; display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
         .generate-btn { background: var(--success); color: white; border: none; height: 38px; padding: 0 18px; border-radius: 19px; font-weight: bold; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); font-family: var(--font-body); }
 
-        /* エディタ */
+        /* エディター */
         .editor-wrapper { flex: 1; position: relative; display: flex; flex-direction: column; overflow: hidden; }
         #code-editor-container { flex: 1; background: var(--color-bg-deep); overflow: hidden; position: relative; padding-top: 40px;}
         .cm-editor { height: 100%; outline: none !important; }
@@ -153,7 +174,7 @@
         .key-status { font-size:10px; color:var(--color-text-secondary); margin-top:4px; }
         .key-status a { color:var(--primary); cursor:pointer; text-decoration:underline; }
 
-        /* テーマ & テンプレートの横スクロールUI */
+        /* テーマ & テンプレート */
         .theme-section, .template-section { margin-top: 24px; margin-bottom: 24px; }
         .theme-grid, .template-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; margin-top: 12px; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; }
         .theme-grid::-webkit-scrollbar, .template-grid::-webkit-scrollbar { height: 4px; }
@@ -173,7 +194,7 @@
         .theme-action-btn:hover { background: var(--color-border-focus); color: #fff; }
         .template-icon { font-size: 28px; margin-bottom: 8px; display: block; }
 
-        /* 仕様モーダル（スワイプUI含む） */
+        /* 仕様モーダル */
         .tab-badge { display:inline-block; background:var(--primary); color:#fff; font-size:10px; min-width:18px; height:18px; line-height:18px; text-align:center; border-radius:9px; margin-left:4px; padding:0 5px; }
         .tab-badge.empty { background:var(--color-text-muted); }
         .spec-add-row { display:flex; gap:8px; flex-shrink:0; }
@@ -184,7 +205,6 @@
         .spec-footer-btn:hover { color:#fff; border-color:var(--color-border-focus); }
         .spec-footer-btn.danger:hover { color:var(--danger); border-color:var(--danger); }
         
-        /* スワイプ・インライン編集・NEWカード強調用スタイル */
         .swipe-container { position: relative; overflow: hidden; border-radius: 10px; margin-bottom: 8px; border: 1px solid var(--color-border); background: var(--color-bg-elevated); }
         .swipe-content { position: relative; z-index: 2; background: var(--color-bg-elevated); padding: 10px 12px; display: flex; align-items: flex-start; gap: 10px; transition: transform 0.3s ease; }
         .swipe-actions { position: absolute; top: 0; right: 0; bottom: 0; display: flex; z-index: 1; }
@@ -246,8 +266,8 @@
                 <input type="file" id="file-camera" accept="image/*" capture="environment" style="display:none" onchange="handleAttachment(this)">
                 <input type="file" id="file-gallery" accept="image/*" style="display:none" onchange="handleAttachment(this)">
                 <input type="file" id="file-files" accept="*/*" style="display:none" onchange="handleAttachment(this)">
-                <textarea id="user-prompt" rows="1" oninput="autoGrow(this)"></textarea>
-                <button class="send-btn" id="send-btn"></button>
+                <textarea id="user-prompt" rows="1" oninput="autoGrow(this)" onkeydown="if(event.key==='Enter' && (event.ctrlKey || event.metaKey)){ event.preventDefault(); askAI(); }"></textarea>
+                <button class="send-btn" id="send-btn" onclick="askAI()"></button>
             </div>
         </div>
     </div>
@@ -360,7 +380,6 @@
     </div>
 </div>
 
-<!-- 仕様・修正リスト モーダル -->
 <div id="spec-modal" class="modal-overlay" onclick="if(event.target===this)closeSpecModal()">
     <div class="modal">
         <div class="modal-header">
@@ -382,7 +401,6 @@
     </div>
 </div>
 
-<!-- ペルソナ提案 モーダル -->
 <div id="profile-proposal-modal" class="modal-overlay">
     <div class="modal">
         <div class="modal-header">
@@ -407,7 +425,6 @@
     </div>
 </div>
 
-<!-- AI質問・選択肢 モーダル -->
 <div id="ai-question-modal" class="modal-overlay" onclick="if(event.target===this)closeAIQuestionModal()">
     <div class="modal">
         <div class="modal-header">
@@ -436,7 +453,6 @@
     </div>
 </div>
 
-<!-- GitHub Import Modal -->
 <div id="gh-import-modal" class="modal-overlay" onclick="if(event.target===this)closeGitHubImport()">
     <div class="modal">
         <div class="modal-header">
@@ -458,7 +474,6 @@
     </div>
 </div>
 
-<!-- GitHub Deploy Modal -->
 <div id="gh-deploy-modal" class="modal-overlay" onclick="if(event.target===this)closeGitHubDeploy()">
     <div class="modal">
         <div class="modal-header">
@@ -566,7 +581,6 @@
     /* === プロンプト管理 === */
     let PROMPTS_DATA = null;
     async function loadPrompts() {
-        // ハードコードされたデフォルトのプロンプトとUIテキスト
         PROMPTS_DATA = {
             defaults: {
                 'system-prompt': 'あなたは優秀なAIアシスタントです。簡潔に答えてください。\nユーザーに選択させたい場合は、文末に必ず [OPTIONS: 選択肢A | 選択肢B] と記載してください。',
@@ -579,9 +593,9 @@
                 debug: '以下の修正依頼に対し、原因と修正案を提示してください。\n依頼: {memoText}',
                 extract: '以下のやり取りから、実装すべき要件を抽出しJSONの文字列配列で出力してください。\n【ユーザー】{userMessage}\n【AI】{aiResponse}\n【既存】{existingSpecs}',
                 verify: '仕様とコードを照合し、未実装の要件をJSONの文字列配列で返してください。\n【仕様】{specList}\n【コード】{generatedCode}',
-                extractProfile: '以下の会話から、ユーザーの好みや開発におけるペルソナ（使用技術、デザインの好み等）に関する新しい情報があれば抽出してください。\n現在のペルソナ:\n{currentProfile}\nユーザーの発言:\n{userText}\nAIの応答:\n{aiText}\n\n【ルール】\n- 既存と重複しない新情報のみを抽出し、ペルソナを充実させた「更新後の文章全体」を生成してください。\n- ユーザーの好みや開発スタイルに関する情報のみ抽出し、システムの機能要件や具体的な仕様に関する記述は絶対に含めないでください。\n- 新情報がなければ空のJSON `{}` を返してください。\n- 更新がある場合は `{ "newProfile": "更新後の文章全体" }` 形式のJSONのみ出力すること。'
+                extractProfile: '以下の会話から、ユーザーのペルソナに関する新しい情報があれば抽出してください。\n現在のペルソナ:\n{currentProfile}\nユーザーの発言:\n{userText}\nAIの応答:\n{aiText}\n\n【ルール】\n- アプリのコンセプトやユーザー体験が大きく変わる情報のみを抽出し、ペルソナを充実させた「更新後の文章全体」を生成してください。\n- 簡単なUIの変更やシステムの機能要件や具体的な仕様に関する記述は絶対に含めないでください。\n- 新情報がなければ空のJSON `{}` を返してください。\n- 更新がある場合は `{ "newProfile": "更新後の文章全体" }` 形式のJSONのみ出力すること。'
             },
-            ui: { // 新しいUIラベルセクション
+            ui: { 
                 tabChat: "CHAT", tabCode: "CODE", tabPreview: "PREVIEW", tabSettings: "SET",
                 headerConversation: "CONVERSATION", specButton: "📋 仕様", newButton: "＋ New",
                 generateCodeButton: "⚡️ コードを作成 (BUILD)",
@@ -615,12 +629,12 @@
                 aiQuestionPromptMissingReqs: "未実装の要件が残っています。これらの修正を依頼しますか？",
                 aiQuestionOptionFix: "⚡️修正を依頼", aiQuestionOptionSuggest: "✨要件をおまかせ",
                 aiSystemMsgSpecsUpdated: "📋 仕様リスト更新（+{count}件）",
-                aiSystemMsgMissingReqs: "⚠️ 未実装の要件があります:\n", // Newline for formatting
+                aiSystemMsgMissingReqs: "⚠️ 未実装の要件があります:\n",
                 aiSystemMsgAllSpecsCovered: "✅ 全仕様を網羅しました",
-                aiSystemMsgInitial: "AI Web Studio 起動。\n要件を教えてください。プランが固まったら「⚡️コードを作成」ボタンを表示します。",
+                aiSystemMsgInitial: "AI Web Studioです。\n要件を教えてください。プランが固まったら「⚡️コードを作成」ボタンを表示します。",
                 aiSystemMsgReset: "リセットしました。\n要件を教えてください。",
                 aiSystemMsgCodeLoaded: "{source} からコードを読み込みました。\n修正したい点があれば教えてください。",
-                aiSystemMsgThinking: "考案中...", aiSystemMsgBuildingCode: "構築中...",
+                aiSystemMsgThinking: "考えています...", aiSystemMsgBuildingCode: "構築中...",
                 aiSystemMsgBuildComplete: "✨ 構築完了。PREVIEWを確認してください。",
                 aiSystemMsgBuildError: "エラー:", toastInputRequired: "入力が必要です",
                 toastSettingsSaved: "設定を自動保存しました", toastDefaultRestored: "デフォルト値に戻しました",
@@ -652,11 +666,11 @@
                 templateEditorCodePlaceholder: "<!DOCTYPE html>...",
                 templateEditorLoadButton: "📁 読込", templateEditorSaveButton: "💾 保存",
                 templateDeleteConfirm: "削除しますか？",
-                chatSpinnerThinking: "考案中...", chatSpinnerBuilding: "構築中...",
+                chatSpinnerThinking: "考えています...", chatSpinnerBuilding: "構築中...",
                 chatSpinnerInterrupted: "⚠️ 中断されました。",
                 chatMsgEdit: "✏️", chatMsgSave: "💾", chatMsgDelete: "🗑️",
                 searchModalTitle: "🔍 Find in Code", searchInputPlaceholder: "Find...",
-                deployTargetRepoPrefix: "Target: ", // Specific prefix for deploy target
+                deployTargetRepoPrefix: "Target: ",
                 deployStatusSuccess: "✅ 成功！",
                 deployStatusError: "❌ エラー",
                 deployStatusCreating: "作成中...",
@@ -672,31 +686,20 @@
             const res = await fetch('./prompts.json');
             if (res.ok) {
                 const loadedPrompts = await res.json();
-                if (loadedPrompts.defaults) {
-                    Object.assign(PROMPTS_DATA.defaults, loadedPrompts.defaults);
-                }
+                if (loadedPrompts.defaults) { Object.assign(PROMPTS_DATA.defaults, loadedPrompts.defaults); }
                 if (loadedPrompts.prompts) {
                     for (const [key, value] of Object.entries(loadedPrompts.prompts)) {
-                        if (value && value.template) {
-                            PROMPTS_DATA.prompts[key] = value.template;
-                        } else if (typeof value === 'string') {
-                            PROMPTS_DATA.prompts[key] = value;
-                        }
+                        if (value && value.template) { PROMPTS_DATA.prompts[key] = value.template; }
+                        else if (typeof value === 'string') { PROMPTS_DATA.prompts[key] = value; }
                     }
                 }
-                if (loadedPrompts.ui) { // UIセクションをロード
-                    Object.assign(PROMPTS_DATA.ui, loadedPrompts.ui);
-                }
-            } else {
-                console.warn('prompts.json could not be loaded. Using hardcoded defaults.');
+                if (loadedPrompts.ui) { Object.assign(PROMPTS_DATA.ui, loadedPrompts.ui); }
             }
-        } catch (e) {
-            console.warn('Error fetching prompts.json. Using hardcoded defaults.', e);
-        }
+        } catch (e) { console.warn('Error fetching prompts.json. Using hardcoded defaults.', e); }
     }
     function getPrompt(name) { return PROMPTS_DATA?.prompts?.[name] || ''; }
     function getDefault(fieldId) { return PROMPTS_DATA?.defaults?.[fieldId] || ''; }
-    function getLabel(key) { return PROMPTS_DATA?.ui?.[key] || ''; } // 新しいヘルパー関数
+    function getLabel(key) { return PROMPTS_DATA?.ui?.[key] || ''; } 
     function getFieldDefaults() { return { 'system-prompt': getDefault('system-prompt'), 'user-profile': getDefault('user-profile'), 'code-principles': getDefault('code-principles'), 'prompt-plan': getPrompt('plan'), 'prompt-suggest': getPrompt('suggest'), 'prompt-debug': getPrompt('debug') }; }
     function resetFieldDefault(fieldId) { const def = getFieldDefaults()[fieldId]; if (def !== undefined) { document.getElementById(fieldId).value = def; autoSaveSettings(); showToast(getLabel('toastDefaultRestored')); } }
 
@@ -711,7 +714,6 @@
     function updateFloatingGenerateBtn() { const container = document.getElementById('floating-generate-container'); if (!container) return; if (getSpecList().length > 0) container.classList.add('show'); else container.classList.remove('show'); }
     function clearNewSpecFlags() { const list = getSpecList(); let changed = false; list.forEach(i => { if(i.isNew) { i.isNew = false; changed = true; } }); if(changed) { saveSpecList(list); renderSpecCards(); } }
 
-    // スワイプ操作変数
     let startX = 0, currentX = 0, activeSwipeElement = null;
     function handleTouchStart(e, el) { startX = e.touches[0].clientX; currentX = 0; if (activeSwipeElement && activeSwipeElement !== el) activeSwipeElement.style.transform = 'translateX(0)'; activeSwipeElement = el; el.style.transition = 'none'; }
     function handleTouchMove(e, el) { const x = e.touches[0].clientX; currentX = x - startX; if (currentX > 0) currentX = 0; if (currentX < -120) currentX = -120; el.style.transform = `translateX(${currentX}px)`; }
@@ -742,7 +744,7 @@
     function deleteSpecItem(id) { const list = getSpecList().filter(item => item.id !== id); saveSpecList(list); renderSpecCards(); }
     function editSpecText(id) { const el = document.getElementById('spec-text-' + id); if (el) { if (activeSwipeElement) { activeSwipeElement.style.transform = 'translateX(0)'; activeSwipeElement = null; } el.focus(); } }
     function updateSpecText(id, newText) { const text = newText.trim(); if (!text) { deleteSpecItem(id); return; } const list = getSpecList(); const item = list.find(i => i.id === id); if (item && item.text !== text) { item.text = text; saveSpecList(list); showToast(getLabel('toastSpecUpdated')); } }
-    function clearSpecList() { const list = getSpecList(); if (list.length === 0) return showToast(getLabel('toastEmptySpecs')); if (!confirm(getLabel('specClearConfirm'))) return; saveSpecBackup(list); saveSpecList([]); renderSpecCards(); document.getElementById('spec-restore-btn').style.display = ''; showToast(getLabel('toastSpecCleared')); }
+    function clearSpecList() { const list = getSpecList(); if (list.length === 0) return showToast(getLabel('toastEmptySpecs')); if (!confirm(getLabel('specClearButton')+'しますか？')) return; saveSpecBackup(list); saveSpecList([]); renderSpecCards(); document.getElementById('spec-restore-btn').style.display = ''; showToast(getLabel('toastSpecCleared')); }
     function restoreSpecList() { const backup = getSpecBackup(); if (backup.length === 0) return; saveSpecList(backup); renderSpecCards(); document.getElementById('spec-restore-btn').style.display = 'none'; showToast(getLabel('toastSpecRestored')); }
     function specListToString() { const list = getSpecList(); return list.length === 0 ? '（なし）' : list.map((item, i) => `${i + 1}. ${item.text}`).join('\n'); }
 
@@ -763,10 +765,9 @@
                     chatHistory.push(sysMsg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(sysMsg);
                 }
             }
-        } catch(e) { /* silent error */ }
+        } catch(e) { }
     }
 
-    // ユーザーペルソナ抽出・更新提案
     async function extractUserProfileFromChat(userText, aiText) {
         const currentProfile = document.getElementById('user-profile').value;
         const prompt = getPrompt('extractProfile').replace('{currentProfile}', currentProfile).replace('{userText}', userText).replace('{aiText}', aiText);
@@ -776,13 +777,12 @@
             if (!cleaned || cleaned === '{}') return;
             const data = JSON.parse(cleaned);
             if (data.newProfile && data.newProfile !== currentProfile) { showProfileProposalModal(currentProfile, data.newProfile); }
-        } catch(e) { /* silent error */ }
+        } catch(e) { }
     }
     function showProfileProposalModal(oldProfile, newProfile) { document.getElementById('old-profile-text').textContent = oldProfile; document.getElementById('new-profile-text').textContent = newProfile; document.getElementById('profile-proposal-modal').classList.add('show'); }
     function closeProfileProposalModal() { document.getElementById('profile-proposal-modal').classList.remove('show'); }
     function acceptProfileProposal() { document.getElementById('user-profile').value = document.getElementById('new-profile-text').textContent; autoSaveSettings(); closeProfileProposalModal(); showToast(getLabel('toastProfileUpdated')); }
 
-    // AIからの質問・選択肢モーダル
     function showAIQuestionModal(text, options) {
         document.getElementById('ai-question-text').innerText = text;
         const container = document.getElementById('ai-question-options');
@@ -796,8 +796,8 @@
             btn.onclick = () => { 
                 closeAIQuestionModal(); 
                 const choice = opt.trim();
-                if (choice === getLabel('aiQuestionOptionFix') || choice === getLabel('aiQuestionOptionFixAlt')) {
-                    document.getElementById('user-prompt').value = getPrompt('debug').replace('{memoText}', getLabel('aiQuestionOptionFixPrompt')); // AIへの指示はprompt-debugで
+                if (choice === getLabel('aiQuestionOptionFix')) {
+                    document.getElementById('user-prompt').value = getPrompt('debug').replace('{memoText}', "要件の残りをお願いします");
                 } else if (choice === getLabel('aiQuestionOptionSuggest')) {
                     document.getElementById('user-prompt').value = getPrompt('suggest');
                 } else {
@@ -829,7 +829,7 @@
                 saveSpecBackup(list); saveSpecList([]); document.getElementById('spec-restore-btn').style.display = ''; renderSpecCards();
             }
             chatHistory.push(sysMsg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(sysMsg);
-        } catch(e) { /* silent error */ }
+        } catch(e) { }
     }
 
     /* === APIキー暗号化 === */
@@ -843,7 +843,6 @@
     function updateModelOptions(selectId, models) { document.getElementById(selectId).innerHTML = models.map(([v, l]) => `<option value="${v}">${l}</option>`).join(''); }
     function toggleModelSelects() { const k = getCurrentApiKey(); const chat = document.getElementById('chat-model'), code = document.getElementById('code-model'); chat.style.opacity = k ? "1" : "0.6"; code.style.opacity = k ? "1" : "0.6"; }
 
-    /* --- 自動保存機能 --- */
     let saveTimeout;
     async function autoSaveSettings() {
         clearTimeout(saveTimeout);
@@ -894,7 +893,6 @@
     function nextSearchMatch() { if (!cmView || !cmSearchModules || searchMatchesCount === 0) return; cmSearchModules.findNext(cmView); currentSearchIndex = currentSearchIndex < searchMatchesCount ? currentSearchIndex + 1 : 1; document.getElementById('search-status').innerText = `${currentSearchIndex}/${searchMatchesCount}`; document.getElementById('code-search-input').focus(); }
     function prevSearchMatch() { if (!cmView || !cmSearchModules || searchMatchesCount === 0) return; cmSearchModules.findPrevious(cmView); currentSearchIndex = currentSearchIndex > 1 ? currentSearchIndex - 1 : searchMatchesCount; document.getElementById('search-status').innerText = `${currentSearchIndex}/${searchMatchesCount}`; document.getElementById('code-search-input').focus(); }
 
-    /* --- DB / History --- */
     function openDB() { return new Promise((res, rej) => { const req = indexedDB.open('AIWebStudioBG', 2); req.onupgradeneeded = () => { if(!req.result.objectStoreNames.contains('tasks')) req.result.createObjectStore('tasks'); }; req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error); }); }
     async function saveToDB(k, v) { const db = await openDB(); return new Promise((res, rej) => { const tx = db.transaction('tasks', 'readwrite'); tx.objectStore('tasks').put(v, k); tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); }); }
     async function getFromDB(k) { const db = await openDB(); return new Promise((res, rej) => { const tx = db.transaction('tasks', 'readonly'); const req = tx.objectStore('tasks').get(k); req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error); }); }
@@ -906,14 +904,59 @@
         if (history && history.length > 0) { chatHistory = history; document.getElementById('chat-log').innerHTML = ''; chatHistory.forEach(msg => { if(msg.html && msg.text.includes('spinner')) { msg.text = getLabel('aiSystemMsgInterrupted'); msg.html = false; } renderMessageFromHistory(msg); }); rebuildConversationContext(); } 
         else { const initMsg = { id: Date.now().toString(), role: 'ai system-msg', text: getLabel('aiSystemMsgInitial'), html: false }; chatHistory.push(initMsg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(initMsg); rebuildConversationContext(); }
     }
-    function renderMessageFromHistory(msg) { const log = document.getElementById('chat-log'); log.appendChild(createMessageElement(msg)); log.scrollTop = log.scrollHeight; }
+    
+    function renderMessageFromHistory(msg) { 
+        const log = document.getElementById('chat-log'); 
+        log.appendChild(createMessageElement(msg)); 
+        log.scrollTop = log.scrollHeight; 
+    }
+    
     function createMessageElement(msg) {
         const d = document.createElement('div'); d.className = `msg ${msg.role}`; d.dataset.id = msg.id;
-        const c = document.createElement('div'); c.className = 'msg-content'; if (msg.html) c.innerHTML = msg.text; else c.textContent = msg.text; d.appendChild(c);
-        if (!msg.role.includes('system-msg') && !msg.html) { const a = document.createElement('div'); a.className = 'msg-actions'; const ed = document.createElement('button'); ed.className = 'msg-action-btn'; ed.innerHTML = getLabel('chatMsgEdit'); ed.onclick = () => { if (c.contentEditable === "true") { c.contentEditable = "false"; c.style.border = "none"; c.style.padding = "0"; ed.innerHTML = getLabel('chatMsgEdit'); const m = chatHistory.find(x => x.id === msg.id); if (m) { m.text = c.textContent; saveToDB('chatHistory', chatHistory); rebuildConversationContext(); showToast(getLabel('toastSettingsSaved')); } } else { c.contentEditable = "true"; c.style.border = "1px solid var(--primary)"; c.style.padding = "4px"; c.focus(); ed.innerHTML = getLabel('chatMsgSave'); } }; const dl = document.createElement('button'); dl.className = 'msg-action-btn'; dl.innerHTML = getLabel('chatMsgDelete'); dl.onclick = () => { chatHistory = chatHistory.filter(x => x.id !== msg.id); d.remove(); saveToDB('chatHistory', chatHistory); rebuildConversationContext(); showToast(getLabel('toastSettingsSaved')); }; a.appendChild(ed); a.appendChild(dl); d.appendChild(a); }
-        if (msg.role === 'ai' && !msg.html) { const b = document.createElement('div'); b.className = 'generate-btn-wrapper'; let h = false; if (msg.text.includes(getLabel('generateCodeButton'))) { const gb = document.createElement('button'); gb.className = 'generate-btn'; gb.innerHTML = getLabel('generateCodeButton'); gb.onclick = generateCode; b.appendChild(gb); h = true; } if (msg.text.includes(getLabel('aiQuestionOptionSuggest'))) { const pb = document.createElement('button'); pb.className = 'generate-btn'; pb.style.background = 'var(--accent)'; pb.innerHTML = getLabel('aiQuestionOptionSuggest'); pb.onclick = askForPlan; b.appendChild(pb); h = true; } if (h) d.appendChild(b); }
+        const c = document.createElement('div'); c.className = 'msg-content'; 
+        
+        // Markdown Rendering
+        if (msg.html) {
+            c.innerHTML = msg.text;
+        } else if (msg.role === 'ai') {
+            c.innerHTML = typeof marked !== 'undefined' ? DOMPurify.sanitize(marked.parse(msg.text)) : msg.text;
+        } else {
+            c.textContent = msg.text;
+        }
+        d.appendChild(c);
+
+        if (!msg.role.includes('system-msg') && !msg.html) { 
+            const a = document.createElement('div'); a.className = 'msg-actions'; 
+            const ed = document.createElement('button'); ed.className = 'msg-action-btn'; ed.innerHTML = getLabel('chatMsgEdit'); 
+            ed.onclick = () => { 
+                if (c.contentEditable === "true") { 
+                    c.contentEditable = "false"; c.style.border = "none"; c.style.padding = "0"; ed.innerHTML = getLabel('chatMsgEdit'); 
+                    const m = chatHistory.find(x => x.id === msg.id); 
+                    if (m) { 
+                        m.text = c.innerText; // 改行を維持して生テキストを取得
+                        saveToDB('chatHistory', chatHistory); rebuildConversationContext(); showToast(getLabel('toastSettingsSaved')); 
+                        if (msg.role === 'ai') c.innerHTML = typeof marked !== 'undefined' ? DOMPurify.sanitize(marked.parse(m.text)) : m.text;
+                    } 
+                } else { 
+                    c.contentEditable = "true"; c.style.border = "1px solid var(--primary)"; c.style.padding = "4px"; 
+                    c.innerText = msg.text; // マークダウンソースを表示
+                    c.focus(); ed.innerHTML = getLabel('chatMsgSave'); 
+                } 
+            }; 
+            const dl = document.createElement('button'); dl.className = 'msg-action-btn'; dl.innerHTML = getLabel('chatMsgDelete'); 
+            dl.onclick = () => { chatHistory = chatHistory.filter(x => x.id !== msg.id); d.remove(); saveToDB('chatHistory', chatHistory); rebuildConversationContext(); showToast(getLabel('toastSettingsSaved')); }; 
+            a.appendChild(ed); a.appendChild(dl); d.appendChild(a); 
+        }
+        
+        if (msg.role === 'ai' && !msg.html) { 
+            const b = document.createElement('div'); b.className = 'generate-btn-wrapper'; let h = false; 
+            if (msg.text.includes(getLabel('generateCodeButton'))) { const gb = document.createElement('button'); gb.className = 'generate-btn'; gb.innerHTML = getLabel('generateCodeButton'); gb.onclick = generateCode; b.appendChild(gb); h = true; } 
+            if (msg.text.includes(getLabel('aiQuestionOptionSuggest'))) { const pb = document.createElement('button'); pb.className = 'generate-btn'; pb.style.background = 'var(--accent)'; pb.innerHTML = getLabel('aiQuestionOptionSuggest'); pb.onclick = askForPlan; b.appendChild(pb); h = true; } 
+            if (h) d.appendChild(b); 
+        }
         return d;
     }
+
     function rebuildConversationContext() { conversationContext = ""; chatHistory.forEach(msg => { if (msg.role === 'user') { conversationContext += `\nユーザー: ${msg.text}`; if(msg.attachment) conversationContext += ` (添付: ${msg.attachment})`; } else if (msg.role === 'ai') { conversationContext += `\nアシスタント: ${msg.text}`; } }); }
     function confirmReset() { if (confirm(getLabel('tabButtonResetConfirm'))) { chatHistory = []; document.getElementById('chat-log').innerHTML = ''; window.setCode(""); updatePreview(); removeAttachment(); const initMsg = { id: Date.now().toString(), role: 'ai system-msg', text: getLabel('aiSystemMsgReset'), html: false }; chatHistory.push(initMsg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(initMsg); rebuildConversationContext(); clearSpecList(); } }
     function resetChatForNewCode(source) { chatHistory = []; document.getElementById('chat-log').innerHTML = ''; const msg = { id: Date.now().toString(), role: 'ai system-msg', text: getLabel('aiSystemMsgCodeLoaded').replace('{source}', source), html: false }; chatHistory.push(msg); saveToDB('chatHistory', chatHistory); renderMessageFromHistory(msg); rebuildConversationContext(); clearSpecList(); }
@@ -937,12 +980,28 @@
             const key = getCurrentApiKey();
             if (key && document.getElementById('ai-provider').value === 'gemini') {
                 const result = await callLLM({ prompt: system, stream: true, model, images }); const reader = result.reader; const decoder = new TextDecoder("utf-8"); let buffer = ""; contentDiv.innerHTML = "";
-                while (true) { const { value, done } = await reader.read(); if (done) break; buffer += decoder.decode(value, { stream: true }); const lines = buffer.split('\n'); buffer = lines.pop(); for (const line of lines) { if (line.startsWith(result.prefix || 'data: ')) { const chunk = result.parseChunk(line); if (chunk) { aiText += chunk; contentDiv.innerText = aiText; log.scrollTop = log.scrollHeight; } } } }
+                while (true) { 
+                    const { value, done } = await reader.read(); 
+                    if (done) break; 
+                    buffer += decoder.decode(value, { stream: true }); 
+                    const lines = buffer.split('\n'); buffer = lines.pop(); 
+                    for (const line of lines) { 
+                        if (line.startsWith(result.prefix || 'data: ')) { 
+                            const chunk = result.parseChunk(line); 
+                            if (chunk) { 
+                                aiText += chunk; 
+                                contentDiv.innerHTML = typeof marked !== 'undefined' ? DOMPurify.sanitize(marked.parse(aiText)) : aiText; 
+                                log.scrollTop = log.scrollHeight; 
+                            } 
+                        } 
+                    } 
+                }
             } else {
-                const result = await callLLM({ prompt: system, stream: false, model, images }); aiText = result.text; contentDiv.innerText = aiText;
+                const result = await callLLM({ prompt: system, stream: false, model, images }); 
+                aiText = result.text; 
+                contentDiv.innerHTML = typeof marked !== 'undefined' ? DOMPurify.sanitize(marked.parse(aiText)) : aiText;
             }
             
-            // 選択肢の抽出とモーダル表示
             const optionRegex = /\[OPTIONS:\s*(.*?)\s*\]/;
             const match = aiText.match(optionRegex);
             if (match) {
@@ -951,7 +1010,13 @@
                 showAIQuestionModal(getLabel('aiQuestionModalTitle'), options);
             }
 
-            const aiMsgToUpdate = chatHistory.find(m => m.id === aiMsgId); if(aiMsgToUpdate) { aiMsgToUpdate.text = aiText; aiMsgToUpdate.html = false; saveToDB('chatHistory', chatHistory); aiMsgElement.replaceWith(createMessageElement(aiMsgToUpdate)); log.scrollTop = log.scrollHeight; }
+            const aiMsgToUpdate = chatHistory.find(m => m.id === aiMsgId); 
+            if(aiMsgToUpdate) { 
+                aiMsgToUpdate.text = aiText; aiMsgToUpdate.html = false; 
+                saveToDB('chatHistory', chatHistory); 
+                aiMsgElement.replaceWith(createMessageElement(aiMsgToUpdate)); 
+                log.scrollTop = log.scrollHeight; 
+            }
             if (aiText) { await extractSpecsFromChat(promptText, aiText); extractUserProfileFromChat(promptText, aiText); }
         } catch (e) { contentDiv.textContent = `${getLabel('aiSystemMsgBuildError')} ${e.message}`; } finally { clearNewSpecFlags(); }
     }
@@ -978,153 +1043,38 @@
         if (!text) return; 
         showPage('chat', document.getElementById('tab-chat')); 
         const input = document.getElementById('user-prompt'); 
-        // 修正依頼のプロンプトテキストをプロンプトファイルから取得
         input.value = getPrompt('debug').replace('{memoText}', text); 
         autoGrow(input); 
         document.getElementById('debug-memo').value = ''; 
         askAI(); 
     }
 
-    /* --- UIテキストの適用 --- */
     function safeText(selector, text) { const el = document.querySelector(selector); if (el) el.textContent = text; }
     function safeHTML(selector, html) { const el = document.querySelector(selector); if (el) el.innerHTML = html; }
     function safePlaceholder(id, text) { const el = document.getElementById(id); if (el) el.placeholder = text; }
     function applyUITexts() {
-        // Tabs
-        document.getElementById('tab-chat').textContent = getLabel('tabChat');
-        document.getElementById('tab-editor').textContent = getLabel('tabCode');
-        document.getElementById('tab-preview').textContent = getLabel('tabPreview');
-        document.getElementById('tab-settings').textContent = getLabel('tabSettings');
-
-        // Chat Header
-        safeText('.chat-header .header-title', getLabel('headerConversation'));
-        safeHTML('.chat-header .spec-btn', `${getLabel('specButton')} <span id="spec-badge" class="tab-badge empty">0</span>`);
-        safeText('.chat-header .reset-btn', getLabel('newButton'));
-
-        // Floating Generate Container
+        document.getElementById('tab-chat').textContent = getLabel('tabChat'); document.getElementById('tab-editor').textContent = getLabel('tabCode'); document.getElementById('tab-preview').textContent = getLabel('tabPreview'); document.getElementById('tab-settings').textContent = getLabel('tabSettings');
+        safeText('.chat-header .header-title', getLabel('headerConversation')); safeHTML('.chat-header .spec-btn', `${getLabel('specButton')} <span id="spec-badge" class="tab-badge empty">0</span>`); safeText('.chat-header .reset-btn', getLabel('newButton'));
         safeHTML('#floating-generate-container .generate-btn', getLabel('generateCodeButton'));
-
-        // Input Container
-        safeText('#attach-menu .menu-item:nth-child(1)', getLabel('cameraOption'));
-        safeText('#attach-menu .menu-item:nth-child(2)', getLabel('galleryOption'));
-        safeText('#attach-menu .menu-item:nth-child(3)', getLabel('filesOption'));
-        safePlaceholder('user-prompt', getLabel('userPromptPlaceholder'));
-        document.getElementById('send-btn').textContent = getLabel('sendButton');
-
-        // Editor Actions
-        safeText('.action-btn.import-btn', getLabel('importButton'));
-        safeText('.action-btn.upload-btn', getLabel('uploadButton'));
-        safeText('.action-btn.search-btn', getLabel('searchButton'));
-        safeText('.action-btn.download-btn', getLabel('downloadButton'));
-        safeText('.action-btn.deploy-btn', getLabel('deployButton'));
-
-        // Debug Panel
-        safePlaceholder('debug-memo', getLabel('debugMemoPlaceholder'));
-        safeText('.debug-panel .debug-btn', getLabel('debugRequestButton'));
-
-        // Settings Page
-        safeText('#p-settings .field:nth-child(1) label', getLabel('aiProviderLabel'));
-        safeText('#p-settings .field:nth-child(2) label', getLabel('chatModelLabel'));
-        safeText('#p-settings .field:nth-child(3) label', getLabel('codeModelLabel'));
-        safeText('.api-key-field[data-provider="gemini"] label', getLabel('apiKeyGeminiLabel'));
-        safeText('.api-key-field[data-provider="openai"] label', getLabel('apiKeyOpenAILabel'));
-        safeText('.api-key-field[data-provider="claude"] label', getLabel('apiKeyClaudeLabel'));
-        safeText('.api-key-field[data-provider="xai"] label', getLabel('apiKeyXaiLabel'));
-        safeText('.api-key-field[data-provider="groq"] label', getLabel('apiKeyGroqLabel'));
-        safeText('#api-keys-section + .field label', getLabel('apiKeySecurityLabel'));
-        safeText('#api-keys-section + .field + .field label', getLabel('ghTokenLabel'));
-        safeText('#api-keys-section + .field + .field + .field label', getLabel('userPersonaLabel'));
-        safeText('#api-keys-section + .field + .field + .field .reset-default-btn', getLabel('resetDefaultButton'));
-        safePlaceholder('user-profile', getLabel('userPersonaPlaceholder'));
-        safeText('.field:nth-of-type(6) .field-header label', getLabel('systemPromptLabel'));
-        safeText('.field:nth-of-type(6) .reset-default-btn', getLabel('resetDefaultButton'));
-        safeText('.field:nth-of-type(7) .field-header label', getLabel('codePrinciplesLabel'));
-        safeText('.field:nth-of-type(7) .reset-default-btn', getLabel('resetDefaultButton'));
-        safeText('.prompt-details summary', getLabel('promptTemplatesSummary'));
-        safeText('.prompt-details .field-header:nth-of-type(1) label', getLabel('planPromptLabel'));
-        safeText('.prompt-details .field-header:nth-of-type(1) .reset-default-btn', getLabel('resetDefaultButton'));
-        safeText('.prompt-details .field-header:nth-of-type(2) label', getLabel('suggestPromptLabel'));
-        safeText('.prompt-details .field-header:nth-of-type(2) .reset-default-btn', getLabel('resetDefaultButton'));
-        safeText('.prompt-details .field-header:nth-of-type(3) label', getLabel('debugPromptLabel'));
-        safeText('.prompt-details .field-header:nth-of-type(3) .reset-default-btn', getLabel('resetDefaultButton'));
-        safeText('.theme-section label', getLabel('codeThemeLabel'));
-        safeText('.template-section label', getLabel('templatesLabel'));
-
-        // Spec Modal
-        safeText('#spec-modal .modal-header h3', getLabel('specModalTitle'));
-        safeText('#spec-modal .modal-body p', getLabel('specModalDescription'));
-        safePlaceholder('spec-add-input', getLabel('specAddPlaceholder'));
-        safeText('#spec-modal .spec-add-btn', getLabel('specAddButton'));
-        document.getElementById('spec-restore-btn').textContent = getLabel('specRestoreButton');
-        safeText('#spec-modal .spec-footer-btn.danger', getLabel('specClearButton'));
-
-        // Profile Proposal Modal
-        safeText('#profile-proposal-modal .modal-header h3', getLabel('profileProposalModalTitle'));
-        safeText('#profile-proposal-modal .modal-body p', getLabel('profileProposalDescription'));
-        safeText('#profile-proposal-modal .modal-body div:nth-child(2) label', getLabel('currentPersonaLabel'));
-        safeText('#profile-proposal-modal .modal-body div:nth-child(3) label', getLabel('proposedPersonaLabel'));
-        safeText('#profile-proposal-modal .modal-body .modal-btn:nth-child(1)', getLabel('discardButton'));
-        safeText('#profile-proposal-modal .modal-body .modal-btn:nth-child(2)', getLabel('applyButton'));
-
-        // AI Question Modal
+        safeText('#attach-menu .menu-item:nth-child(1)', getLabel('cameraOption')); safeText('#attach-menu .menu-item:nth-child(2)', getLabel('galleryOption')); safeText('#attach-menu .menu-item:nth-child(3)', getLabel('filesOption')); safePlaceholder('user-prompt', getLabel('userPromptPlaceholder')); document.getElementById('send-btn').textContent = getLabel('sendButton');
+        safeText('.action-btn.import-btn', getLabel('importButton')); safeText('.action-btn.upload-btn', getLabel('uploadButton')); safeText('.action-btn.search-btn', getLabel('searchButton')); safeText('.action-btn.download-btn', getLabel('downloadButton')); safeText('.action-btn.deploy-btn', getLabel('deployButton'));
+        safePlaceholder('debug-memo', getLabel('debugMemoPlaceholder')); safeText('.debug-panel .debug-btn', getLabel('debugRequestButton'));
+        safeText('#p-settings .field:nth-child(1) label', getLabel('aiProviderLabel')); safeText('#p-settings .field:nth-child(2) label', getLabel('chatModelLabel')); safeText('#p-settings .field:nth-child(3) label', getLabel('codeModelLabel')); safeText('.api-key-field[data-provider="gemini"] label', getLabel('apiKeyGeminiLabel')); safeText('.api-key-field[data-provider="openai"] label', getLabel('apiKeyOpenAILabel')); safeText('.api-key-field[data-provider="claude"] label', getLabel('apiKeyClaudeLabel')); safeText('.api-key-field[data-provider="xai"] label', getLabel('apiKeyXaiLabel')); safeText('.api-key-field[data-provider="groq"] label', getLabel('apiKeyGroqLabel')); safeText('#api-keys-section + .field label', getLabel('apiKeySecurityLabel')); safeText('#api-keys-section + .field + .field label', getLabel('ghTokenLabel')); safeText('#api-keys-section + .field + .field + .field label', getLabel('userPersonaLabel')); safeText('#api-keys-section + .field + .field + .field .reset-default-btn', getLabel('resetDefaultButton')); safePlaceholder('user-profile', getLabel('userPersonaPlaceholder')); safeText('.field:nth-of-type(6) .field-header label', getLabel('systemPromptLabel')); safeText('.field:nth-of-type(6) .reset-default-btn', getLabel('resetDefaultButton')); safeText('.field:nth-of-type(7) .field-header label', getLabel('codePrinciplesLabel')); safeText('.field:nth-of-type(7) .reset-default-btn', getLabel('resetDefaultButton')); safeText('.prompt-details summary', getLabel('promptTemplatesSummary')); safeText('.prompt-details .field-header:nth-of-type(1) label', getLabel('planPromptLabel')); safeText('.prompt-details .field-header:nth-of-type(1) .reset-default-btn', getLabel('resetDefaultButton')); safeText('.prompt-details .field-header:nth-of-type(2) label', getLabel('suggestPromptLabel')); safeText('.prompt-details .field-header:nth-of-type(2) .reset-default-btn', getLabel('resetDefaultButton')); safeText('.prompt-details .field-header:nth-of-type(3) label', getLabel('debugPromptLabel')); safeText('.prompt-details .field-header:nth-of-type(3) .reset-default-btn', getLabel('resetDefaultButton')); safeText('.theme-section label', getLabel('codeThemeLabel')); safeText('.template-section label', getLabel('templatesLabel'));
+        safeText('#spec-modal .modal-header h3', getLabel('specModalTitle')); safeText('#spec-modal .modal-body p', getLabel('specModalDescription')); safePlaceholder('spec-add-input', getLabel('specAddPlaceholder')); safeText('#spec-modal .spec-add-btn', getLabel('specAddButton')); document.getElementById('spec-restore-btn').textContent = getLabel('specRestoreButton'); safeText('#spec-modal .spec-footer-btn.danger', getLabel('specClearButton'));
+        safeText('#profile-proposal-modal .modal-header h3', getLabel('profileProposalModalTitle')); safeText('#profile-proposal-modal .modal-body p', getLabel('profileProposalDescription')); safeText('#profile-proposal-modal .modal-body div:nth-child(2) label', getLabel('currentPersonaLabel')); safeText('#profile-proposal-modal .modal-body div:nth-child(3) label', getLabel('proposedPersonaLabel')); safeText('#profile-proposal-modal .modal-body .modal-btn:nth-child(1)', getLabel('discardButton')); safeText('#profile-proposal-modal .modal-body .modal-btn:nth-child(2)', getLabel('applyButton'));
         safeText('#ai-question-modal .modal-header h3', getLabel('aiQuestionModalTitle'));
-
-        // Search Modal
-        safeText('#search-modal .modal-header h3', getLabel('searchModalTitle'));
-        safePlaceholder('code-search-input', getLabel('searchInputPlaceholder'));
-
-        // GitHub Import Modal
-        safeText('#gh-import-modal .modal-header h3', getLabel('ghImportModalTitle'));
-        safePlaceholder('gh-repo-search', getLabel('ghRepoSearchPlaceholder'));
-        safeText('#gh-step-file .modal-btn', getLabel('ghBackToRepos'));
-
-        // GitHub Deploy Modal
-        safeText('#gh-deploy-modal .modal-header h3', getLabel('ghDeployModalTitle'));
-        safePlaceholder('deploy-token-input', getLabel('deployTokenInputPlaceholder'));
-        safeText('#deploy-step-token .modal-btn', getLabel('deploySaveAndAuth'));
-        safeText('#deploy-step-repo .modal-btn', getLabel('deployNewRepoButton'));
-        safePlaceholder('deploy-repo-search', getLabel('deploySearchPlaceholder'));
-        safeText('#deploy-step-new-repo .modal-btn:nth-child(1)', getLabel('deployNewRepoBack'));
-        safePlaceholder('new-repo-name', getLabel('newRepoNamePlaceholder'));
-        safeText('#new-repo-private option[value="false"]', getLabel('newRepoPublicOption'));
-        safeText('#new-repo-private option[value="true"]', getLabel('newRepoPrivateOption'));
-        safeText('#deploy-step-new-repo .modal-btn:nth-child(5)', getLabel('newRepoCreateButton'));
-        safeText('#deploy-step-details .modal-btn', getLabel('deployNewRepoBack'));
-        const deployTargetDiv = document.querySelector('#deploy-step-details div:nth-child(2)');
-        if (deployTargetDiv && deployTargetDiv.childNodes[0]) deployTargetDiv.childNodes[0].nodeValue = getLabel('deployTargetRepoPrefix');
-        safePlaceholder('deploy-branch', getLabel('deployBranchPlaceholder'));
-        safePlaceholder('deploy-filepath', getLabel('deployFilePlaceholder'));
-        safePlaceholder('deploy-readme-content', getLabel('deployReadmePlaceholder'));
-        safeText('#deploy-gh-pages + span', getLabel('deployGhPagesCheckbox'));
-        document.getElementById('deploy-exec-btn').textContent = getLabel('deployExecButton');
-        safeText('#deploy-step-success h4', getLabel('deploySuccessTitle'));
-        document.getElementById('view-site-btn').textContent = getLabel('viewSiteButton');
-
-        // Background Notify
+        safeText('#search-modal .modal-header h3', getLabel('searchModalTitle')); safePlaceholder('code-search-input', getLabel('searchInputPlaceholder'));
+        safeText('#gh-import-modal .modal-header h3', getLabel('ghImportModalTitle')); safePlaceholder('gh-repo-search', getLabel('ghRepoSearchPlaceholder')); safeText('#gh-step-file .modal-btn', getLabel('ghBackToRepos'));
+        safeText('#gh-deploy-modal .modal-header h3', getLabel('ghDeployModalTitle')); safePlaceholder('deploy-token-input', getLabel('deployTokenInputPlaceholder')); safeText('#deploy-step-token .modal-btn', getLabel('deploySaveAndAuth')); safeText('#deploy-step-repo .modal-btn', getLabel('deployNewRepoButton')); safePlaceholder('deploy-repo-search', getLabel('deploySearchPlaceholder')); safeText('#deploy-step-new-repo .modal-btn:nth-child(1)', getLabel('deployNewRepoBack')); safePlaceholder('new-repo-name', getLabel('newRepoNamePlaceholder')); safeText('#new-repo-private option[value="false"]', getLabel('newRepoPublicOption')); safeText('#new-repo-private option[value="true"]', getLabel('newRepoPrivateOption')); safeText('#deploy-step-new-repo .modal-btn:nth-child(5)', getLabel('newRepoCreateButton')); safeText('#deploy-step-details .modal-btn', getLabel('deployNewRepoBack')); const deployTargetDiv = document.querySelector('#deploy-step-details div:nth-child(2)'); if (deployTargetDiv && deployTargetDiv.childNodes[0]) deployTargetDiv.childNodes[0].nodeValue = getLabel('deployTargetRepoPrefix'); safePlaceholder('deploy-branch', getLabel('deployBranchPlaceholder')); safePlaceholder('deploy-filepath', getLabel('deployFilePlaceholder')); safePlaceholder('deploy-readme-content', getLabel('deployReadmePlaceholder')); safeText('#deploy-gh-pages + span', getLabel('deployGhPagesCheckbox')); document.getElementById('deploy-exec-btn').textContent = getLabel('deployExecButton'); safeText('#deploy-step-success h4', getLabel('deploySuccessTitle')); document.getElementById('view-site-btn').textContent = getLabel('viewSiteButton');
         safeText('#bg-notify span', getLabel('bgNotifyText'));
-
-        // Theme Editor Modal
-        document.getElementById('theme-editor-title').textContent = getLabel('themeEditorModalTitleCreate');
-        safePlaceholder('te-name', getLabel('themeEditorNamePlaceholder'));
-        safePlaceholder('te-icon', getLabel('themeEditorIconPlaceholder'));
-        safePlaceholder('te-desc', getLabel('themeEditorDescPlaceholder'));
-        safeText('#theme-editor-modal .modal-btn:nth-of-type(1)', getLabel('themeEditorSaveButton'));
-        safeText('#theme-editor-modal .modal-btn:nth-of-type(2)', getLabel('themeEditorApplyButton'));
-
-        // Template Editor Modal
-        document.getElementById('tpl-editor-title').textContent = getLabel('templateEditorModalTitleAdd');
-        safePlaceholder('tple-name', getLabel('templateEditorNamePlaceholder'));
-        safePlaceholder('tple-icon', getLabel('templateEditorIconPlaceholder'));
-        safePlaceholder('tple-desc', getLabel('templateEditorDescPlaceholder'));
-        safePlaceholder('tple-code', getLabel('templateEditorCodePlaceholder'));
-        safeText('#tpl-editor-modal .modal-btn:nth-of-type(1)', getLabel('templateEditorLoadButton'));
-        safeText('#tpl-editor-modal .modal-btn:nth-of-type(2)', getLabel('templateEditorSaveButton'));
+        document.getElementById('theme-editor-title').textContent = getLabel('themeEditorModalTitleCreate'); safePlaceholder('te-name', getLabel('themeEditorNamePlaceholder')); safePlaceholder('te-icon', getLabel('themeEditorIconPlaceholder')); safePlaceholder('te-desc', getLabel('themeEditorDescPlaceholder')); safeText('#theme-editor-modal .modal-btn:nth-of-type(1)', getLabel('themeEditorSaveButton')); safeText('#theme-editor-modal .modal-btn:nth-of-type(2)', getLabel('themeEditorApplyButton'));
+        document.getElementById('tpl-editor-title').textContent = getLabel('templateEditorModalTitleAdd'); safePlaceholder('tple-name', getLabel('templateEditorNamePlaceholder')); safePlaceholder('tple-icon', getLabel('templateEditorIconPlaceholder')); safePlaceholder('tple-desc', getLabel('templateEditorDescPlaceholder')); safePlaceholder('tple-code', getLabel('templateEditorCodePlaceholder')); safeText('#tpl-editor-modal .modal-btn:nth-of-type(1)', getLabel('templateEditorLoadButton')); safeText('#tpl-editor-modal .modal-btn:nth-of-type(2)', getLabel('templateEditorSaveButton'));
     }
 
     /* --- Init --- */
     window.onload = async () => {
-        await loadPrompts(); // Load prompts first
-        try { applyUITexts(); } catch(e) { console.warn('applyUITexts error:', e); } // Apply UI texts after loading prompts
+        await loadPrompts(); 
+        try { applyUITexts(); } catch(e) {} 
         try {
             const settings = await getFromDB('settings');
             if (settings) {
@@ -1145,7 +1095,7 @@
                 onProviderChange(); ['user-profile','system-prompt','code-principles','prompt-plan','prompt-suggest','prompt-debug'].forEach(k => document.getElementById(k).value = getFieldDefaults()[k]); updateKeyExpiryStatus(null);
             }
             toggleModelSelects(); const ghToken = await getFromDB('gh_token'); if (ghToken) { document.getElementById('setting-gh-token').value = ghToken; document.getElementById('deploy-token-input').value = ghToken; }
-        } catch(e) { /* silent error */ }
+        } catch(e) {}
         
         await initCodeMirror(await getFromDB('currentCode'));
         await loadChatHistory(); loadThemeManager(); loadTemplateList();
